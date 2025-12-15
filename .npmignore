@@ -1,0 +1,40 @@
+# Development files
+test-*.js
+demo-*.js
+benchmark.js
+chat.js
+trainer.js
+test-queries.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build artifacts
+node_modules/
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Environment
+.env
+.env.*
