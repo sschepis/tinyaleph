@@ -154,7 +154,7 @@ Each example should follow this structure:
  * @requires Specific requirements if any
  */
 
-const { /* imports */ } = require('@sschepis/tinyaleph');
+const { /* imports */ } = require('@aleph-ai/tinyaleph');
 
 // ===========================================
 // SETUP

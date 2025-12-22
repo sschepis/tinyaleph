@@ -1,10 +1,10 @@
-# @sschepis/tinyaleph
+# @aleph-ai/tinyaleph
 
 **Prime-resonant semantic computing framework**
 
 A novel computational paradigm that encodes meaning as prime number signatures, embeds them in hypercomplex space, and performs reasoning through entropy minimization and oscillator synchronization.
 
-[![npm version](https://badge.fury.io/js/@sschepis%2Ftinyaleph.svg)](https://www.npmjs.com/package/@sschepis/tinyaleph)
+[![npm version](https://badge.fury.io/js/@sschepis%2Ftinyaleph.svg)](https://www.npmjs.com/package/@aleph-ai/tinyaleph)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -18,16 +18,16 @@ A novel computational paradigm that encodes meaning as prime number signatures, 
 ## Installation
 
 ```bash
-npm install @sschepis/tinyaleph
+npm install @aleph-ai/tinyaleph
 ```
 
 ## Quick Start
 
 ```javascript
-const { createEngine, SemanticBackend } = require('@sschepis/tinyaleph');
+const { createEngine, SemanticBackend } = require('@aleph-ai/tinyaleph');
 
 // Load configuration
-const config = require('@sschepis/tinyaleph/data.json');
+const config = require('@aleph-ai/tinyaleph/data.json');
 
 // Create a semantic engine
 const engine = createEngine('semantic', config);
@@ -58,7 +58,7 @@ console.log(primes);  // [2, 3, 5, 7, 11, ...]
 Primes embed into 16-dimensional sedenion space:
 
 ```javascript
-const { Hypercomplex } = require('@sschepis/tinyaleph');
+const { Hypercomplex } = require('@aleph-ai/tinyaleph');
 
 // Create a state
 const state = new Hypercomplex(16);
@@ -90,7 +90,7 @@ for (const step of result.steps) {
 Natural language understanding and concept mapping:
 
 ```javascript
-const { SemanticBackend } = require('@sschepis/tinyaleph');
+const { SemanticBackend } = require('@aleph-ai/tinyaleph');
 
 const backend = new SemanticBackend(config);
 
@@ -114,7 +114,7 @@ console.log('Similarity:', state1.coherence(state2));
 Semantic hashing and key derivation:
 
 ```javascript
-const { CryptographicBackend, hash, deriveKey } = require('@sschepis/tinyaleph');
+const { CryptographicBackend, hash, deriveKey } = require('@aleph-ai/tinyaleph');
 
 // Quick hash
 const h = hash('my secret data');
@@ -132,7 +132,7 @@ const semanticHash = crypto.hash('similar meanings produce similar hashes');
 Quantum-inspired computation:
 
 ```javascript
-const { ScientificBackend } = require('@sschepis/tinyaleph');
+const { ScientificBackend } = require('@aleph-ai/tinyaleph');
 
 const backend = new ScientificBackend(config);
 
@@ -152,7 +152,7 @@ const result = backend.measure(superposition, [basis]);
 ### Oscillators
 
 ```javascript
-const { Oscillator, OscillatorBank, KuramotoModel } = require('@sschepis/tinyaleph');
+const { Oscillator, OscillatorBank, KuramotoModel } = require('@aleph-ai/tinyaleph');
 
 // Create oscillator bank
 const bank = new OscillatorBank(16);
@@ -170,7 +170,7 @@ console.log('Order parameter:', kuramoto.orderParameter());
 ### Entropy and Stability
 
 ```javascript
-const { shannonEntropy, estimateLyapunov, stateEntropy } = require('@sschepis/tinyaleph');
+const { shannonEntropy, estimateLyapunov, stateEntropy } = require('@aleph-ai/tinyaleph');
 
 // Calculate entropy
 const entropy = stateEntropy(state);
@@ -201,13 +201,13 @@ console.log('Stable:', lambda < 0);
 
 ```javascript
 // Direct module access
-const { core, physics, backends, engine } = require('@sschepis/tinyaleph');
+const { core, physics, backends, engine } = require('@aleph-ai/tinyaleph');
 
 // Or import sub-modules directly
-const core = require('@sschepis/tinyaleph/core');
-const physics = require('@sschepis/tinyaleph/physics');
-const backends = require('@sschepis/tinyaleph/backends');
-const engine = require('@sschepis/tinyaleph/engine');
+const core = require('@aleph-ai/tinyaleph/core');
+const physics = require('@aleph-ai/tinyaleph/physics');
+const backends = require('@aleph-ai/tinyaleph/backends');
+const engine = require('@aleph-ai/tinyaleph/engine');
 ```
 
 ## Documentation

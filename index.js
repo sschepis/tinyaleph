@@ -1,5 +1,5 @@
 /**
- * @sschepis/tinyaleph
+ * @aleph-ai/tinyaleph
  * 
  * Prime-resonant semantic computing framework
  * 
@@ -11,13 +11,13 @@
  * - Multiple backends (semantic, cryptographic, scientific)
  * 
  * @example
- * const { createEngine } = require('@sschepis/tinyaleph');
+ * const { createEngine } = require('@aleph-ai/tinyaleph');
  * 
  * const engine = createEngine('semantic', config);
  * const result = engine.run('What is wisdom?');
  * console.log(result.output);
  * 
- * @module @sschepis/tinyaleph
+ * @module @aleph-ai/tinyaleph
  */
 
 module.exports = require('./modular');

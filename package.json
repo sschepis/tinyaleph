@@ -1,5 +1,5 @@
 {
-  "name": "@sschepis/tinyaleph",
+  "name": "@aleph-ai/tinyaleph",
   "version": "1.0.0",
   "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, and entropy-minimizing reasoning",
   "main": "index.js",
@@ -67,12 +67,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sschepis/tinyaleph.git"
+    "url": "git+https://github.com/aleph-ai/tinyaleph.git"
   },
   "bugs": {
-    "url": "https://github.com/sschepis/tinyaleph/issues"
+    "url": "https://github.com/aleph-ai/tinyaleph/issues"
   },
-  "homepage": "https://github.com/sschepis/tinyaleph#readme",
+  "homepage": "https://github.com/aleph-ai/tinyaleph#readme",
   "engines": {
     "node": ">=14.0.0"
   },

@@ -1,8 +1,8 @@
 /**
- * Type definitions for @sschepis/tinyaleph
+ * Type definitions for @aleph-ai/tinyaleph
  */
 
-declare module '@sschepis/tinyaleph' {
+declare module '@aleph-ai/tinyaleph' {
   // ============================================
   // Core Types
   // ============================================
