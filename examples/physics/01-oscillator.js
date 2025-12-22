@@ -8,8 +8,8 @@
  * - Emergence of collective behavior
  */
 
-const Oscillator = require('../../physics/oscillator');
-const Kuramoto = require('../../physics/kuramoto');
+const { Oscillator } = require('../../physics/oscillator');
+const { KuramotoModel } = require('../../physics/kuramoto');
 
 console.log('TinyAleph Coupled Oscillators Example');
 console.log('=====================================\n');
@@ -21,14 +21,10 @@ console.log('=====================================\n');
 console.log('Single Oscillator:');
 console.log('-'.repeat(50) + '\n');
 
-var oscillator = new Oscillator({
-    frequency: 1.0,
-    phase: 0,
-    amplitude: 1.0
-});
+var oscillator = new Oscillator(1.0, 0, 1.0);
 
 console.log('Initial state:');
-console.log('  Frequency: ' + oscillator.frequency + ' Hz');
+console.log('  Frequency: ' + oscillator.freq + ' Hz');
 console.log('  Phase: ' + oscillator.phase.toFixed(4) + ' rad');
 console.log('  Amplitude: ' + oscillator.amplitude);
 
@@ -37,7 +33,7 @@ console.log('\nTime evolution:');
 var times = [0, 0.25, 0.5, 0.75, 1.0];
 for (var i = 0; i < times.length; i++) {
     var t = times[i];
-    var phase = oscillator.phase + 2 * Math.PI * oscillator.frequency * t;
+    var phase = oscillator.phase + 2 * Math.PI * oscillator.freq * t;
     var value = oscillator.amplitude * Math.sin(phase);
     console.log('  t=' + t.toFixed(2) + 's: phase=' + (phase % (2*Math.PI)).toFixed(3) + ', sin=' + value.toFixed(3));
 }
