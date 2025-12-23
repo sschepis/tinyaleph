@@ -14,7 +14,7 @@ const { ScientificBackend, Hypercomplex } = require('../../modular');
 // SETUP
 // ===========================================
 
-const backend = new ScientificBackend({ dimension: 2 });
+const backend = new ScientificBackend({ dimension: 16 });
 
 console.log('TinyAleph Quantum Random Number Generator');
 console.log('=========================================\n');
@@ -29,14 +29,13 @@ console.log('-'.repeat(50) + '\n');
 console.log('Creating superposition and measuring produces a random bit.\n');
 
 function quantumRandomBit() {
-    // Create |+⟩ state
-    var ket0 = backend.encode('|0⟩');
-    var superposition = backend.applyGate(ket0, 'H');
+    // Create |+⟩ state (equal superposition of |0⟩ and |1⟩)
+    var superposition = backend.encode('|+⟩');  // [2, 3] = equal weights
     var state = backend.primesToState(superposition);
     
-    // Measure - 50/50 chance
+    // Use the built-in measure method
     var result = backend.measure(state);
-    return parseInt(result);
+    return result.outcome;
 }
 
 console.log('Generating 20 quantum random bits:');
@@ -56,9 +55,12 @@ console.log('='.repeat(50) + '\n');
 
 function quantumRandomInt(max) {
     var bitsNeeded = Math.ceil(Math.log2(max + 1));
+    var attempts = 0;
+    var maxAttempts = 100;  // Prevent infinite loop
     
     // Rejection sampling for uniform distribution
-    while (true) {
+    while (attempts < maxAttempts) {
+        attempts++;
         var value = 0;
         for (var i = 0; i < bitsNeeded; i++) {
             value = (value << 1) | quantumRandomBit();
@@ -67,6 +69,8 @@ function quantumRandomInt(max) {
             return value;
         }
     }
+    // Fallback to modulo if rejection sampling fails
+    return value % (max + 1);
 }
 
 console.log('Random integers 0-9:');
@@ -162,7 +166,7 @@ function chiSquareTest(observed, expected) {
 }
 
 // Generate many random bits and test distribution
-var trials = 1000;
+var trials = 500;  // Reduced for faster execution
 var counts = [0, 0];
 
 for (var i = 0; i < trials; i++) {

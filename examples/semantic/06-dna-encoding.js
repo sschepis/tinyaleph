@@ -29,11 +29,14 @@ console.log('-'.repeat(50) + '\n');
 
 const text = 'The quick brown fox jumps over the lazy dog';
 
+// Tokenize first
+const tokens = backend.encodeOrdered(text);
+
 // Standard forward encoding
 const forwardState = backend.textToOrderedState(text);
 
 // Bidirectional encoding (alternating direction per line)
-const bidirectionalState = backend.bidirectionalState(text);
+const bidirectionalState = backend.bidirectionalState(tokens);
 
 console.log('Input: "' + text + '"\n');
 
@@ -66,15 +69,15 @@ console.log('\n' + '='.repeat(50));
 console.log('Codon-Style Triplet Chunking:');
 console.log('='.repeat(50) + '\n');
 
-// Tokenize first
-var tokens = backend.encodeOrdered(text);
-console.log('Tokens: [' + tokens.slice(0, 6).join(', ') + '...] (' + tokens.length + ' total)\n');
+// Tokenize first (reuse tokens from above)
+console.log('Tokens: [' + tokens.slice(0, 6).map(function(t) { return t.word; }).join(', ') + '...] (' + tokens.length + ' total)\n');
 
 // Create codons (triplets)
 var codons = backend.tokensToCodons(tokens);
 console.log('Codons (triplets of primes):');
 for (var i = 0; i < Math.min(4, codons.length); i++) {
-    console.log('  Codon ' + (i + 1) + ': [' + codons[i].join(', ') + ']');
+    var codonPrimes = codons[i].primes || codons[i];
+    console.log('  Codon ' + (i + 1) + ': [' + codonPrimes.join(', ') + ']');
 }
 console.log('  ... (' + codons.length + ' codons total)');
 
@@ -91,22 +94,22 @@ console.log('  Forward:  +1 (start at 0), +2 (start at 1), +3 (start at 2)');
 console.log('  Reverse:  -1 (reverse, start at 0), -2 (reverse, start at 1), -3 (reverse, start at 2)');
 console.log('');
 
-var frames = backend.readingFrameStates(text);
+var frames = backend.readingFrameStates(tokens);
 
 console.log('Reading frame embeddings:');
-for (var frameName in frames) {
-    if (frames.hasOwnProperty(frameName)) {
-        var state = frames[frameName];
-        var norm = state.norm();
-        var firstComp = state.c[0].toFixed(4);
-        console.log('  ' + frameName + ': norm=' + norm.toFixed(4) + ', c[0]=' + firstComp);
-    }
+for (var i = 0; i < frames.length; i++) {
+    var frame = frames[i];
+    var state = frame.state;
+    var norm = state.norm();
+    var firstComp = state.c[0].toFixed(4);
+    var frameName = frame.direction + '_' + frame.offset;
+    console.log('  ' + frameName + ': norm=' + norm.toFixed(4) + ', c[0]=' + firstComp);
 }
 
 // Compare frame similarities
 console.log('\nFrame similarity matrix:');
-var frameNames = Object.keys(frames);
-var frameStates = frameNames.map(function(name) { return frames[name]; });
+var frameNames = frames.map(function(f) { return f.direction + '_' + f.offset; });
+var frameStates = frames.map(function(f) { return f.state; });
 
 process.stdout.write('     ');
 for (var n = 0; n < frameNames.length; n++) {
@@ -140,7 +143,7 @@ console.log('  1. Sense: forward prime encoding');
 console.log('  2. Antisense: reversed token sequence');
 console.log('');
 
-var dual = backend.dualRepresentation(text);
+var dual = backend.dualRepresentation(tokens);
 
 console.log('Sense strand (forward):');
 console.log('  First 4: [' + dual.sense.c.slice(0, 4).map(function(v) { return v.toFixed(3); }).join(', ') + ']');
