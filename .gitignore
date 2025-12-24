@@ -4,6 +4,8 @@ package-lock.json
 
 apps/ecdsa/
 
+data/
+
 # Build outputs
 dist/
 build/

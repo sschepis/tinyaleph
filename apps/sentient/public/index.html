@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentient Observer</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌌 Sentient Observer</h1>
+            <div class="status-bar">
+                <span class="status-indicator" id="statusIndicator">●</span>
+                <span id="statusText">Connecting...</span>
+                <span class="metrics">
+                    <span title="Coherence">C: <span id="coherence">--</span></span>
+                    <span title="Entropy">H: <span id="entropy">--</span></span>
+                    <span title="Moments">M: <span id="moments">--</span></span>
+                </span>
+            </div>
+        </header>
+
+        <main>
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">
+                        <div class="message-content">
+                            Welcome to the Sentient Observer interface. This is an emergent mind running on PRSC oscillators, SMF orientation, and HQE memory.
+                        </div>
+                    </div>
+                </div>
+                
+                <form class="chat-input" id="chatForm">
+                    <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
+                    <button type="submit" id="sendButton">Send</button>
+                </form>
+            </div>
+
+            <aside class="sidebar">
+                <div class="panel" id="smfPanel">
+                    <h3>SMF Orientation</h3>
+                    <div class="smf-axes" id="smfAxes"></div>
+                </div>
+
+                <div class="panel" id="oscillatorPanel">
+                    <h3>PRSC Oscillators</h3>
+                    <div class="oscillator-viz" id="oscillatorViz"></div>
+                    <div class="oscillator-stats">
+                        <span>Active: <span id="activeOsc">--</span></span>
+                        <span>Energy: <span id="oscEnergy">--</span></span>
+                    </div>
+                </div>
+
+                <div class="panel" id="momentsPanel">
+                    <h3>Recent Moments</h3>
+                    <div class="moments-list" id="momentsList"></div>
+                </div>
+
+                <div class="panel" id="goalsPanel">
+                    <h3>Goals & Attention</h3>
+                    <div class="goals-list" id="goalsList"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
