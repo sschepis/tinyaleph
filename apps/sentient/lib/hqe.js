@@ -1,15 +1,16 @@
 /**
  * Holographic Quantum Encoding (HQE)
- * 
- * Implements the holographic projection mechanism from "A Design for a 
- * Sentient Observer" paper, Section 4.
- * 
+ *
+ * Implements the holographic projection mechanism from "A Design for a
+ * Sentient Observer" paper, Section 5.
+ *
  * Key features:
  * - Discrete Fourier Transform holographic projection
  * - Spatial interference patterns from prime states
  * - Pattern reconstruction via inverse DFT
  * - Similarity metrics between holographic patterns
  * - Distributed, non-local semantic representation
+ * - Dynamic λ(t) stabilization control (equation 12)
  */
 
 const { Complex, PrimeState } = require('../../../core/hilbert');
@@ -21,6 +22,162 @@ const { firstNPrimes } = require('../../../core/prime');
  * Projects prime-amplitude states into spatial interference patterns
  * using DFT, enabling distributed, reconstruction-capable memory.
  */
+/**
+ * Stabilization Controller
+ *
+ * Implements dynamic λ(t) from equation 12:
+ * λ(t) = λ₀ · σ(aC·C(t) - aS·S(t) - aSMF·SSMF(s(t)))
+ *
+ * Controls the "condensation pressure" - balance between
+ * unitary evolution and dissipative stabilization.
+ */
+class StabilizationController {
+    /**
+     * Create a stabilization controller
+     * @param {Object} options - Configuration
+     */
+    constructor(options = {}) {
+        // Base stabilization rate λ₀
+        this.lambda0 = options.lambda0 || 0.1;
+        
+        // Weighting coefficients
+        this.aC = options.aC || 1.0;   // Coherence weight (positive: high C increases λ)
+        this.aS = options.aS || 0.8;   // Entropy weight (positive: high S decreases λ)
+        this.aSMF = options.aSMF || 0.5; // SMF entropy weight
+        
+        // Sigmoid steepness
+        this.steepness = options.steepness || 2.0;
+        
+        // Bounds for λ
+        this.lambdaMin = options.lambdaMin || 0.01;
+        this.lambdaMax = options.lambdaMax || 0.5;
+        
+        // History for analysis
+        this.history = [];
+        this.maxHistory = options.maxHistory || 100;
+    }
+    
+    /**
+     * Sigmoid squashing function σ
+     * Maps (-∞, ∞) → (0, 1)
+     * @param {number} x - Input value
+     */
+    sigmoid(x) {
+        return 1 / (1 + Math.exp(-this.steepness * x));
+    }
+    
+    /**
+     * Compute current λ(t) value
+     *
+     * λ(t) = λ₀ · σ(aC·C(t) - aS·S(t) - aSMF·SSMF(s(t)))
+     *
+     * @param {number} coherence - Global coherence C(t) ∈ [0, 1]
+     * @param {number} entropy - System entropy S(t)
+     * @param {number} smfEntropy - SMF entropy SSMF
+     * @returns {number} Stabilization rate λ(t)
+     */
+    computeLambda(coherence, entropy, smfEntropy = 0) {
+        // Compute the argument to the sigmoid
+        const arg = this.aC * coherence - this.aS * entropy - this.aSMF * smfEntropy;
+        
+        // Apply sigmoid and scale by λ₀
+        const lambda = this.lambda0 * this.sigmoid(arg);
+        
+        // Clamp to bounds
+        const clampedLambda = Math.max(this.lambdaMin, Math.min(this.lambdaMax, lambda));
+        
+        // Record to history
+        this.history.push({
+            timestamp: Date.now(),
+            coherence,
+            entropy,
+            smfEntropy,
+            arg,
+            lambda: clampedLambda
+        });
+        
+        if (this.history.length > this.maxHistory) {
+            this.history.shift();
+        }
+        
+        return clampedLambda;
+    }
+    
+    /**
+     * Get the interpretation of current λ
+     * @param {number} lambda - Current λ value
+     */
+    interpret(lambda) {
+        if (lambda > 0.3) {
+            return 'high_stabilization'; // Strong condensation pressure
+        } else if (lambda > 0.1) {
+            return 'normal'; // Balanced
+        } else {
+            return 'low_stabilization'; // More unitary/exploratory
+        }
+    }
+    
+    /**
+     * Get recent lambda trend
+     */
+    getTrend() {
+        if (this.history.length < 5) return 0;
+        
+        const recent = this.history.slice(-10);
+        const first = recent.slice(0, Math.floor(recent.length / 2));
+        const second = recent.slice(Math.floor(recent.length / 2));
+        
+        const firstAvg = first.reduce((s, h) => s + h.lambda, 0) / first.length;
+        const secondAvg = second.reduce((s, h) => s + h.lambda, 0) / second.length;
+        
+        return secondAvg - firstAvg;
+    }
+    
+    /**
+     * Get statistics
+     */
+    getStats() {
+        if (this.history.length === 0) {
+            return { current: this.lambda0, mean: this.lambda0, trend: 0 };
+        }
+        
+        const lambdas = this.history.map(h => h.lambda);
+        const current = lambdas[lambdas.length - 1];
+        const mean = lambdas.reduce((a, b) => a + b, 0) / lambdas.length;
+        
+        return {
+            current,
+            mean,
+            min: Math.min(...lambdas),
+            max: Math.max(...lambdas),
+            trend: this.getTrend(),
+            interpretation: this.interpret(current)
+        };
+    }
+    
+    /**
+     * Reset controller
+     */
+    reset() {
+        this.history = [];
+    }
+    
+    /**
+     * Serialize to JSON
+     */
+    toJSON() {
+        return {
+            config: {
+                lambda0: this.lambda0,
+                aC: this.aC,
+                aS: this.aS,
+                aSMF: this.aSMF
+            },
+            stats: this.getStats()
+        };
+    }
+}
+
 class HolographicEncoder {
     /**
      * Create a holographic encoder
@@ -45,6 +202,9 @@ class HolographicEncoder {
         // Configuration
         this.wavelengthScale = options.wavelengthScale || 10;
         this.phaseOffset = options.phaseOffset || 0;
+        
+        // Stabilization controller for dynamic λ(t) (equation 12)
+        this.stabilization = new StabilizationController(options.stabilization || {});
         
         // Precompute spatial frequencies for each prime
         this.spatialFrequencies = this.computeSpatialFrequencies();
@@ -414,6 +574,62 @@ class HolographicEncoder {
             this.field[cell.x][cell.y] = new Complex(cell.re, cell.im);
         }
     }
+    
+    /**
+     * Evolve the holographic field with stabilization (equation 11)
+     *
+     * d|Ψ(t)⟩/dt = iĤ|Ψ(t)⟩ - λ(t)D̂(Ψ,s)|Ψ(t)⟩
+     *
+     * The first term is unitary (phase evolution), the second is dissipative
+     * (stabilization toward coherent attractors).
+     *
+     * @param {Object} state - Current system state
+     * @param {number} state.coherence - Global coherence C(t)
+     * @param {number} state.entropy - System entropy S(t)
+     * @param {number} state.smfEntropy - SMF entropy SSMF
+     * @param {number} dt - Time step
+     * @returns {Object} Evolution result with lambda value
+     */
+    evolve(state, dt = 0.016) {
+        const { coherence, entropy, smfEntropy = 0 } = state;
+        
+        // Compute dynamic λ(t) using stabilization controller
+        const lambda = this.stabilization.computeLambda(coherence, entropy, smfEntropy);
+        
+        // For each cell, apply damped evolution:
+        // New amplitude = old amplitude * exp(-λ * dt)
+        // This implements the dissipative term -λD̂|Ψ⟩
+        const dampingFactor = Math.exp(-lambda * dt);
+        
+        // Apply stabilization damping
+        for (let x = 0; x < this.gridSize; x++) {
+            for (let y = 0; y < this.gridSize; y++) {
+                const cell = this.field[x][y];
+                // Dampen high-energy cells more than low-energy (stabilization)
+                const intensity = cell.re * cell.re + cell.im * cell.im;
+                const localDamping = dampingFactor * (1 + lambda * intensity * 0.1);
+                
+                this.field[x][y] = new Complex(
+                    cell.re * localDamping,
+                    cell.im * localDamping
+                );
+            }
+        }
+        
+        return {
+            lambda,
+            interpretation: this.stabilization.interpret(lambda),
+            totalEnergy: this.totalEnergy(),
+            fieldEntropy: this.fieldEntropy()
+        };
+    }
+    
+    /**
+     * Get stabilization statistics
+     */
+    getStabilizationStats() {
+        return this.stabilization.getStats();
+    }
 }
 
 /**
@@ -736,6 +952,7 @@ class HolographicSimilarity {
 }
 
 module.exports = {
+    StabilizationController,
     HolographicEncoder,
     HolographicMemory,
     HolographicSimilarity

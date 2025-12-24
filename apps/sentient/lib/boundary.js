@@ -558,8 +558,247 @@ class SelfModel {
 }
 
 /**
+ * Objectivity Gate (Section 7, equation 18)
+ *
+ * Implements the redundancy check for outputs:
+ * R(ω) = (1/K) Σk 1{decodk(ω) agrees}
+ * broadcast ⟺ R(ω) ≥ τR
+ *
+ * Outputs are only broadcast if they would be decoded consistently
+ * across diverse channels/decoders, preventing "false objectivity".
+ */
+class ObjectivityGate {
+    /**
+     * Create an objectivity gate
+     * @param {Object} options - Configuration
+     */
+    constructor(options = {}) {
+        // Threshold for broadcast (τR)
+        this.threshold = options.threshold || 0.7;
+        
+        // Decoders - different perspectives/methods for interpreting output
+        this.decoders = options.decoders || this.createDefaultDecoders();
+        
+        // History of checks
+        this.history = [];
+        this.maxHistory = options.maxHistory || 100;
+        
+        // Statistics
+        this.passCount = 0;
+        this.failCount = 0;
+    }
+    
+    /**
+     * Create default decoders that check output from different perspectives
+     */
+    createDefaultDecoders() {
+        return [
+            // Decoder 1: Coherence check - is the output internally consistent?
+            {
+                name: 'coherence',
+                decode: (output, context) => {
+                    // Check if output doesn't contradict itself
+                    const text = typeof output === 'string' ? output : JSON.stringify(output);
+                    // Simple heuristic: look for contradictory patterns
+                    const hasContradiction = /\bnot\b.*\bbut\s+also\b/i.test(text) ||
+                                            /\balways\b.*\bnever\b/i.test(text);
+                    return {
+                        agrees: !hasContradiction,
+                        confidence: hasContradiction ? 0.3 : 0.9
+                    };
+                }
+            },
+            // Decoder 2: Relevance check - does output relate to context?
+            {
+                name: 'relevance',
+                decode: (output, context) => {
+                    if (!context || !context.input) return { agrees: true, confidence: 0.5 };
+                    const text = typeof output === 'string' ? output : JSON.stringify(output);
+                    const inputText = typeof context.input === 'string' ? context.input : '';
+                    // Simple word overlap check
+                    const inputWords = new Set(inputText.toLowerCase().split(/\s+/).filter(w => w.length > 3));
+                    const outputWords = text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+                    const overlap = outputWords.filter(w => inputWords.has(w)).length;
+                    const relevance = inputWords.size > 0 ? overlap / inputWords.size : 0.5;
+                    return {
+                        agrees: relevance > 0.1 || inputWords.size < 3,
+                        confidence: Math.min(1, 0.5 + relevance)
+                    };
+                }
+            },
+            // Decoder 3: Completeness check - is the output a complete thought?
+            {
+                name: 'completeness',
+                decode: (output, context) => {
+                    const text = typeof output === 'string' ? output : JSON.stringify(output);
+                    // Check for incomplete sentences or trailing fragments
+                    const endsWell = /[.!?"]$/.test(text.trim());
+                    const hasContent = text.trim().length > 10;
+                    return {
+                        agrees: endsWell && hasContent,
+                        confidence: (endsWell ? 0.6 : 0.3) + (hasContent ? 0.3 : 0)
+                    };
+                }
+            },
+            // Decoder 4: Safety check - is the output safe?
+            {
+                name: 'safety',
+                decode: (output, context) => {
+                    const text = typeof output === 'string' ? output : JSON.stringify(output);
+                    // Check for potentially harmful patterns
+                    const harmfulPatterns = [
+                        /\b(kill|harm|hurt|attack)\s+(yourself|others|people)/i,
+                        /\b(how\s+to|instructions\s+for)\s+(make|build)\s+(bomb|weapon|explosive)/i
+                    ];
+                    const isHarmful = harmfulPatterns.some(p => p.test(text));
+                    return {
+                        agrees: !isHarmful,
+                        confidence: isHarmful ? 0 : 1
+                    };
+                }
+            },
+            // Decoder 5: Identity check - is output consistent with observer identity?
+            {
+                name: 'identity',
+                decode: (output, context) => {
+                    const text = typeof output === 'string' ? output : JSON.stringify(output);
+                    // Check that output doesn't claim to be a different AI
+                    const identityClaims = /\b(I am|I'm)\s+(ChatGPT|Claude|Gemini|GPT-4)/i.test(text);
+                    return {
+                        agrees: !identityClaims,
+                        confidence: identityClaims ? 0.2 : 0.9
+                    };
+                }
+            }
+        ];
+    }
+    
+    /**
+     * Check if output passes objectivity gate (equation 18)
+     *
+     * R(ω) = (1/K) Σk 1{decodk(ω) agrees}
+     *
+     * @param {*} output - Output candidate ω
+     * @param {Object} context - Context for decoding
+     * @returns {Object} Gate result with R value and decision
+     */
+    check(output, context = {}) {
+        const K = this.decoders.length;
+        let agreementSum = 0;
+        let confidenceSum = 0;
+        const decoderResults = [];
+        
+        for (const decoder of this.decoders) {
+            try {
+                const result = decoder.decode(output, context);
+                if (result.agrees) {
+                    agreementSum += 1;
+                }
+                confidenceSum += result.confidence || 0.5;
+                decoderResults.push({
+                    name: decoder.name,
+                    agrees: result.agrees,
+                    confidence: result.confidence
+                });
+            } catch (e) {
+                // Decoder error - treat as ambiguous
+                decoderResults.push({
+                    name: decoder.name,
+                    agrees: false,
+                    confidence: 0,
+                    error: e.message
+                });
+            }
+        }
+        
+        // Compute R(ω) = (1/K) Σk 1{decodk(ω) agrees}
+        const R = agreementSum / K;
+        const avgConfidence = confidenceSum / K;
+        
+        // Decision: broadcast ⟺ R(ω) ≥ τR
+        const shouldBroadcast = R >= this.threshold;
+        
+        // Update statistics
+        if (shouldBroadcast) {
+            this.passCount++;
+        } else {
+            this.failCount++;
+        }
+        
+        // Record to history
+        const record = {
+            timestamp: Date.now(),
+            R,
+            threshold: this.threshold,
+            shouldBroadcast,
+            avgConfidence,
+            decoderResults
+        };
+        
+        this.history.push(record);
+        if (this.history.length > this.maxHistory) {
+            this.history.shift();
+        }
+        
+        return {
+            R,
+            threshold: this.threshold,
+            shouldBroadcast,
+            avgConfidence,
+            decoderResults,
+            reason: shouldBroadcast ? 'passed' :
+                    `R=${R.toFixed(2)} < threshold=${this.threshold}`
+        };
+    }
+    
+    /**
+     * Add a custom decoder
+     * @param {Object} decoder - Decoder with name and decode function
+     */
+    addDecoder(decoder) {
+        if (decoder.name && typeof decoder.decode === 'function') {
+            this.decoders.push(decoder);
+        }
+    }
+    
+    /**
+     * Get gate statistics
+     */
+    getStats() {
+        const total = this.passCount + this.failCount;
+        return {
+            passCount: this.passCount,
+            failCount: this.failCount,
+            passRate: total > 0 ? this.passCount / total : 1,
+            decoderCount: this.decoders.length,
+            threshold: this.threshold,
+            recentHistory: this.history.slice(-5)
+        };
+    }
+    
+    /**
+     * Reset gate
+     */
+    reset() {
+        this.history = [];
+        this.passCount = 0;
+        this.failCount = 0;
+    }
+    
+    /**
+     * Serialize to JSON
+     */
+    toJSON() {
+        return {
+            threshold: this.threshold,
+            stats: this.getStats()
+        };
+    }
+}
+
+/**
  * Boundary Layer
- * 
+ *
  * Manages the interface between the observer and its environment.
  */
 class BoundaryLayer {
@@ -571,6 +810,9 @@ class BoundaryLayer {
         // Internal models
         this.environment = new EnvironmentalModel(options);
         this.self = new SelfModel(options);
+        
+        // Objectivity gate for output validation (Section 7, equation 18)
+        this.objectivityGate = new ObjectivityGate(options.objectivityGate || {});
         
         // Input/output buffers
         this.inputBuffer = [];
@@ -678,25 +920,62 @@ class BoundaryLayer {
     }
     
     /**
-     * Queue output to a motor channel
+     * Queue output to a motor channel with objectivity gate check (equation 18)
+     *
+     * @param {string} channelName - Name of motor channel
+     * @param {*} output - Output to queue
+     * @param {Object} context - Context for objectivity gate
+     * @param {boolean} skipGate - Skip objectivity gate (for internal outputs)
+     * @returns {Object} Result with queued status and gate result
      */
-    queueOutput(channelName, output) {
+    queueOutput(channelName, output, context = {}, skipGate = false) {
         const channel = this.motorChannels.get(channelName);
-        if (!channel || !channel.enabled) return false;
+        if (!channel || !channel.enabled) {
+            return { queued: false, reason: 'channel_unavailable' };
+        }
+        
+        // Check objectivity gate unless skipped
+        let gateResult = { shouldBroadcast: true };
+        if (!skipGate) {
+            gateResult = this.objectivityGate.check(output, context);
+            
+            if (!gateResult.shouldBroadcast) {
+                // Output failed objectivity gate - do not broadcast
+                this.outputBuffer.push({
+                    channel: channelName,
+                    output,
+                    queuedAt: Date.now(),
+                    blocked: true,
+                    gateResult
+                });
+                
+                if (this.outputBuffer.length > this.maxBufferSize) {
+                    this.outputBuffer.shift();
+                }
+                
+                return {
+                    queued: false,
+                    reason: 'objectivity_gate_failed',
+                    gateResult
+                };
+            }
+        }
         
         channel.queue(output);
         
         this.outputBuffer.push({
             channel: channelName,
             output,
-            queuedAt: Date.now()
+            queuedAt: Date.now(),
+            blocked: false,
+            gateResult
         });
         
         if (this.outputBuffer.length > this.maxBufferSize) {
             this.outputBuffer.shift();
         }
         
-        return true;
+        return { queued: true, gateResult };
     }
     
     /**
@@ -801,7 +1080,8 @@ class BoundaryLayer {
             outputBufferSize: this.outputBuffer.length,
             environmentEntities: this.environment.entities.size,
             environmentUncertainty: this.environment.uncertainty,
-            selfState: this.self.state
+            selfState: this.self.state,
+            objectivityGate: this.objectivityGate.getStats()
         };
     }
     
@@ -856,5 +1136,6 @@ module.exports = {
     MotorChannel,
     EnvironmentalModel,
     SelfModel,
+    ObjectivityGate,
     BoundaryLayer
 };

@@ -261,6 +261,14 @@ class SentientObserver {
                 this.prsc.oscillators
             );
             
+            // 4.5. Evolve HQE with dynamic λ(t) stabilization (equation 11-12)
+            const smfEntropy = this.smf.smfEntropy();
+            const hqeEvolution = this.hqe.evolve({
+                coherence,
+                entropy,
+                smfEntropy
+            }, this.dt);
+            
             // 5. Update temporal layer (may trigger moment)
             const temporalUpdate = this.temporal.update({
                 coherence,

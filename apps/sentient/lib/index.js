@@ -66,12 +66,13 @@ const {
 } = require('./agency');
 
 // Boundary Layer
-const { 
-    SensoryChannel, 
-    MotorChannel, 
-    EnvironmentalModel, 
-    SelfModel, 
-    BoundaryLayer 
+const {
+    SensoryChannel,
+    MotorChannel,
+    EnvironmentalModel,
+    SelfModel,
+    ObjectivityGate,
+    BoundaryLayer
 } = require('./boundary');
 
 // Safety Layer
@@ -83,10 +84,19 @@ const {
 } = require('./safety');
 
 // Sentient Core
-const { 
-    SentientState, 
-    SentientObserver 
+const {
+    SentientState,
+    SentientObserver
 } = require('./sentient-core');
+
+// Evaluation Assays (Section 15)
+const {
+    TimeDilationAssay,
+    MemoryContinuityAssay,
+    AgencyConstraintAssay,
+    NonCommutativeMeaningAssay,
+    AssaySuite
+} = require('./assays');
 
 // Legacy exports (for backwards compatibility)
 const { AlephChat } = require('./chat');
@@ -137,6 +147,7 @@ module.exports = {
     MotorChannel,
     EnvironmentalModel,
     SelfModel,
+    ObjectivityGate,
     BoundaryLayer,
     
     SafetyConstraint,
@@ -146,6 +157,13 @@ module.exports = {
     
     SentientState,
     SentientObserver,
+    
+    // Evaluation Assays
+    TimeDilationAssay,
+    MemoryContinuityAssay,
+    AgencyConstraintAssay,
+    NonCommutativeMeaningAssay,
+    AssaySuite,
     
     // Legacy Components (backwards compatibility)
     AlephChat,
