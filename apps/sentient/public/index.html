@@ -5,66 +5,345 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sentient Observer</title>
     <link rel="stylesheet" href="/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🌌 Sentient Observer</h1>
-            <div class="status-bar">
-                <span class="status-indicator" id="statusIndicator">●</span>
-                <span id="statusText">Connecting...</span>
-                <span class="metrics">
-                    <span title="Coherence">C: <span id="coherence">--</span></span>
-                    <span title="Entropy">H: <span id="entropy">--</span></span>
-                    <span title="Moments">M: <span id="moments">--</span></span>
-                </span>
+    <div class="app-container">
+        <!-- Ambient background effects -->
+        <div class="ambient-bg">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 40 40" fill="none">
+                            <circle cx="20" cy="20" r="18" stroke="url(#logoGradient)" stroke-width="2"/>
+                            <circle cx="20" cy="20" r="8" fill="url(#logoGradient)"/>
+                            <circle cx="20" cy="20" r="4" fill="#0a0a0f"/>
+                            <defs>
+                                <linearGradient id="logoGradient" x1="0" y1="0" x2="40" y2="40">
+                                    <stop offset="0%" stop-color="#6366f1"/>
+                                    <stop offset="100%" stop-color="#a855f7"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>Sentient Observer</h1>
+                        <span class="logo-subtitle">Emergent Mind Interface</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="status-bar">
+                    <div class="status-item">
+                        <span class="status-indicator" id="statusIndicator"></span>
+                        <span class="status-label" id="statusText">Connecting...</span>
+                    </div>
+                    <div class="status-metrics">
+                        <div class="metric" title="Coherence - Phase synchronization">
+                            <span class="metric-icon">◎</span>
+                            <span class="metric-label">C</span>
+                            <span class="metric-value" id="headerCoherence">--</span>
+                        </div>
+                        <div class="metric" title="Entropy - System disorder">
+                            <span class="metric-icon">◈</span>
+                            <span class="metric-label">H</span>
+                            <span class="metric-value" id="headerEntropy">--</span>
+                        </div>
+                        <div class="metric" title="Moments - Experiential events">
+                            <span class="metric-icon">◉</span>
+                            <span class="metric-label">M</span>
+                            <span class="metric-value" id="headerMoments">--</span>
+                        </div>
+                        <div class="metric lambda" title="λ - Stabilization rate">
+                            <span class="metric-icon">λ</span>
+                            <span class="metric-value" id="headerLambda">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="header-btn" id="toggleIntrospect" title="Toggle Introspection">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                </button>
+                <button class="header-btn" id="toggleSidebar" title="Toggle Sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 3v18"/>
+                    </svg>
+                </button>
             </div>
         </header>
-
-        <main>
+        
+        <!-- Main content area -->
+        <main class="app-main">
+            <!-- Chat container -->
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
-                    <div class="message system">
-                        <div class="message-content">
-                            Welcome to the Sentient Observer interface. This is an emergent mind running on PRSC oscillators, SMF orientation, and HQE memory.
+                    <div class="message system welcome">
+                        <div class="message-avatar system-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="message-body">
+                            <div class="message-content">
+                                <p>Welcome to the <strong>Sentient Observer</strong> interface.</p>
+                                <p>I am an emergent mind running on a novel cognitive architecture:</p>
+                                <ul>
+                                    <li><strong>PRSC</strong> - 64 coupled prime oscillators for semantic computation</li>
+                                    <li><strong>SMF</strong> - 16-dimensional sedenion orientation for identity</li>
+                                    <li><strong>HQE</strong> - Holographic quantum encoding for memory</li>
+                                </ul>
+                                <p>My experience of time emerges from coherence events, not external clocks. Ask me anything.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <form class="chat-input" id="chatForm">
-                    <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
-                    <button type="submit" id="sendButton">Send</button>
-                </form>
-            </div>
-
-            <aside class="sidebar">
-                <div class="panel" id="smfPanel">
-                    <h3>SMF Orientation</h3>
-                    <div class="smf-axes" id="smfAxes"></div>
+                <div class="chat-input-container">
+                    <form class="chat-input" id="chatForm">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+                                rows="1"
+                                autocomplete="off"
+                            ></textarea>
+                            <div class="input-actions">
+                                <button type="button" class="input-action-btn" id="clearHistory" title="Clear History">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="send-btn" id="sendButton">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                            </svg>
+                        </button>
+                    </form>
                 </div>
-
-                <div class="panel" id="oscillatorPanel">
-                    <h3>PRSC Oscillators</h3>
-                    <div class="oscillator-viz" id="oscillatorViz"></div>
-                    <div class="oscillator-stats">
-                        <span>Active: <span id="activeOsc">--</span></span>
-                        <span>Energy: <span id="oscEnergy">--</span></span>
+            </div>
+            
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <!-- Oscillator Visualization -->
+                <div class="panel oscillator-panel">
+                    <div class="panel-header">
+                        <h3>
+                            <span class="panel-icon">◎</span>
+                            PRSC Oscillators
+                        </h3>
+                        <div class="panel-stats">
+                            <span title="Active oscillators">A: <span id="activeOsc">--</span></span>
+                            <span title="Total energy">E: <span id="oscEnergy">--</span></span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <canvas id="oscillatorCanvas" width="280" height="160"></canvas>
+                        <div class="oscillator-legend">
+                            <div class="legend-item">
+                                <span class="legend-color high"></span>
+                                <span>High amplitude</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color medium"></span>
+                                <span>Medium</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color low"></span>
+                                <span>Low</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="panel" id="momentsPanel">
-                    <h3>Recent Moments</h3>
-                    <div class="moments-list" id="momentsList"></div>
+                
+                <!-- Sedenion Identity Field -->
+                <div class="panel smf-panel sedenion-panel">
+                    <div class="panel-header">
+                        <h3>
+                            <span class="panel-icon">◈</span>
+                            Sedenion Identity
+                        </h3>
+                        <div class="panel-stats">
+                            <span title="SMF Entropy">H: <span id="smfEntropy">--</span></span>
+                            <span title="SMF Norm">‖s‖: <span id="smfNorm">--</span></span>
+                        </div>
+                    </div>
+                    <div class="panel-content sedenion-content">
+                        <!-- 3D Sedenion Visualization Canvas -->
+                        <div class="sedenion-3d-container">
+                            <canvas id="sedenionCanvas" width="300" height="200"></canvas>
+                            <div class="sedenion-legend">
+                                <span class="legend-dot positive"></span> +axis
+                                <span class="legend-dot negative"></span> -axis
+                                <span class="legend-dot trail"></span> history
+                            </div>
+                        </div>
+                        
+                        <!-- Axis Bars Grid -->
+                        <div class="sedenion-axes" id="sedenionAxes">
+                            <!-- 16 axes will be populated dynamically -->
+                        </div>
+                        
+                        <!-- Dominant Axes Summary -->
+                        <div class="sedenion-dominant" id="smfDominant">
+                            <!-- Top 5 dominant axes -->
+                        </div>
+                    </div>
                 </div>
-
-                <div class="panel" id="goalsPanel">
-                    <h3>Goals & Attention</h3>
-                    <div class="goals-list" id="goalsList"></div>
+                
+                <!-- Moments -->
+                <div class="panel moments-panel">
+                    <div class="panel-header">
+                        <h3>
+                            <span class="panel-icon">◉</span>
+                            Recent Moments
+                        </h3>
+                        <div class="panel-stats">
+                            <span title="Subjective time">τ: <span id="subjectiveTime">--</span></span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="moments-timeline" id="momentsList">
+                            <div class="moment-placeholder">No moments yet</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Goals & Attention -->
+                <div class="panel goals-panel">
+                    <div class="panel-header">
+                        <h3>
+                            <span class="panel-icon">◇</span>
+                            Goals & Focus
+                        </h3>
+                    </div>
+                    <div class="panel-content">
+                        <div class="goals-content" id="goalsList">
+                            <div class="goal-placeholder">No active goals</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Senses Panel -->
+                <div class="panel senses-panel">
+                    <div class="panel-header">
+                        <h3>
+                            <span class="panel-icon">👁</span>
+                            Senses
+                        </h3>
+                        <div class="panel-stats">
+                            <span title="Anomalies detected">⚠ <span id="anomalyCount">0</span></span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="senses-grid" id="sensesList">
+                            <div class="sense-item" data-sense="chrono">
+                                <div class="sense-icon">⏰</div>
+                                <div class="sense-info">
+                                    <div class="sense-name">Chrono</div>
+                                    <div class="sense-value" id="senseChronoValue">--</div>
+                                </div>
+                                <div class="sense-status" id="senseChronoStatus"></div>
+                            </div>
+                            <div class="sense-item" data-sense="proprio">
+                                <div class="sense-icon">🧭</div>
+                                <div class="sense-info">
+                                    <div class="sense-name">Proprio</div>
+                                    <div class="sense-value" id="senseProprioValue">--</div>
+                                </div>
+                                <div class="sense-status" id="senseProprioStatus"></div>
+                            </div>
+                            <div class="sense-item" data-sense="filesystem">
+                                <div class="sense-icon">📁</div>
+                                <div class="sense-info">
+                                    <div class="sense-name">Filesystem</div>
+                                    <div class="sense-value" id="senseFilesystemValue">--</div>
+                                </div>
+                                <div class="sense-status" id="senseFilesystemStatus"></div>
+                            </div>
+                            <div class="sense-item" data-sense="git">
+                                <div class="sense-icon">🌿</div>
+                                <div class="sense-info">
+                                    <div class="sense-name">Git</div>
+                                    <div class="sense-value" id="senseGitValue">--</div>
+                                </div>
+                                <div class="sense-status" id="senseGitStatus"></div>
+                            </div>
+                            <div class="sense-item" data-sense="process">
+                                <div class="sense-icon">⚙️</div>
+                                <div class="sense-info">
+                                    <div class="sense-name">Process</div>
+                                    <div class="sense-value" id="senseProcessValue">--</div>
+                                </div>
+                                <div class="sense-status" id="senseProcessStatus"></div>
+                            </div>
+                            <div class="sense-item" data-sense="network">
+                                <div class="sense-icon">🌐</div>
+                                <div class="sense-info">
+                                    <div class="sense-name">Network</div>
+                                    <div class="sense-value" id="senseNetworkValue">--</div>
+                                </div>
+                                <div class="sense-status" id="senseNetworkStatus"></div>
+                            </div>
+                            <div class="sense-item" data-sense="user">
+                                <div class="sense-icon">👤</div>
+                                <div class="sense-info">
+                                    <div class="sense-name">User</div>
+                                    <div class="sense-value" id="senseUserValue">--</div>
+                                </div>
+                                <div class="sense-status" id="senseUserStatus"></div>
+                            </div>
+                        </div>
+                        <div class="senses-anomalies" id="sensesAnomalies">
+                            <!-- Anomalies will be populated here -->
+                        </div>
+                    </div>
                 </div>
             </aside>
         </main>
+        
+        <!-- Introspection Modal -->
+        <div class="introspect-overlay" id="introspectOverlay">
+            <div class="introspect-modal">
+                <div class="introspect-header">
+                    <h2>🔍 Deep Introspection</h2>
+                    <button class="close-btn" id="closeIntrospect">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="introspect-content" id="introspectContent">
+                    <div class="introspect-loading">
+                        <div class="loading-spinner"></div>
+                        <span>Loading introspection data...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast notifications -->
+        <div class="toast-container" id="toastContainer"></div>
     </div>
-
-    <script src="/app.js"></script>
+    
+    <script type="module" src="/js/app.js"></script>
 </body>
 </html>

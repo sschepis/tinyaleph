@@ -181,47 +181,94 @@ class AlephChat {
      * @returns {AsyncGenerator<string|Object>}
      */
     async *streamChat(userMessage, onChunk = null, options = {}) {
+        console.log('[AlephChat.streamChat] Called with message:', userMessage?.substring(0, 50));
+        console.log('[AlephChat.streamChat] isConnected:', this.isConnected);
+        
         if (!this.isConnected) {
+            console.log('[AlephChat.streamChat] Not connected, reconnecting...');
             await this.connect();
+            console.log('[AlephChat.streamChat] Reconnection result:', this.isConnected);
         }
 
-        const inputResult = this.core.processUserInput(userMessage);
+        // Check if this is a tool continuation (empty user message with tool results in history)
+        const isToolContinuation = !userMessage && options.conversationHistory?.some(m => m.role === 'tool');
         
-        // Pass conversation history to the enhancer
-        const enhanceOptions = {};
-        if (options.conversationHistory) {
-            enhanceOptions.conversationHistory = options.conversationHistory;
+        let messages;
+        
+        if (isToolContinuation) {
+            // For tool continuation, use the conversation history directly with system prompt
+            console.log('[AlephChat.streamChat] Tool continuation mode');
+            const systemPrompt = this.enhancer.getSystemPrompt();
+            messages = [
+                { role: 'system', content: systemPrompt },
+                ...options.conversationHistory
+            ];
+            console.log('[AlephChat.streamChat] Built messages for tool continuation:', messages.length);
+        } else {
+            // Normal message processing
+            const inputResult = this.core.processUserInput(userMessage);
+            console.log('[AlephChat.streamChat] Input processed, new words:', inputResult.newWords.length);
+            
+            // Pass conversation history to the enhancer
+            const enhanceOptions = {};
+            if (options.conversationHistory) {
+                enhanceOptions.conversationHistory = options.conversationHistory;
+            }
+            const enhanced = this.enhancer.autoEnhance(userMessage, enhanceOptions);
+            messages = enhanced.messages;
         }
-        const enhanced = this.enhancer.autoEnhance(userMessage, enhanceOptions);
+        
+        console.log('[AlephChat.streamChat] Messages count:', messages.length);
+        console.log('[AlephChat.streamChat] First message role:', messages[0]?.role);
 
         // Add tools to the request if enabled
         const streamOptions = {};
         if (this.useTools && options.tools !== false) {
             streamOptions.tools = this.tools;
+            console.log('[AlephChat.streamChat] Tools enabled, count:', this.tools.length);
         }
 
         let fullResponse = '';
-        for await (const chunk of this.llm.streamChat(enhanced.messages, streamOptions)) {
-            // Handle tool calls object
-            if (chunk && typeof chunk === 'object' && chunk.type === 'tool_calls') {
-                if (this.callbacks.onToolCall) {
-                    this.callbacks.onToolCall(chunk.toolCalls);
+        let yieldCount = 0;
+        
+        console.log('[AlephChat.streamChat] Starting LLM stream...');
+        
+        try {
+            for await (const chunk of this.llm.streamChat(messages, streamOptions)) {
+                yieldCount++;
+                
+                // Handle tool calls object
+                if (chunk && typeof chunk === 'object' && chunk.type === 'tool_calls') {
+                    console.log('[AlephChat.streamChat] Tool calls received');
+                    if (this.callbacks.onToolCall) {
+                        this.callbacks.onToolCall(chunk.toolCalls);
+                    }
+                    yield chunk;
+                    continue;
                 }
-                yield chunk;
-                continue;
+                
+                // Handle regular text chunks
+                if (typeof chunk === 'string') {
+                    fullResponse += chunk;
+                    if (onChunk) onChunk(chunk);
+                    yield chunk;
+                } else {
+                    console.log('[AlephChat.streamChat] Unknown chunk type:', typeof chunk, chunk);
+                }
             }
             
-            // Handle regular text chunks
-            if (typeof chunk === 'string') {
-                fullResponse += chunk;
-                if (onChunk) onChunk(chunk);
-                yield chunk;
-            }
+            console.log('[AlephChat.streamChat] Stream complete, total yields:', yieldCount, 'response length:', fullResponse.length);
+        } catch (err) {
+            console.error('[AlephChat.streamChat] Stream error:', err.message);
+            console.error('[AlephChat.streamChat] Stack:', err.stack);
+            throw err;
         }
 
-        // Process complete response
-        this.processor.process(fullResponse, userMessage);
-        this.exchangeCount++;
+        // Process complete response (only if we have content)
+        if (fullResponse && userMessage) {
+            this.processor.process(fullResponse, userMessage);
+            this.exchangeCount++;
+        }
     }
 
     /**

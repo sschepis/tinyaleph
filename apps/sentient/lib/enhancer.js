@@ -217,6 +217,21 @@ When the user asks you to perform file operations or run commands, use the appro
     }
 
     /**
+     * Get the current system prompt (with tool definitions)
+     * @returns {string}
+     */
+    getSystemPrompt() {
+        let systemPrompt = this.systemPromptTemplate;
+        
+        // Add tool definitions
+        if (this.includeTools) {
+            systemPrompt += '\n\n' + TOOL_DEFINITIONS;
+        }
+        
+        return systemPrompt;
+    }
+
+    /**
      * Get current configuration
      * @returns {Object}
      */

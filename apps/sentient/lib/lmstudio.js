@@ -166,6 +166,8 @@ class LMStudioClient {
      * @returns {AsyncGenerator<string>} Yields content chunks or tool calls
      */
     async *streamChat(messages, options = {}) {
+        console.log('[LMStudio] streamChat called with', messages.length, 'messages');
+        
         const body = {
             model: options.model || this.model,
             messages,
@@ -184,6 +186,8 @@ class LMStudioClient {
             }
         }
 
+        console.log('[LMStudio] Request body model:', body.model, 'messages:', body.messages.length, 'stream:', body.stream);
+
         const requestOptions = {
             hostname: this.host,
             port: this.port,
@@ -195,13 +199,21 @@ class LMStudioClient {
             },
             timeout: this.timeout
         };
+        
+        console.log('[LMStudio] Request options:', requestOptions.hostname, requestOptions.port, requestOptions.path);
 
         yield* await new Promise((resolve, reject) => {
+            console.log('[LMStudio] Creating HTTP request...');
+            
             const req = this.protocol.request(requestOptions, (res) => {
+                console.log('[LMStudio] Response status:', res.statusCode);
+                console.log('[LMStudio] Response headers:', JSON.stringify(res.headers));
+                
                 if (res.statusCode !== 200) {
                     let data = '';
                     res.on('data', chunk => data += chunk);
                     res.on('end', () => {
+                        console.log('[LMStudio] Error response:', data.substring(0, 500));
                         try {
                             const json = JSON.parse(data);
                             reject(new Error(json.error?.message || `HTTP ${res.statusCode}`));
@@ -216,9 +228,19 @@ class LMStudioClient {
                 const generator = (async function* () {
                     let buffer = '';
                     let toolCallsBuffer = [];
+                    let chunkCount = 0;
+                    
+                    console.log('[LMStudio] Starting stream read...');
                     
                     for await (const chunk of res) {
-                        buffer += chunk.toString();
+                        const chunkStr = chunk.toString();
+                        chunkCount++;
+                        
+                        if (chunkCount <= 3) {
+                            console.log('[LMStudio] Raw chunk #' + chunkCount + ':', chunkStr.substring(0, 200));
+                        }
+                        
+                        buffer += chunkStr;
                         const lines = buffer.split('\n');
                         buffer = lines.pop() || '';
 
@@ -226,6 +248,7 @@ class LMStudioClient {
                             if (line.startsWith('data: ')) {
                                 const data = line.slice(6).trim();
                                 if (data === '[DONE]') {
+                                    console.log('[LMStudio] Stream complete, total chunks:', chunkCount);
                                     // Yield accumulated tool calls at the end
                                     if (toolCallsBuffer.length > 0) {
                                         yield { type: 'tool_calls', toolCalls: toolCallsBuffer };
@@ -260,24 +283,32 @@ class LMStudioClient {
                                             }
                                         }
                                     }
-                                } catch {
-                                    // Skip invalid JSON
+                                } catch (parseErr) {
+                                    console.log('[LMStudio] JSON parse error for data:', data.substring(0, 100), parseErr.message);
                                 }
                             }
                         }
                     }
+                    
+                    console.log('[LMStudio] Stream ended, total raw chunks:', chunkCount);
                 })();
 
                 resolve(generator);
             });
 
-            req.on('error', reject);
+            req.on('error', (err) => {
+                console.log('[LMStudio] Request error:', err.message);
+                reject(err);
+            });
             req.on('timeout', () => {
+                console.log('[LMStudio] Request timeout');
                 req.destroy();
                 reject(new Error('Stream request timeout'));
             });
 
-            req.write(JSON.stringify(body));
+            const bodyStr = JSON.stringify(body);
+            console.log('[LMStudio] Sending request body, length:', bodyStr.length);
+            req.write(bodyStr);
             req.end();
         });
     }

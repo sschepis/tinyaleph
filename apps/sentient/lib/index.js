@@ -112,6 +112,15 @@ const { LMStudioClient } = require('./lmstudio');
 const { MarkdownRenderer, formatMarkdown } = require('./markdown');
 const { ToolExecutor, executeOpenAIToolCall, processToolCalls } = require('./tools');
 
+// Resolang WASM Integration
+const {
+    ResolangLoader,
+    ResolangPipeline,
+    ResolangSMF,
+    initResolang,
+    createPipeline
+} = require('./resolang');
+
 module.exports = {
     // Sentient Observer Components
     SedenionMemoryField,
@@ -183,5 +192,12 @@ module.exports = {
     formatMarkdown,
     ToolExecutor,
     executeOpenAIToolCall,
-    processToolCalls
+    processToolCalls,
+    
+    // Resolang WASM Integration
+    ResolangLoader,
+    ResolangPipeline,
+    ResolangSMF,
+    initResolang,
+    createPipeline
 };

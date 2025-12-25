@@ -1,6 +1,6 @@
 {
   "name": "@aleph-ai/tinyaleph",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, and entropy-minimizing reasoning",
   "main": "index.js",
   "types": "types/index.d.ts",
@@ -94,6 +94,7 @@
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
+    "@sschepis/resolang": "^0.1.2",
     "@tensorflow/tfjs-node": "^4.22.0"
   }
 }
