@@ -1,0 +1,84 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+apps/ecdsa/
+
+data/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing and coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ECDSA Attack specific
+# (Session data, logs, and invariants that shouldn't be shared)
+apps/ecdsa/attack_log.txt
+apps/ecdsa/attack_session.json
+apps/ecdsa/ecdsa_invariants.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Optional npm cache
+.npm/
+.cache/
+
+# Debug
+.debug/
+*.debug
+
+# Parcel/bundler cache
+.parcel-cache/
+.turbo/
+.next/
+.nuxt/
+
+google.json
+vertex.json

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artifact Editor Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a14;
+            color: #e5e7eb;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .description {
+            text-align: center;
+            color: #9ca3af;
+            margin-bottom: 30px;
+        }
+        
+        .editor-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 600px;
+        }
+        
+        artifact-editor {
+            display: block;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>◆ Artifact Editor Component</h1>
+    <p class="description">A live HTML/CSS/JS editor with preview. Edit code on the left, see results on the right.</p>
+    
+    <div class="editor-container">
+        <artifact-editor 
+            title="Demo Artifact"
+            auto-run="true"
+        ></artifact-editor>
+    </div>
+    
+    <script type="module">
+        import './js/components/artifact-editor.js';
+        
+        // Demo: Set custom content after load
+        setTimeout(() => {
+            const editor = document.querySelector('artifact-editor');
+            if (editor) {
+                editor.setContent({
+                    html: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Demo</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Interactive Demo</h1>
+        <p>This is a live preview of your code!</p>
+        <button id="clickMe">Click Me!</button>
+        <div id="output"></div>
+    </div>
+</body>
+</html>`,
+                    css: `body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+h1 {
+    margin: 0 0 20px 0;
+    color: #333;
+}
+
+p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+#output {
+    margin-top: 20px;
+    padding: 10px;
+    min-height: 24px;
+    color: #764ba2;
+    font-weight: 500;
+}`,
+                    js: `let clickCount = 0;
+
+document.getElementById('clickMe').addEventListener('click', function() {
+    clickCount++;
+    const messages = [
+        '🎉 Nice click!',
+        '✨ Keep going!',
+        '🚀 You\\'re on fire!',
+        '💫 Amazing!',
+        '🌟 Superstar!'
+    ];
+    const message = messages[clickCount % messages.length];
+    document.getElementById('output').textContent = message + ' (Clicks: ' + clickCount + ')';
+});
+
+console.log('Interactive demo loaded!');`
+                });
+            }
+        }, 500);
+    </script>
+</body>
+</html>

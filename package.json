@@ -1,0 +1,100 @@
+{
+  "name": "@aleph-ai/tinyaleph",
+  "version": "1.0.3",
+  "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, and entropy-minimizing reasoning",
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./index.js",
+      "import": "./index.js",
+      "types": "./types/index.d.ts"
+    },
+    "./core": {
+      "require": "./core/index.js",
+      "import": "./core/index.js"
+    },
+    "./physics": {
+      "require": "./physics/index.js",
+      "import": "./physics/index.js"
+    },
+    "./backends": {
+      "require": "./backends/index.js",
+      "import": "./backends/index.js"
+    },
+    "./engine": {
+      "require": "./engine/index.js",
+      "import": "./engine/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:legacy": "node test/test-modular.js",
+    "test:queries": "node test/test-queries.js",
+    "test:dna": "node test/test-dna-queries.js",
+    "test:watch": "node --test --watch test/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
+    "demo": "node examples/demo-modular.js",
+    "demo:two-layer": "node examples/demo-two-layer.js",
+    "benchmark": "node scripts/benchmark.js",
+    "chat": "node examples/chat.js",
+    "train": "node scripts/trainer.js",
+    "examples": "node examples/run-examples.js",
+    "aleph-chat": "node apps/aleph-chat/index.js",
+    "ecdsa-learn": "node apps/ecdsa/index.js"
+  },
+  "keywords": [
+    "semantic-computing",
+    "hypercomplex",
+    "sedenion",
+    "quaternion",
+    "octonion",
+    "prime-numbers",
+    "nlp",
+    "natural-language",
+    "cryptography",
+    "hash",
+    "oscillator",
+    "kuramoto",
+    "entropy",
+    "ai",
+    "machine-learning",
+    "reasoning",
+    "symbolic-ai",
+    "quantum-inspired"
+  ],
+  "author": "Sebastian Schepis",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aleph-ai/tinyaleph.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aleph-ai/tinyaleph/issues"
+  },
+  "homepage": "https://github.com/aleph-ai/tinyaleph#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "index.js",
+    "modular.js",
+    "data.json",
+    "core/",
+    "physics/",
+    "backends/",
+    "engine/",
+    "types/",
+    "docs/",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.9.7",
+    "@sschepis/resolang": "^0.4.1",
+    "@tensorflow/tfjs-node": "^4.22.0"
+  }
+}
