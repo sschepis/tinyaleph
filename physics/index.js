@@ -68,6 +68,15 @@ const {
   createAdiabaticSchedule
 } = require('./primeon_z_ladder_multi');
 
+// Kuramoto-coupled ladder (hybrid quantum + oscillator dynamics)
+const {
+  KuramotoCoupledLadder,
+  createKuramotoLadder,
+  runCollapsePressureExperiment,
+  kuramotoOrderParameter,
+  getPhase
+} = require('./kuramoto-coupled-ladder');
+
 module.exports = {
   // Oscillators
   Oscillator,
@@ -102,6 +111,13 @@ module.exports = {
   PrimeonZLadderMulti,
   createMultiChannelLadder,
   createAdiabaticSchedule,
+  
+  // Kuramoto-coupled ladder (hybrid model)
+  KuramotoCoupledLadder,
+  createKuramotoLadder,
+  runCollapsePressureExperiment,
+  kuramotoOrderParameter,
+  getPhase,
   
   // Entropy & Information
   shannonEntropy,

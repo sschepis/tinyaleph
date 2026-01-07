@@ -39,6 +39,20 @@ node examples/physics/04-kuramoto.js
 node examples/physics/05-entropy.js
 ```
 
+### 06-primeon-ladder.js
+**Primeon Z-Ladder** - Quantum-inspired ladder dynamics with Z-flux.
+
+```bash
+node examples/physics/06-primeon-ladder.js
+```
+
+### 07-kuramoto-coupled-ladder.js
+**Kuramoto-Coupled Ladder** - Hybrid model combining quantum ladder with Kuramoto synchronization.
+
+```bash
+node examples/physics/07-kuramoto-coupled-ladder.js
+```
+
 ## Key Concepts
 
 ### Oscillators

@@ -1,6 +1,6 @@
 /**
  * Tests for TinyAleph Enhancements
- * 
+ *
  * Covers:
  * - Stochastic Kuramoto models
  * - Prime Entanglement Graph
@@ -8,6 +8,7 @@
  * - Hypercomplex exp/log/slerp extensions
  * - Multi-Z channels for Primeon Ladder
  * - ResoFormer complete layers
+ * - Kuramoto-coupled ladder
  */
 
 'use strict';
@@ -1114,6 +1115,368 @@ describe('Integration Tests', () => {
     const result = model.forward(sequence);
     
     assert.strictEqual(result.output.length, sequence.length);
+  });
+});
+
+// ============================================================================
+// KURAMOTO-COUPLED LADDER TESTS
+// ============================================================================
+
+describe('Kuramoto-Coupled Ladder', () => {
+  const {
+    KuramotoCoupledLadder,
+    createKuramotoLadder,
+    runCollapsePressureExperiment,
+    kuramotoOrderParameter,
+    getPhase
+  } = require('../physics/kuramoto-coupled-ladder');
+  
+  describe('getPhase', () => {
+    it('should extract phase from complex number', () => {
+      const complex = { re: 1, im: 1 };
+      const phase = getPhase(complex);
+      
+      assert.ok(Math.abs(phase - Math.PI / 4) < 1e-10);
+    });
+    
+    it('should handle pure real positive', () => {
+      const complex = { re: 1, im: 0 };
+      const phase = getPhase(complex);
+      assert.strictEqual(phase, 0);
+    });
+    
+    it('should handle pure imaginary', () => {
+      const complex = { re: 0, im: 1 };
+      const phase = getPhase(complex);
+      assert.ok(Math.abs(phase - Math.PI / 2) < 1e-10);
+    });
+  });
+  
+  describe('kuramotoOrderParameter', () => {
+    it('should return 1 for synchronized phases', () => {
+      const phases = [0, 0, 0, 0];
+      const result = kuramotoOrderParameter(phases);
+      
+      assert.ok(Math.abs(result.r - 1) < 1e-10);
+    });
+    
+    it('should return 0 for uniformly distributed phases', () => {
+      const n = 4;
+      const phases = Array.from({ length: n }, (_, i) => (2 * Math.PI * i) / n);
+      const result = kuramotoOrderParameter(phases);
+      
+      assert.ok(Math.abs(result.r) < 1e-10);
+    });
+    
+    it('should handle intermediate cases', () => {
+      const phases = [0, 0.1, 0, 0.1];
+      const result = kuramotoOrderParameter(phases);
+      
+      assert.ok(result.r > 0.9 && result.r <= 1);
+    });
+    
+    it('should return mean phase (psi)', () => {
+      const phases = [0, 0, 0, 0];
+      const result = kuramotoOrderParameter(phases);
+      
+      assert.ok('psi' in result);
+      assert.ok(typeof result.psi === 'number');
+    });
+  });
+  
+  describe('KuramotoCoupledLadder', () => {
+    it('should create with default options', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8 });
+      
+      assert.strictEqual(ladder.N, 8);
+      assert.strictEqual(ladder.K, 0.1);
+      assert.strictEqual(ladder.collapseThreshold, 1.0);  // Default is 1.0
+      assert.strictEqual(ladder.autoCollapse, false);  // Default is false
+    });
+    
+    it('should create with custom Kuramoto coupling', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        K: 0.5,
+        collapseThreshold: 0.8
+      });
+      
+      assert.strictEqual(ladder.K, 0.5);
+      assert.strictEqual(ladder.collapseThreshold, 0.8);
+    });
+    
+    it('should track collapse pressure', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8, autoCollapse: false });
+      ladder.exciteRung(0);
+      
+      // Run a few steps to accumulate Z-flux
+      ladder.run(20, 0.01);
+      
+      assert.ok(ladder.collapsePressure >= 0);
+    });
+    
+    it('should compute order parameter', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8 });
+      ladder.exciteRung(0);
+      
+      const result = ladder.orderParameter();
+      
+      // orderParameter returns {r, psi, weighted}
+      assert.ok(typeof result.r === 'number');
+      assert.ok(result.r >= 0 && result.r <= 1);
+    });
+    
+    it('should compute sync metrics', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8 });
+      ladder.exciteRung(0);
+      
+      const metrics = ladder.syncMetrics();
+      
+      assert.ok('orderParameter' in metrics);
+      assert.ok('meanPhase' in metrics);
+      assert.ok('phaseVariance' in metrics);
+      assert.ok('collapsePressure' in metrics);
+    });
+    
+    it('should reset collapse pressure after collapse', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        collapseThreshold: 0.1,
+        autoCollapse: false
+      });
+      ladder.exciteRung(0);
+      
+      // Build up pressure
+      ladder.run(50, 0.01);
+      const pressureBefore = ladder.collapsePressure;
+      
+      // Manual collapse via triggerCollapse
+      ladder.triggerCollapse();
+      
+      // Pressure should be reset to 0
+      assert.strictEqual(ladder.collapsePressure, 0);
+    });
+    
+    it('should auto-collapse when threshold exceeded', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        collapseThreshold: 0.1,
+        autoCollapse: true
+      });
+      ladder.exciteRung(0);
+      
+      // Run enough steps that trigger collapses
+      ladder.run(100, 0.01);
+      
+      // Should have at least one collapse event
+      assert.ok(ladder.collapseEvents.length > 0);
+    });
+    
+    it('should track collapse events with metadata', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        collapseThreshold: 0.1,
+        autoCollapse: true
+      });
+      ladder.exciteRung(0);
+      
+      // Run to trigger some collapses
+      ladder.run(100, 0.01);
+      
+      if (ladder.collapseEvents.length > 0) {
+        const event = ladder.collapseEvents[0];
+        assert.ok('t' in event);
+        assert.ok('step' in event);
+        assert.ok('outcome' in event);
+        assert.ok('probability' in event);
+        assert.ok('orderBefore' in event);
+        assert.ok('pressure' in event);
+      }
+    });
+    
+    it('should provide collapse dynamics info', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        collapseThreshold: 0.5,
+        autoCollapse: true
+      });
+      ladder.exciteRung(0);
+      ladder.run(50, 0.01);
+      
+      const dynamics = ladder.collapseDynamics();
+      
+      assert.ok('pressure' in dynamics);
+      assert.ok('threshold' in dynamics);
+      assert.ok('ratio' in dynamics);
+      assert.ok('willCollapse' in dynamics);
+      assert.ok('events' in dynamics);
+      assert.ok('totalCollapses' in dynamics);
+    });
+  });
+  
+  describe('runWithSync', () => {
+    it('should track sync history', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8 });
+      ladder.exciteRung(0);
+      
+      const result = ladder.runWithSync(50, 0.01);
+      
+      assert.strictEqual(result.trajectory.length, 50);
+      assert.strictEqual(result.syncHistory.length, 50);
+    });
+    
+    it('should record order parameter in sync history', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8, K: 0.5 });
+      ladder.exciteRungs([0, 1, 2], 1);
+      
+      const result = ladder.runWithSync(20, 0.01);
+      
+      // Each sync history entry should have orderParameter
+      result.syncHistory.forEach(entry => {
+        assert.ok('orderParameter' in entry);
+        assert.ok('t' in entry);
+      });
+    });
+    
+    it('should include collapse events', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        K: 0.5,
+        autoCollapse: true,
+        collapseThreshold: 0.1
+      });
+      ladder.exciteRung(0);
+      
+      const result = ladder.runWithSync(100, 0.01);
+      
+      assert.ok('collapseEvents' in result);
+      assert.ok(Array.isArray(result.collapseEvents));
+    });
+  });
+  
+  describe('detectSyncTransition', () => {
+    it('should detect synchronization state', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8, K: 0.3 });
+      ladder.exciteRungs([0, 1, 2, 3], 1);
+      
+      // Run to build up history
+      ladder.run(150, 0.01);
+      
+      const detection = ladder.detectSyncTransition(50);
+      
+      assert.ok('detected' in detection);
+      // Should have early and late R values
+      if (detection.detected === false && detection.reason === 'insufficient_data') {
+        // That's ok, we didn't run enough steps
+      } else {
+        assert.ok('earlyR' in detection);
+        assert.ok('lateR' in detection);
+      }
+    });
+    
+    it('should return insufficient_data for short runs', () => {
+      const ladder = new KuramotoCoupledLadder({ N: 8, K: 0.3 });
+      ladder.exciteRung(0);
+      
+      // Don't run enough to build history
+      ladder.run(10, 0.01);
+      
+      const detection = ladder.detectSyncTransition(50);
+      
+      assert.strictEqual(detection.detected, false);
+      assert.strictEqual(detection.reason, 'insufficient_data');
+    });
+  });
+  
+  describe('createKuramotoLadder factory', () => {
+    it('should create ladder from prime list', () => {
+      const ladder = createKuramotoLadder([2, 3, 5, 7], { K: 0.2 });
+      
+      assert.ok(ladder instanceof KuramotoCoupledLadder);
+      assert.strictEqual(ladder.K, 0.2);
+    });
+    
+    it('should have frequencies array', () => {
+      const ladder = createKuramotoLadder([2, 3, 5, 7]);
+      
+      // frequencies is the property name, not naturalFrequencies
+      assert.ok(ladder.frequencies.length > 0);
+    });
+  });
+  
+  describe('runCollapsePressureExperiment', () => {
+    it('should run experiment and return results', () => {
+      const results = runCollapsePressureExperiment({
+        N: 8,
+        primes: [2, 3, 5],
+        maxSteps: 50,
+        K: 0.2
+      });
+      
+      assert.ok('trajectory' in results);
+      assert.ok('collapses' in results);
+      assert.ok('finalState' in results);
+      assert.ok('syncTransition' in results);
+    });
+    
+    it('should record trajectory snapshots', () => {
+      const results = runCollapsePressureExperiment({
+        N: 8,
+        maxSteps: 100,
+        K: 0.2
+      });
+      
+      // Trajectory sampled every 10 steps
+      assert.ok(results.trajectory.length > 0);
+      
+      if (results.trajectory.length > 0) {
+        const snapshot = results.trajectory[0];
+        assert.ok('step' in snapshot);
+        assert.ok('orderParameter' in snapshot);
+        assert.ok('collapsePressure' in snapshot);
+      }
+    });
+  });
+  
+  describe('Integration: Kuramoto synchronization with quantum ladder', () => {
+    it('should maintain phase coherence during evolution', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        K: 0.5,  // Strong coupling
+        autoCollapse: false
+      });
+      
+      // Excite multiple rungs
+      ladder.exciteRungs([0, 1, 2, 3], 1);
+      
+      // Evolve and track order parameter
+      const result = ladder.runWithSync(100, 0.01);
+      
+      // With strong coupling, order parameter should be reasonably high
+      const avgOrder = result.syncHistory.reduce((a, s) => a + s.orderParameter, 0) / result.syncHistory.length;
+      assert.ok(avgOrder > 0.3, `Average order ${avgOrder} should be > 0.3`);
+    });
+    
+    it('should couple Z-flux to collapse dynamics', () => {
+      const ladder = new KuramotoCoupledLadder({
+        N: 8,
+        collapseThreshold: 0.2,
+        autoCollapse: true
+      });
+      
+      ladder.exciteRung(0);
+      
+      // Run to trigger collapses
+      ladder.run(200, 0.01);
+      
+      // Collapses should occur due to Z-flux accumulation
+      assert.ok(ladder.collapseEvents.length > 0, 'Should have at least one collapse');
+      
+      // Order parameter should be recorded at each collapse
+      ladder.collapseEvents.forEach(event => {
+        assert.ok(event.orderBefore >= 0 && event.orderBefore <= 1);
+      });
+    });
   });
 });
 
