@@ -1,13 +1,10 @@
 /**
- * Network Panel - WebRTC status, room viewer, memory sync, topology graph
- */
-export { NetworkPanel } from './network-panel.js';
-
-/**
- * Sentient Observer Web Components
+ * Sentient Observer Web Components (Simplified)
  *
  * Central export for all web components.
  * Import this file to register all custom elements.
+ *
+ * Removed: SentientSidebar (redundant, functionality merged into main app)
  */
 
 // Base
@@ -16,8 +13,10 @@ export { BaseComponent, sharedStyles, defineComponent } from './base-component.j
 // Core UI Components
 export { SentientHeader } from './sentient-header.js';
 export { SentientPanel } from './sentient-panel.js';
-export { SentientSidebar } from './sentient-sidebar.js';
 export { SentientChat } from './sentient-chat.js';
+
+// Network Panel - WebRTC status, room viewer, memory sync, topology graph
+export { NetworkPanel } from './network-panel.js';
 
 // Chat Components
 export { ChatMessage } from './chat-message.js';

@@ -313,6 +313,9 @@ export class SentientChat extends BaseComponent {
         this.addEventListener('message-edit', (e) => this.handleMessageEdit(e.detail));
         this.addEventListener('message-rerun', (e) => this.handleMessageRerun(e.detail));
         this.addEventListener('toast', (e) => this.showToast(e.detail.message));
+        
+        // Listen for next step button clicks
+        this.addEventListener('next-step-click', (e) => this.handleNextStepClick(e.detail));
     }
     
     handleInputChange() {
@@ -469,6 +472,7 @@ export class SentientChat extends BaseComponent {
         let fullResponse = '';
         let finalState = null;
         let toolCount = 0;
+        let currentEventType = null;
         
         while (true) {
             const { done, value } = await reader.read();
@@ -480,46 +484,153 @@ export class SentientChat extends BaseComponent {
             buffer = lines.pop() || '';
             
             for (const line of lines) {
+                // Handle named event type (e.g., "event: chunk")
+                if (line.startsWith('event: ')) {
+                    currentEventType = line.slice(7).trim();
+                    continue;
+                }
+                
+                // Handle data line
                 if (line.startsWith('data: ')) {
                     try {
                         const data = JSON.parse(line.slice(6));
                         
-                        if (data.status === 'starting') {
-                            msgElement.updateStreamingStatus('Connecting to LLM...');
-                        } else if (data.status === 'iteration_start') {
-                            msgElement.updateStreamingStatus(data.message || `Step ${data.iteration}...`);
-                        } else if (data.content) {
-                            fullResponse += data.content;
-                            msgElement.updateStreamingContent(fullResponse);
-                            const iterInfo = data.iteration > 1 ? ` (step ${data.iteration})` : '';
-                            msgElement.updateStreamingStatus(`Generating${iterInfo}... (${fullResponse.length} chars)`);
-                            this.scrollToBottom();
-                        } else if (data.tool && data.status === 'executing') {
-                            msgElement.updateStreamingStatus(`🔧 Executing: ${data.tool}...`);
-                        } else if (data.success !== undefined && data.tool) {
-                            toolCount++;
-                            msgElement.addToolResult(data.tool, data.success, data.content);
-                            this.scrollToBottom();
-                        } else if (data.response !== undefined) {
-                            finalState = data.state;
-                            const finalContent = data.response || fullResponse;
-                            
-                            msgElement.finishStreaming(finalContent, {
-                                coherence: finalState?.coherence,
-                                toolCount
-                            });
-                            
-                            if (finalState) {
-                                this.emit('state-update', { state: finalState });
-                            }
-                        } else if (data.error) {
-                            throw new Error(data.error);
-                        }
+                        // Process based on event type or data content
+                        this.handleSSEEvent(currentEventType, data, msgElement, {
+                            fullResponse: () => fullResponse,
+                            setFullResponse: (val) => { fullResponse = val; },
+                            addToResponse: (val) => { fullResponse += val; },
+                            setFinalState: (state) => { finalState = state; },
+                            incrementToolCount: () => { toolCount++; },
+                            getToolCount: () => toolCount
+                        });
+                        
                     } catch (parseError) {
-                        console.warn('SSE parse error:', parseError);
+                        console.warn('SSE parse error:', parseError, 'line:', line);
                     }
+                    
+                    // Reset event type after processing
+                    currentEventType = null;
                 }
             }
+        }
+    }
+    
+    /**
+     * Handle SSE event based on event type
+     */
+    handleSSEEvent(eventType, data, msgElement, ctx) {
+        // Route by event type first (if we have named events)
+        switch (eventType) {
+            case 'thinking':
+                msgElement.updateStreamingStatus('Connecting to LLM...');
+                return;
+                
+            case 'status':
+                if (data.status === 'iteration_start') {
+                    msgElement.updateStreamingStatus(data.message || `Step ${data.iteration}...`);
+                }
+                return;
+                
+            case 'heartbeat':
+                // Keep-alive, update status
+                if (data.status === 'executing_tools') {
+                    msgElement.updateStreamingStatus(`🔧 Executing tools... (${data.elapsed}s)`);
+                }
+                return;
+                
+            case 'chunk':
+                const content = data.content || '';
+                ctx.addToResponse(content);
+                msgElement.updateStreamingContent(ctx.fullResponse());
+                const iterInfo = data.iteration > 1 ? ` (step ${data.iteration})` : '';
+                msgElement.updateStreamingStatus(`Generating${iterInfo}... (${ctx.fullResponse().length} chars)`);
+                this.scrollToBottom();
+                return;
+                
+            case 'tool_call':
+                if (data.toolCalls && data.toolCalls.length > 0) {
+                    const toolNames = data.toolCalls.map(tc => tc.function?.name || 'unknown').join(', ');
+                    msgElement.updateStreamingStatus(`🔧 Calling: ${toolNames}...`);
+                }
+                return;
+                
+            case 'tool_exec':
+                msgElement.updateStreamingStatus(`🔧 Executing: ${data.tool}...`);
+                return;
+                
+            case 'tool_result':
+                ctx.incrementToolCount();
+                msgElement.addToolResult(data.tool, data.success, data.content);
+                this.scrollToBottom();
+                return;
+                
+            case 'next_steps':
+                // Store next steps for later use
+                if (data.suggestions) {
+                    this._nextSteps = data.suggestions;
+                }
+                return;
+                
+            case 'complete':
+                ctx.setFinalState(data.state);
+                const finalContent = data.response || ctx.fullResponse();
+                
+                // Get stored next steps and clear them
+                const nextSteps = this._nextSteps || [];
+                this._nextSteps = null;
+                
+                msgElement.finishStreaming(finalContent, {
+                    coherence: data.state?.coherence,
+                    toolCount: ctx.getToolCount(),
+                    nextSteps: nextSteps
+                });
+                
+                if (data.state) {
+                    this.emit('state-update', { state: data.state });
+                }
+                return;
+                
+            case 'error':
+                throw new Error(data.error || 'Unknown error');
+        }
+        
+        // Fallback: handle by data content (backward compatibility with non-named events)
+        if (data.status === 'starting') {
+            msgElement.updateStreamingStatus('Connecting to LLM...');
+        } else if (data.status === 'iteration_start') {
+            msgElement.updateStreamingStatus(data.message || `Step ${data.iteration}...`);
+        } else if (data.content) {
+            ctx.addToResponse(data.content);
+            msgElement.updateStreamingContent(ctx.fullResponse());
+            const iterInfo = data.iteration > 1 ? ` (step ${data.iteration})` : '';
+            msgElement.updateStreamingStatus(`Generating${iterInfo}... (${ctx.fullResponse().length} chars)`);
+            this.scrollToBottom();
+        } else if (data.tool && data.status === 'executing') {
+            msgElement.updateStreamingStatus(`🔧 Executing: ${data.tool}...`);
+        } else if (data.success !== undefined && data.tool) {
+            ctx.incrementToolCount();
+            msgElement.addToolResult(data.tool, data.success, data.content);
+            this.scrollToBottom();
+        } else if (data.response !== undefined) {
+            ctx.setFinalState(data.state);
+            const finalContent = data.response || ctx.fullResponse();
+            
+            // Get stored next steps and clear them
+            const nextSteps = this._nextSteps || [];
+            this._nextSteps = null;
+            
+            msgElement.finishStreaming(finalContent, {
+                coherence: data.state?.coherence,
+                toolCount: ctx.getToolCount(),
+                nextSteps: nextSteps
+            });
+            
+            if (data.state) {
+                this.emit('state-update', { state: data.state });
+            }
+        } else if (data.error) {
+            throw new Error(data.error);
         }
     }
     
@@ -640,6 +751,22 @@ export class SentientChat extends BaseComponent {
         this.abortController = null;
         this.updateSendButton();
         this.chatInput?.focus();
+    }
+    
+    /**
+     * Handle next step button click - sends the step text as a new message
+     */
+    handleNextStepClick(detail) {
+        if (this._state.isProcessing) return;
+        
+        const { step } = detail;
+        if (!step) return;
+        
+        // Put the step text into the input and submit
+        if (this.chatInput) {
+            this.chatInput.value = step;
+            this.handleSubmit(new Event('submit'));
+        }
     }
     
     /**

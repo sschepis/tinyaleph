@@ -599,3 +599,188 @@ adaptiveStep(state, derivative, dt, tolerance)
 
 **Notes:**
 - Automatically adjusts dt to maintain error below tolerance
+
+---
+
+## Stochastic Kuramoto (`physics/stochastic-kuramoto.js`)
+
+Noise-robust synchronization models with Langevin dynamics.
+
+### StochasticKuramoto
+
+White noise Kuramoto model with Langevin dynamics.
+
+```javascript
+new StochasticKuramoto(frequencies, options)
+```
+
+**Parameters:**
+- `frequencies` (Array<number>): Natural frequencies for oscillators
+- `options` (Object):
+  - `coupling` (number): Coupling strength K (default 0.3)
+  - `noiseIntensity` (number): Noise intensity σ (default 0.1)
+  - `noiseType` (string): 'white' or 'colored' (default 'white')
+
+**Example:**
+```javascript
+const model = new StochasticKuramoto([1.0, 1.1, 0.9], {
+  coupling: 0.5,
+  noiseIntensity: 0.1
+});
+
+model.evolve(100, 0.01);
+console.log(model.orderParameter());
+```
+
+#### Methods
+
+| Method | Description |
+|--------|-------------|
+| `evolve(steps, dt)` | Evolve system for specified steps |
+| `orderParameter()` | Get current order parameter |
+| `orderParameterWithUncertainty(samples, dt)` | Get order parameter with statistics |
+| `detectNoiseInducedSync()` | Check for noise-induced synchronization |
+
+---
+
+### ColoredNoiseKuramoto
+
+Ornstein-Uhlenbeck colored noise model.
+
+```javascript
+new ColoredNoiseKuramoto(frequencies, options)
+```
+
+**Parameters:**
+- `frequencies` (Array<number>): Natural frequencies
+- `options` (Object):
+  - `correlationTime` (number): Noise correlation time τ (default 1.0)
+  - `noiseIntensity` (number): Noise intensity σ (default 0.1)
+  - `coupling` (number): Coupling strength K (default 0.3)
+
+**Example:**
+```javascript
+const colored = new ColoredNoiseKuramoto([1.0, 1.1], {
+  correlationTime: 2.0,
+  noiseIntensity: 0.1
+});
+
+console.log('Stationary variance:', colored.getStationaryVariance());
+```
+
+---
+
+### ThermalKuramoto
+
+Temperature-dependent coupling model.
+
+```javascript
+new ThermalKuramoto(frequencies, options)
+```
+
+**Parameters:**
+- `frequencies` (Array<number>): Natural frequencies
+- `options` (Object):
+  - `temperature` (number): Initial temperature T (default 1.0)
+  - `coupling` (number): Base coupling strength K (default 0.3)
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `setTemperature(T)` | Update temperature and noise |
+| `temperatureSweep(Tmin, Tmax, steps)` | Sweep temperature range |
+| `estimateCriticalTemperature()` | Estimate phase transition temperature |
+
+**Example:**
+```javascript
+const thermal = new ThermalKuramoto([1.0, 1.1, 0.9], { temperature: 2.0 });
+thermal.setTemperature(4.0);
+const Tc = thermal.estimateCriticalTemperature();
+```
+
+---
+
+## Multi-Z Primeon Ladder (`physics/primeon_z_ladder_multi.js`)
+
+Hierarchical memory with multiple Z channels.
+
+### PrimeonZLadderMulti
+
+Multi-channel Z-sector ladder for hierarchical memory.
+
+```javascript
+new PrimeonZLadderMulti(config)
+```
+
+**Parameters:**
+- `config` (Object):
+  - `N` (number): Number of rungs
+  - `zChannels` (Array): Channel configurations
+    - `name` (string): Channel name
+    - `dz` (number): Z sector size (default 1)
+    - `leak` (number): Leak rate (default 0.1)
+    - `decay` (number): Decay rate (default 0.01)
+  - `J` (number): Hopping amplitude (default 0.25)
+  - `Jt` (Function): Time-dependent J function (optional)
+  - `crossCoupling` (number): Cross-channel coupling (default 0.01)
+
+**Default Channels:**
+- `fast`: High leak (0.2), working memory
+- `slow`: Low leak (0.01), long-term memory
+- `permanent`: No leak (0.0), persistent storage
+
+**Example:**
+```javascript
+const ladder = new PrimeonZLadderMulti({
+  N: 32,
+  zChannels: [
+    { name: 'fast', leak: 0.2, decay: 0.1 },
+    { name: 'slow', leak: 0.01, decay: 0.001 },
+    { name: 'permanent', leak: 0.0, decay: 0.0 }
+  ]
+});
+
+ladder.exciteRung(0);
+ladder.run(100, 0.01);
+
+const metrics = ladder.channelMetrics();
+console.log('Fast entropy:', metrics.fast.entropy);
+```
+
+#### Methods
+
+| Method | Description |
+|--------|-------------|
+| `exciteRung(n, amplitude)` | Excite rung n |
+| `exciteRungs(rungs, amplitude)` | Excite multiple rungs |
+| `step(t)` | Advance by one time step |
+| `run(steps, dt)` | Run for multiple steps |
+| `rungProbabilities()` | Get probability distribution |
+| `channelMetrics()` | Get per-channel metrics |
+| `entanglementEntropy()` | Compute entanglement entropy |
+| `measure()` | Perform measurement/collapse |
+| `gaussianPulse(center, width, amp)` | Apply Gaussian pulse |
+| `piPulse(target)` | Apply π-pulse to target rung |
+
+### createAdiabaticSchedule
+
+Create time-dependent parameter schedules.
+
+```javascript
+createAdiabaticSchedule(startValue, endValue, duration, type)
+```
+
+**Parameters:**
+- `startValue` (number): Initial value
+- `endValue` (number): Final value
+- `duration` (number): Schedule duration
+- `type` (string): 'linear' or 'sinusoidal' (default 'linear')
+
+**Returns:** Function - `t => value`
+
+**Example:**
+```javascript
+const Jt = createAdiabaticSchedule(0.1, 0.5, 100, 'sinusoidal');
+const ladder = new PrimeonZLadderMulti({ N: 16, Jt });
+```

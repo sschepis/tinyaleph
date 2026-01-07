@@ -1,26 +1,26 @@
 
 /**
- * Sentient App Component
+ * Sentient App Component - Simplified Layout
  *
- * Main application shell with Aleph.0-style layout:
- * - Header with tools and metrics
- * - Left sidebar with chat input
- * - Main content area with visualization panels (switchable views)
- * - Two side-by-side bottom panels
- * - Collapsible right panel with tabs
+ * Entropy-reduced UI with:
+ * - Minimal header with consolidated metrics (single source of truth)
+ * - Left sidebar with chat
+ * - Center content with main visualization  
+ * - Right panel with 6 flat tabs (no nesting)
+ * 
+ * Removed redundancies:
+ * - Bottom panels (duplicate oscillator/sedenion views)
+ * - Sidebar stats (duplicate metrics)
+ * - Nested tab structure
+ * - sentient-sidebar.js import (deleted)
  */
 
 import { BaseComponent, sharedStyles, defineComponent } from './base-component.js';
-import './sentient-header.js';
 import './provider-selector.js';
 import './sentient-chat.js';
-import './sentient-sidebar.js';
 import './introspection-modal.js';
-import './oscillator-visualizer.js';
-import './sedenion-visualizer.js';
 import './field-panel.js';
 import './sight-camera.js';
-import './sentient-panel.js';
 import './artifact-editor.js';
 import './structure-panel.js';
 import './learning-panel.js';
@@ -36,24 +36,17 @@ export class SentientApp extends BaseComponent {
             coherence: 0,
             entropy: 0,
             lambda: 0,
-            oscillatorCount: 0,
-            momentCount: 0,
-            subjectiveTime: 0,
+            activePrimes: 0,
             leftSidebarVisible: true,
             rightPanelVisible: true,
-            rightPanelTab: 'structure', // structure, learning, network, memory
-            mainView: 'sedenion', // sedenion, artifact, camera
-            artifactContent: null // content for artifact editor
+            rightPanelTab: 'prime', // prime, memory, graph, learn, network, field
+            mainView: 'field', // field, artifact, camera
+            artifactContent: null
         };
         
         // Stream connections
         this.statusStream = null;
-        this.momentStream = null;
         this.fieldStream = null;
-        this.learningStream = null;
-        
-        // Polling intervals
-        this.nodesInterval = null;
         
         // Field history
         this.fieldHistory = [];
@@ -62,8 +55,8 @@ export class SentientApp extends BaseComponent {
         // Resizer state
         this.isResizingLeft = false;
         this.isResizingRight = false;
-        this.leftSidebarWidth = 500;
-        this.rightPanelWidth = 450;
+        this.leftSidebarWidth = 420;
+        this.rightPanelWidth = 360;
     }
     
     styles() {
@@ -84,7 +77,7 @@ export class SentientApp extends BaseComponent {
                 height: 100%;
             }
             
-            /* ===== HEADER ===== */
+            /* ===== HEADER (Consolidated Metrics - Single Source of Truth) ===== */
             .app-header {
                 display: flex;
                 align-items: center;
@@ -92,7 +85,7 @@ export class SentientApp extends BaseComponent {
                 padding: var(--space-xs) var(--space-md);
                 background: var(--bg-secondary);
                 border-bottom: 1px solid var(--border-color);
-                min-height: 44px;
+                min-height: 40px;
             }
             
             .header-left {
@@ -104,49 +97,73 @@ export class SentientApp extends BaseComponent {
             .logo {
                 display: flex;
                 align-items: center;
-                gap: var(--space-sm);
+                gap: var(--space-xs);
             }
             
-            .logo-icon {
-                font-size: 1.3rem;
-            }
+            .logo-icon { font-size: 1.1rem; }
             
             .logo-text {
                 font-weight: 700;
-                font-size: 1rem;
+                font-size: 0.9rem;
                 background: linear-gradient(135deg, #f5f5f5, #a3a3a3);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
             }
             
-            .logo-sub {
-                font-size: 0.6rem;
-                color: var(--text-dim);
-                font-family: var(--font-mono);
-            }
-            
-            .status-badges {
+            /* Unified Metrics Bar - THE single source of truth for metrics */
+            .metrics-bar {
                 display: flex;
                 align-items: center;
                 gap: var(--space-xs);
-                font-size: 0.65rem;
+                padding: 4px var(--space-sm);
+                background: var(--bg-tertiary);
+                border-radius: var(--radius-sm);
                 font-family: var(--font-mono);
+                font-size: 0.7rem;
             }
             
-            .status-badge {
+            .metric-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 0 var(--space-xs);
+                border-right: 1px solid var(--border-color);
+            }
+            
+            .metric-item:last-child { border-right: none; }
+            
+            .metric-symbol { color: var(--text-dim); font-weight: 500; }
+            .metric-val { font-weight: 600; }
+            .metric-val.coherence { color: var(--accent-primary); }
+            .metric-val.entropy { color: var(--warning); }
+            .metric-val.lambda { color: var(--text-secondary); }
+            .metric-val.primes { color: var(--success); }
+            
+            .status-indicator {
                 display: flex;
                 align-items: center;
                 gap: 4px;
                 padding: 2px 8px;
-                background: var(--bg-tertiary);
                 border-radius: var(--radius-sm);
-                color: var(--text-secondary);
+                font-size: 0.65rem;
             }
             
-            .status-badge.listening {
+            .status-indicator.connected {
                 background: rgba(34, 197, 94, 0.15);
                 color: var(--success);
+            }
+            
+            .status-indicator.offline {
+                background: var(--bg-tertiary);
+                color: var(--text-dim);
+            }
+            
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: currentColor;
             }
             
             .header-center {
@@ -159,15 +176,14 @@ export class SentientApp extends BaseComponent {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 32px;
-                height: 32px;
+                width: 28px;
+                height: 28px;
                 border-radius: var(--radius-sm);
                 background: var(--bg-tertiary);
                 color: var(--text-secondary);
-                font-size: 0.85rem;
+                font-size: 0.8rem;
                 transition: all var(--transition-fast);
                 cursor: pointer;
-                border: 1px solid transparent;
             }
             
             .tool-btn:hover {
@@ -178,50 +194,14 @@ export class SentientApp extends BaseComponent {
             .tool-btn.active {
                 background: var(--accent-primary);
                 color: white;
-                border-color: var(--accent-secondary);
             }
             
             .tool-divider {
                 width: 1px;
-                height: 20px;
+                height: 18px;
                 background: var(--border-color);
-                margin: 0 var(--space-xs);
+                margin: 0 2px;
             }
-            
-            .header-right {
-                display: flex;
-                align-items: center;
-                gap: var(--space-lg);
-            }
-            
-            .metric-group {
-                display: flex;
-                align-items: center;
-                gap: var(--space-lg);
-            }
-            
-            .metric {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                font-family: var(--font-mono);
-            }
-            
-            .metric-label {
-                font-size: 0.5rem;
-                color: var(--text-dim);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            
-            .metric-value {
-                font-size: 0.8rem;
-                font-weight: 600;
-            }
-            
-            .metric-value.entropy { color: var(--warning); }
-            .metric-value.coherence { color: var(--accent-primary); }
-            .metric-value.phrases { color: var(--text-primary); }
             
             /* ===== MAIN LAYOUT ===== */
             .main-layout {
@@ -230,11 +210,11 @@ export class SentientApp extends BaseComponent {
                 overflow: hidden;
             }
             
-            /* ===== LEFT SIDEBAR (Chat) ===== */
+            /* ===== LEFT SIDEBAR (Chat - Simplified) ===== */
             .left-sidebar {
-                width: 500px;
-                min-width: 350px;
-                max-width: 800px;
+                width: 420px;
+                min-width: 320px;
+                max-width: 600px;
                 display: flex;
                 flex-direction: column;
                 background: var(--bg-secondary);
@@ -247,7 +227,7 @@ export class SentientApp extends BaseComponent {
                 overflow: hidden;
             }
             
-            .sidebar-header {
+            .chat-header {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -257,21 +237,24 @@ export class SentientApp extends BaseComponent {
                 min-height: 32px;
             }
             
-            .sidebar-controls {
-                display: flex;
-                gap: var(--space-xs);
+            .chat-title {
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
             
             .mini-btn {
-                width: 24px;
-                height: 24px;
+                width: 22px;
+                height: 22px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 border-radius: var(--radius-sm);
                 background: transparent;
                 color: var(--text-dim);
-                font-size: 0.8rem;
+                font-size: 0.75rem;
                 cursor: pointer;
                 transition: all var(--transition-fast);
             }
@@ -281,30 +264,6 @@ export class SentientApp extends BaseComponent {
                 color: var(--text-primary);
             }
             
-            .voice-indicator {
-                display: flex;
-                align-items: center;
-                gap: var(--space-sm);
-                padding: var(--space-xs) var(--space-sm);
-                font-size: 0.7rem;
-                color: var(--text-dim);
-            }
-            
-            .tip-box {
-                margin: var(--space-sm);
-                padding: var(--space-sm) var(--space-md);
-                background: rgba(255, 255, 255, 0.04);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: var(--radius-md);
-                font-size: 0.75rem;
-                color: var(--text-secondary);
-                display: flex;
-                align-items: flex-start;
-                gap: var(--space-sm);
-            }
-            
-            .tip-icon { font-size: 1rem; }
-            
             .chat-area {
                 flex: 1;
                 display: flex;
@@ -312,65 +271,7 @@ export class SentientApp extends BaseComponent {
                 min-height: 0;
             }
             
-            sentient-chat {
-                flex: 1;
-            }
-            
-            .sidebar-stats {
-                padding: var(--space-sm) var(--space-md);
-                border-top: 1px solid var(--border-color);
-                background: var(--bg-tertiary);
-            }
-            
-            .stat-bar {
-                margin-bottom: var(--space-xs);
-            }
-            
-            .stat-bar:last-child { margin-bottom: 0; }
-            
-            .stat-bar-header {
-                display: flex;
-                justify-content: space-between;
-                font-size: 0.6rem;
-                color: var(--text-dim);
-                margin-bottom: 2px;
-                text-transform: uppercase;
-            }
-            
-            .stat-bar-track {
-                height: 4px;
-                background: var(--bg-primary);
-                border-radius: 2px;
-                overflow: hidden;
-            }
-            
-            .stat-bar-fill {
-                height: 100%;
-                transition: width var(--transition-normal);
-            }
-            
-            .stat-bar-fill.coherence { background: linear-gradient(90deg, #737373, var(--success)); }
-            .stat-bar-fill.energy { background: linear-gradient(90deg, var(--warning), #a3a3a3); }
-            
-            .lang-selector {
-                display: flex;
-                gap: var(--space-xs);
-                margin-top: var(--space-sm);
-            }
-            
-            .lang-btn {
-                padding: 2px 8px;
-                font-size: 0.65rem;
-                background: var(--bg-primary);
-                border-radius: var(--radius-sm);
-                color: var(--text-dim);
-                cursor: pointer;
-            }
-            
-            .lang-btn.active {
-                background: var(--accent-primary);
-                color: white;
-            }
+            sentient-chat { flex: 1; }
             
             /* ===== RESIZERS ===== */
             .resizer {
@@ -398,16 +299,15 @@ export class SentientApp extends BaseComponent {
                 background: var(--bg-primary);
             }
             
-            /* Main Visualization Panel */
+            /* Main Panel - Full Height, No Bottom Panels */
             .main-panel {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 position: relative;
-                min-height: 300px;
             }
             
-            /* View Switcher Bar */
+            /* View Switcher */
             .view-switcher {
                 display: flex;
                 align-items: center;
@@ -425,7 +325,7 @@ export class SentientApp extends BaseComponent {
             .view-tab {
                 display: flex;
                 align-items: center;
-                gap: var(--space-xs);
+                gap: 4px;
                 padding: var(--space-xs) var(--space-sm);
                 font-size: 0.7rem;
                 font-weight: 500;
@@ -446,43 +346,15 @@ export class SentientApp extends BaseComponent {
                 background: var(--bg-tertiary);
             }
             
-            .view-tab-icon {
-                font-size: 0.85rem;
-            }
-            
-            .view-actions {
-                display: flex;
-                gap: var(--space-xs);
-            }
-            
-            .view-action-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 24px;
-                height: 24px;
-                border-radius: var(--radius-sm);
-                background: transparent;
-                color: var(--text-dim);
-                cursor: pointer;
-                transition: all var(--transition-fast);
-            }
-            
-            .view-action-btn:hover {
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-            }
+            .view-tab-icon { font-size: 0.8rem; }
             
             .main-panel-content {
                 flex: 1;
                 display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: var(--space-lg);
                 position: relative;
+                overflow: hidden;
             }
             
-            /* View content containers */
             .view-content {
                 display: none;
                 width: 100%;
@@ -494,140 +366,34 @@ export class SentientApp extends BaseComponent {
                 flex-direction: column;
             }
             
-            .sedenion-view {
+            .field-view {
                 align-items: stretch;
                 justify-content: stretch;
             }
             
-            .sedenion-view field-panel {
+            .field-view field-panel {
                 flex: 1;
                 width: 100%;
                 height: 100%;
             }
             
-            .artifact-view {
-                padding: 0;
-            }
+            .artifact-view { padding: 0; }
             
             .artifact-view artifact-editor {
                 flex: 1;
                 height: 100%;
             }
             
-            .sedenion-main {
-                width: 100%;
-                max-width: 600px;
-                aspect-ratio: 1;
-            }
-            
-            .viz-status {
-                position: absolute;
-                bottom: var(--space-md);
-                left: var(--space-md);
-                font-size: 0.65rem;
-                font-family: var(--font-mono);
-                color: var(--text-dim);
-            }
-            
-            .primes-bar {
-                position: absolute;
-                top: var(--space-md);
-                left: var(--space-md);
-                font-size: 0.65rem;
-                font-family: var(--font-mono);
-                color: var(--text-dim);
-            }
-            
-            .dominant-info {
-                position: absolute;
-                bottom: var(--space-md);
-                left: 50%;
-                transform: translateX(-50%);
-                display: flex;
-                gap: var(--space-lg);
-                font-size: 0.7rem;
-                font-family: var(--font-mono);
-            }
-            
-            .dominant-axis {
-                display: flex;
-                gap: var(--space-sm);
-            }
-            
-            .axis-label { color: var(--text-dim); }
-            .axis-value { color: var(--accent-primary); font-weight: 600; }
-            
-            /* Bottom Panels */
-            .bottom-panels {
-                display: flex;
-                height: 250px;
-                border-top: 1px solid var(--border-color);
-            }
-            
-            .bottom-panel {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                min-width: 0;
-            }
-            
-            .bottom-panel + .bottom-panel {
-                border-left: 1px solid var(--border-color);
-            }
-            
-            .bottom-panel-header {
-                display: flex;
+            .camera-view {
                 align-items: center;
-                justify-content: space-between;
-                padding: var(--space-xs) var(--space-sm);
-                background: var(--bg-secondary);
-                border-bottom: 1px solid var(--border-color);
+                justify-content: center;
             }
             
-            .bottom-panel-title {
-                display: flex;
-                align-items: center;
-                gap: var(--space-sm);
-            }
-            
-            .panel-icon {
-                font-size: 0.7rem;
-                color: var(--text-dim);
-            }
-            
-            .panel-label {
-                font-size: 0.65rem;
-                font-weight: 600;
-                color: var(--text-secondary);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            
-            .panel-status {
-                font-size: 0.6rem;
-                font-family: var(--font-mono);
-                color: var(--text-dim);
-            }
-            
-            .bottom-panel-content {
-                flex: 1;
-                overflow: auto;
-                padding: var(--space-sm);
-            }
-            
-            .osc-container {
-                height: 100%;
-            }
-            
-            .osc-container oscillator-visualizer {
-                height: 100%;
-            }
-            
-            /* ===== RIGHT PANEL ===== */
+            /* ===== RIGHT PANEL (6 Flat Tabs - No Nesting) ===== */
             .right-panel {
-                width: 450px;
-                min-width: 300px;
-                max-width: 600px;
+                width: 360px;
+                min-width: 280px;
+                max-width: 500px;
                 display: flex;
                 flex-direction: column;
                 background: var(--bg-secondary);
@@ -640,22 +406,29 @@ export class SentientApp extends BaseComponent {
                 overflow: hidden;
             }
             
+            /* 6 Flat Tabs - Single Level Navigation */
             .right-panel-tabs {
-                display: flex;
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
                 background: var(--bg-tertiary);
                 border-bottom: 1px solid var(--border-color);
             }
             
             .right-tab {
-                flex: 1;
-                padding: var(--space-sm);
-                font-size: 0.7rem;
+                padding: var(--space-sm) var(--space-xs);
+                font-size: 0.6rem;
                 color: var(--text-dim);
                 text-align: center;
                 cursor: pointer;
                 border-bottom: 2px solid transparent;
                 transition: all var(--transition-fast);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
             }
+            
+            .right-tab-icon { font-size: 0.85rem; }
             
             .right-tab:hover {
                 color: var(--text-secondary);
@@ -671,221 +444,28 @@ export class SentientApp extends BaseComponent {
             .right-panel-content {
                 flex: 1;
                 overflow-y: auto;
-                padding: var(--space-sm);
             }
             
-            /* Tab Contents */
             .tab-content {
                 display: none;
+                height: 100%;
             }
             
             .tab-content.active {
                 display: block;
             }
             
-            /* Structure Tab - Matrix view */
-            .matrix-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: var(--space-sm);
-            }
-            
-            .matrix-tabs {
-                display: flex;
-                gap: var(--space-xs);
-            }
-            
-            .matrix-tab {
-                padding: 2px 8px;
-                font-size: 0.65rem;
-                background: var(--bg-tertiary);
-                border-radius: var(--radius-sm);
-                color: var(--text-dim);
-                cursor: pointer;
-            }
-            
-            .matrix-tab.active {
-                background: var(--accent-primary);
-                color: white;
-            }
-            
-            .matrix-info {
-                font-size: 0.6rem;
-                font-family: var(--font-mono);
-                color: var(--text-dim);
-            }
-            
-            .matrix-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-                gap: 4px;
-            }
-            
-            .matrix-cell {
-                padding: var(--space-xs);
-                background: var(--bg-tertiary);
-                border-radius: var(--radius-sm);
-                font-size: 0.6rem;
-                text-align: center;
-            }
-            
-            .matrix-cell-label {
-                color: var(--text-secondary);
-                margin-bottom: 2px;
-            }
-            
-            .matrix-cell-value {
-                font-family: var(--font-mono);
-                color: var(--text-dim);
-            }
-            
-            /* Learning Tab */
-            .learning-section {
-                margin-bottom: var(--space-md);
-            }
-            
-            .learning-controls {
-                display: flex;
-                gap: var(--space-xs);
-                margin-bottom: var(--space-sm);
-            }
-            
-            .learning-btn {
-                flex: 1;
-                padding: var(--space-xs) var(--space-sm);
-                font-size: 0.7rem;
-                background: var(--bg-tertiary);
-                border-radius: var(--radius-sm);
-                color: var(--text-secondary);
-                cursor: pointer;
-                transition: all var(--transition-fast);
-            }
-            
-            .learning-btn:hover:not(:disabled) {
-                background: var(--accent-primary);
-                color: white;
-            }
-            
-            .learning-btn:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
-            
-            .learning-stats {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: var(--space-xs);
-            }
-            
-            .learning-stat {
-                text-align: center;
-                padding: var(--space-xs);
-                background: var(--bg-tertiary);
-                border-radius: var(--radius-sm);
-            }
-            
-            .learning-stat-value {
-                font-size: 0.9rem;
-                font-weight: 600;
-                color: var(--accent-primary);
-            }
-            
-            .learning-stat-label {
-                font-size: 0.55rem;
-                color: var(--text-dim);
-            }
-            
-            .eavesdrop-log {
-                max-height: 200px;
-                overflow-y: auto;
-                background: var(--bg-primary);
-                border-radius: var(--radius-sm);
-                padding: var(--space-xs);
-            }
-            
-            .log-entry {
-                padding: 2px var(--space-xs);
-                font-size: 0.6rem;
-                font-family: var(--font-mono);
-                border-left: 2px solid transparent;
-            }
-            
-            .log-entry.log-curiosity { border-left-color: var(--accent-primary); }
-            .log-entry.log-question { border-left-color: var(--accent-secondary); }
-            .log-entry.log-answer { border-left-color: var(--success); }
-            
-            /* Network Tab */
-            .nodes-list {
-                display: flex;
-                flex-direction: column;
-                gap: var(--space-xs);
-            }
-            
-            .node-item {
-                display: flex;
-                align-items: center;
-                gap: var(--space-sm);
-                padding: var(--space-sm);
-                background: var(--bg-tertiary);
-                border-radius: var(--radius-sm);
-            }
-            
-            .node-status {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background: var(--text-dim);
-            }
-            
-            .node-status.connected { background: var(--success); }
-            .node-status.connecting { background: var(--warning); }
-            
-            .node-info {
-                flex: 1;
-            }
-            
-            .node-url {
-                font-size: 0.7rem;
-                font-family: var(--font-mono);
-                color: var(--text-primary);
-            }
-            
-            .node-meta {
-                font-size: 0.6rem;
-                color: var(--text-dim);
-            }
-            
             /* Introspection Modal */
-            introspection-modal {
-                z-index: 2000;
-            }
+            introspection-modal { z-index: 2000; }
             
             /* Responsive */
             @media (max-width: 1200px) {
-                .right-panel {
-                    width: 350px;
-                }
+                .right-panel { width: 320px; }
+                .right-tab { font-size: 0.55rem; }
             }
             
             @media (max-width: 1024px) {
-                .left-sidebar {
-                    width: 400px;
-                }
-                
-                .bottom-panels {
-                    flex-direction: column;
-                    height: auto;
-                }
-                
-                .bottom-panel {
-                    min-height: 200px;
-                }
-                
-                .bottom-panel + .bottom-panel {
-                    border-left: none;
-                    border-top: 1px solid var(--border-color);
-                }
+                .left-sidebar { width: 350px; }
             }
             
             @media (max-width: 768px) {
@@ -896,61 +476,49 @@ export class SentientApp extends BaseComponent {
     }
     
     template() {
-        const { leftSidebarVisible, rightPanelVisible, rightPanelTab, coherence, entropy, connected } = this._state;
+        const { leftSidebarVisible, rightPanelVisible, rightPanelTab, mainView, connected, coherence, entropy, lambda, activePrimes } = this._state;
         
         return `
             <div class="app-container">
-                <!-- Header -->
+                <!-- Header with Consolidated Metrics -->
                 <header class="app-header">
                     <div class="header-left">
                         <div class="logo">
                             <span class="logo-icon">◈</span>
-                            <div>
-                                <span class="logo-text">SENTIENT</span>
-                                <span class="logo-sub">PRSC/SMF · τ<sub>s</sub> · 7700 words</span>
+                            <span class="logo-text">SENTIENT</span>
+                        </div>
+                        
+                        <!-- Unified Metrics Bar - Single Source of Truth -->
+                        <div class="metrics-bar">
+                            <div class="metric-item">
+                                <span class="metric-symbol">κ</span>
+                                <span class="metric-val coherence" id="metricCoherence">${coherence.toFixed(3)}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-symbol">H</span>
+                                <span class="metric-val entropy" id="metricEntropy">${entropy.toFixed(3)}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-symbol">λ</span>
+                                <span class="metric-val lambda" id="metricLambda">${lambda.toFixed(3)}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-symbol">P</span>
+                                <span class="metric-val primes" id="metricPrimes">${activePrimes}</span>
                             </div>
                         </div>
                         
-                        <div class="status-badges">
-                            <span class="status-badge ${connected ? 'listening' : ''}">
-                                <span class="status-dot ${connected ? 'active' : ''}"></span>
-                                ${connected ? 'Listening' : 'Offline'}
-                            </span>
+                        <div class="status-indicator ${connected ? 'connected' : 'offline'}">
+                            <span class="status-dot"></span>
+                            <span>${connected ? 'Live' : 'Offline'}</span>
                         </div>
                     </div>
                     
                     <div class="header-center">
-                        <button class="tool-btn" title="Visualization">🌌</button>
-                        <button class="tool-btn" title="Analytics">📊</button>
-                        <span class="tool-divider"></span>
-                        <button class="tool-btn" title="Zoom In">🔍+</button>
-                        <button class="tool-btn" title="Zoom Out">🔍-</button>
-                        <span class="tool-divider"></span>
                         <provider-selector></provider-selector>
                         <span class="tool-divider"></span>
                         <button class="tool-btn" id="toggleIntrospect" title="Introspect">🔮</button>
                         <button class="tool-btn" id="toggleRightPanel" title="Toggle Panel">☰</button>
-                    </div>
-                    
-                    <div class="header-right">
-                        <div class="metric-group">
-                            <div class="metric">
-                                <span class="metric-label">Active Primes</span>
-                                <span class="metric-value" id="headerActivePrimes">--</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Entropy</span>
-                                <span class="metric-value entropy" id="headerEntropy">0.00↓</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Coherence</span>
-                                <span class="metric-value coherence" id="headerCoherence">0.00</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Phrases</span>
-                                <span class="metric-value phrases" id="headerPhrases">0~</span>
-                            </div>
-                        </div>
                     </div>
                 </header>
                 
@@ -958,49 +526,12 @@ export class SentientApp extends BaseComponent {
                 <div class="main-layout">
                     <!-- Left Sidebar (Chat) -->
                     <aside class="left-sidebar ${leftSidebarVisible ? '' : 'collapsed'}" id="leftSidebar" style="width: ${this.leftSidebarWidth}px">
-                        <div class="sidebar-header">
-                            <div class="sidebar-controls">
-                                <button class="mini-btn" title="Refresh">↻</button>
-                                <button class="mini-btn" title="Settings">⚙</button>
-                            </div>
-                            <div class="voice-indicator">
-                                <span>🎤</span>
-                                <span>SILENT</span>
-                            </div>
+                        <div class="chat-header">
+                            <span class="chat-title">Chat</span>
+                            <button class="mini-btn" id="collapseChat" title="Collapse">◀</button>
                         </div>
-                        
-                        <div class="tip-box">
-                            <span class="tip-icon">💡</span>
-                            <span>For best results, try the interactive tutorial to learn how Sentient works.</span>
-                        </div>
-                        
                         <div class="chat-area">
                             <sentient-chat id="chat"></sentient-chat>
-                        </div>
-                        
-                        <div class="sidebar-stats">
-                            <div class="stat-bar">
-                                <div class="stat-bar-header">
-                                    <span>System Energy</span>
-                                    <span id="systemEnergy">0.00</span>
-                                </div>
-                                <div class="stat-bar-track">
-                                    <div class="stat-bar-fill energy" id="energyBar" style="width: 0%"></div>
-                                </div>
-                            </div>
-                            <div class="stat-bar">
-                                <div class="stat-bar-header">
-                                    <span>Coherence (Alignment)</span>
-                                    <span id="sidebarCoherence">0.000</span>
-                                </div>
-                                <div class="stat-bar-track">
-                                    <div class="stat-bar-fill coherence" id="coherenceBar" style="width: 0%"></div>
-                                </div>
-                            </div>
-                            <div class="lang-selector">
-                                <button class="lang-btn active">English</button>
-                                <button class="lang-btn">✦ Enochian</button>
-                            </div>
                         </div>
                     </aside>
                     
@@ -1008,81 +539,39 @@ export class SentientApp extends BaseComponent {
                     
                     <!-- Center Content -->
                     <main class="center-content">
-                        <!-- Main Visualization Panel -->
                         <div class="main-panel">
                             <!-- View Switcher -->
                             <div class="view-switcher">
                                 <div class="view-tabs">
-                                    <button class="view-tab ${this._state.mainView === 'sedenion' ? 'active' : ''}" data-view="sedenion">
+                                    <button class="view-tab ${mainView === 'field' ? 'active' : ''}" data-view="field">
                                         <span class="view-tab-icon">◈</span>
                                         <span>Field</span>
                                     </button>
-                                    <button class="view-tab ${this._state.mainView === 'artifact' ? 'active' : ''}" data-view="artifact">
+                                    <button class="view-tab ${mainView === 'artifact' ? 'active' : ''}" data-view="artifact">
                                         <span class="view-tab-icon">◆</span>
                                         <span>Artifact</span>
                                     </button>
-                                    <button class="view-tab ${this._state.mainView === 'camera' ? 'active' : ''}" data-view="camera">
+                                    <button class="view-tab ${mainView === 'camera' ? 'active' : ''}" data-view="camera">
                                         <span class="view-tab-icon">👁️</span>
                                         <span>Camera</span>
                                     </button>
                                 </div>
-                                <div class="view-actions">
-                                    <button class="view-action-btn" id="refreshView" title="Refresh">↻</button>
-                                    <button class="view-action-btn" id="expandView" title="Expand">⛶</button>
-                                </div>
                             </div>
                             
                             <div class="main-panel-content">
-                                <!-- Field Panel View (Sedenion 16D with interactive exploration) -->
-                                <div class="view-content sedenion-view ${this._state.mainView === 'sedenion' ? 'active' : ''}" data-view="sedenion">
+                                <!-- Field Panel View -->
+                                <div class="view-content field-view ${mainView === 'field' ? 'active' : ''}" data-view="field">
                                     <field-panel id="fieldPanel"></field-panel>
                                 </div>
                                 
                                 <!-- Artifact Editor View -->
-                                <div class="view-content artifact-view ${this._state.mainView === 'artifact' ? 'active' : ''}" data-view="artifact">
-                                    <artifact-editor
-                                        id="mainArtifact"
-                                        title="AI Artifact"
-                                        auto-run="true"
-                                    ></artifact-editor>
+                                <div class="view-content artifact-view ${mainView === 'artifact' ? 'active' : ''}" data-view="artifact">
+                                    <artifact-editor id="mainArtifact" title="AI Artifact" auto-run="true"></artifact-editor>
                                 </div>
                                 
                                 <!-- Camera View -->
-                                <div class="view-content camera-view ${this._state.mainView === 'camera' ? 'active' : ''}" data-view="camera">
+                                <div class="view-content camera-view ${mainView === 'camera' ? 'active' : ''}" data-view="camera">
                                     <sight-camera id="mainCamera"></sight-camera>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Bottom Panels -->
-                        <div class="bottom-panels">
-                            <!-- Oscillators Panel -->
-                            <div class="bottom-panel">
-                                <div class="bottom-panel-header">
-                                    <div class="bottom-panel-title">
-                                        <span class="panel-icon">Λ:</span>
-                                        <span class="panel-label" id="lambdaLabel">0.000 • TRANSITIONAL</span>
-                                    </div>
-                                    <span class="panel-status" id="oscStatus">SEEKING · H: 1.50</span>
-                                </div>
-                                <div class="bottom-panel-content">
-                                    <div class="osc-container">
-                                        <oscillator-visualizer id="bottomOsc"></oscillator-visualizer>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Sedenion Detail Panel -->
-                            <div class="bottom-panel">
-                                <div class="bottom-panel-header">
-                                    <div class="bottom-panel-title">
-                                        <span class="panel-label">SEDENION (16D) + ENLIGHTENMENT</span>
-                                    </div>
-                                    <span class="panel-status">Energy: <span id="smfEnergy">0.00</span> · Coherence: <span id="smfCoherence">0%</span></span>
-                                </div>
-                                <div class="bottom-panel-content">
-                                    <div class="sedenion-axes" id="sedenionAxes">
-                                        <!-- Axes grid will be rendered here -->
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1090,34 +579,64 @@ export class SentientApp extends BaseComponent {
                     
                     <div class="resizer ${rightPanelVisible ? '' : 'hidden'}" id="rightResizer"></div>
                     
-                    <!-- Right Panel -->
+                    <!-- Right Panel (6 Flat Tabs) -->
                     <aside class="right-panel ${rightPanelVisible ? '' : 'collapsed'}" id="rightPanel" style="width: ${this.rightPanelWidth}px">
                         <div class="right-panel-tabs">
-                            <button class="right-tab ${rightPanelTab === 'structure' ? 'active' : ''}" data-tab="structure">Structure</button>
-                            <button class="right-tab ${rightPanelTab === 'learning' ? 'active' : ''}" data-tab="learning">Learning</button>
-                            <button class="right-tab ${rightPanelTab === 'network' ? 'active' : ''}" data-tab="network">Network</button>
-                            <button class="right-tab ${rightPanelTab === 'memory' ? 'active' : ''}" data-tab="memory">Memory</button>
+                            <button class="right-tab ${rightPanelTab === 'prime' ? 'active' : ''}" data-tab="prime">
+                                <span class="right-tab-icon">⚛</span>
+                                <span>Prime</span>
+                            </button>
+                            <button class="right-tab ${rightPanelTab === 'memory' ? 'active' : ''}" data-tab="memory">
+                                <span class="right-tab-icon">🧠</span>
+                                <span>Memory</span>
+                            </button>
+                            <button class="right-tab ${rightPanelTab === 'graph' ? 'active' : ''}" data-tab="graph">
+                                <span class="right-tab-icon">🔗</span>
+                                <span>Graph</span>
+                            </button>
+                            <button class="right-tab ${rightPanelTab === 'learn' ? 'active' : ''}" data-tab="learn">
+                                <span class="right-tab-icon">📚</span>
+                                <span>Learn</span>
+                            </button>
+                            <button class="right-tab ${rightPanelTab === 'network' ? 'active' : ''}" data-tab="network">
+                                <span class="right-tab-icon">🌐</span>
+                                <span>Network</span>
+                            </button>
+                            <button class="right-tab ${rightPanelTab === 'field' ? 'active' : ''}" data-tab="field">
+                                <span class="right-tab-icon">◈</span>
+                                <span>SMF</span>
+                            </button>
                         </div>
                         
                         <div class="right-panel-content" id="rightPanelContent">
-                            <!-- Structure Tab -->
-                            <div class="tab-content ${rightPanelTab === 'structure' ? 'active' : ''}" data-tab="structure" style="height: 100%;">
-                                <structure-panel id="structurePanel"></structure-panel>
+                            <!-- Prime Tab (from structure-panel Prime Map) -->
+                            <div class="tab-content ${rightPanelTab === 'prime' ? 'active' : ''}" data-tab="prime">
+                                <structure-panel id="structurePanel" view="prime"></structure-panel>
                             </div>
                             
-                            <!-- Learning Tab -->
-                            <div class="tab-content ${rightPanelTab === 'learning' ? 'active' : ''}" data-tab="learning" style="height: 100%;">
+                            <!-- Memory Tab (unified memory-panel) -->
+                            <div class="tab-content ${rightPanelTab === 'memory' ? 'active' : ''}" data-tab="memory">
+                                <memory-panel id="memoryPanel"></memory-panel>
+                            </div>
+                            
+                            <!-- Graph Tab (from structure-panel Graph view) -->
+                            <div class="tab-content ${rightPanelTab === 'graph' ? 'active' : ''}" data-tab="graph">
+                                <structure-panel id="graphPanel" view="graph"></structure-panel>
+                            </div>
+                            
+                            <!-- Learn Tab -->
+                            <div class="tab-content ${rightPanelTab === 'learn' ? 'active' : ''}" data-tab="learn">
                                 <learning-panel id="learningPanel"></learning-panel>
                             </div>
                             
                             <!-- Network Tab -->
-                            <div class="tab-content ${rightPanelTab === 'network' ? 'active' : ''}" data-tab="network" style="height: 100%;">
+                            <div class="tab-content ${rightPanelTab === 'network' ? 'active' : ''}" data-tab="network">
                                 <network-panel id="networkPanel"></network-panel>
                             </div>
                             
-                            <!-- Memory Tab -->
-                            <div class="tab-content ${rightPanelTab === 'memory' ? 'active' : ''}" data-tab="memory" style="height: 100%;">
-                                <memory-panel id="memoryPanel"></memory-panel>
+                            <!-- SMF/Field Tab (sedenion axis detail) -->
+                            <div class="tab-content ${rightPanelTab === 'field' ? 'active' : ''}" data-tab="field">
+                                <field-panel id="smfPanel" mode="compact"></field-panel>
                             </div>
                         </div>
                     </aside>
@@ -1128,18 +647,6 @@ export class SentientApp extends BaseComponent {
         `;
     }
     
-    renderMatrixGrid() {
-        const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 67];
-        const concepts = ['Rhythm', 'Time', 'Flow', 'Time', 'Limitation', 'Temporal Will', 'Bifurcation', 'temporal Orb'];
-        
-        return primes.slice(0, 8).map((p, i) => `
-            <div class="matrix-cell">
-                <div class="matrix-cell-label">${p}</div>
-                <div class="matrix-cell-value">${concepts[i] || '--'}</div>
-            </div>
-        `).join('');
-    }
-    
     onMount() {
         // Get component references
         this.chat = this.$('#chat');
@@ -1147,7 +654,6 @@ export class SentientApp extends BaseComponent {
         this.fieldPanel = this.$('#fieldPanel');
         this.mainArtifact = this.$('#mainArtifact');
         this.mainCamera = this.$('#mainCamera');
-        this.bottomOsc = this.$('#bottomOsc');
         this.leftSidebar = this.$('#leftSidebar');
         this.rightPanel = this.$('#rightPanel');
         this.leftResizer = this.$('#leftResizer');
@@ -1165,7 +671,7 @@ export class SentientApp extends BaseComponent {
         // Setup resizers
         this.setupResizers();
         
-        // Listen for artifact display events from chat
+        // Listen for artifact display events
         this.addEventListener('show-artifact', (e) => {
             this.showArtifact(e.detail);
         });
@@ -1173,10 +679,6 @@ export class SentientApp extends BaseComponent {
     
     onUnmount() {
         this.disconnectStreams();
-        if (this.nodesInterval) {
-            clearInterval(this.nodesInterval);
-            this.nodesInterval = null;
-        }
     }
     
     setupEventListeners() {
@@ -1196,6 +698,16 @@ export class SentientApp extends BaseComponent {
             });
         }
         
+        // Chat collapse
+        const collapseChat = this.$('#collapseChat');
+        if (collapseChat) {
+            collapseChat.addEventListener('click', () => {
+                this._state.leftSidebarVisible = !this._state.leftSidebarVisible;
+                this.leftSidebar?.classList.toggle('collapsed', !this._state.leftSidebarVisible);
+                this.leftResizer?.classList.toggle('hidden', !this._state.leftSidebarVisible);
+            });
+        }
+        
         // Main view switching
         const viewTabs = this.$$('.view-tab');
         viewTabs.forEach(tab => {
@@ -1205,7 +717,7 @@ export class SentientApp extends BaseComponent {
             });
         });
         
-        // Tab switching (right panel)
+        // Right panel tab switching (6 flat tabs)
         const tabs = this.$$('.right-tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -1220,8 +732,6 @@ export class SentientApp extends BaseComponent {
                 contents.forEach(c => c.classList.toggle('active', c.dataset.tab === tabName));
             });
         });
-        
-        // Learning controls are now handled by learning-panel component
     }
     
     setupResizers() {
@@ -1239,7 +749,7 @@ export class SentientApp extends BaseComponent {
                 const onMove = (e) => {
                     if (!this.isResizingLeft) return;
                     const delta = e.clientX - startX;
-                    const newWidth = Math.max(350, Math.min(800, startWidth + delta));
+                    const newWidth = Math.max(320, Math.min(600, startWidth + delta));
                     if (this.leftSidebar) {
                         this.leftSidebar.style.width = `${newWidth}px`;
                         this.leftSidebarWidth = newWidth;
@@ -1274,7 +784,7 @@ export class SentientApp extends BaseComponent {
                 const onMove = (e) => {
                     if (!this.isResizingRight) return;
                     const delta = startX - e.clientX;
-                    const newWidth = Math.max(300, Math.min(600, startWidth + delta));
+                    const newWidth = Math.max(280, Math.min(500, startWidth + delta));
                     if (this.rightPanel) {
                         this.rightPanel.style.width = `${newWidth}px`;
                         this.rightPanelWidth = newWidth;
@@ -1320,8 +830,7 @@ export class SentientApp extends BaseComponent {
             this.updateConnectionStatus();
             setTimeout(() => this.connectStreams(), 3000);
         };
-        
-        // Field stream (500ms updates)
+        // Field stream
         this.fieldStream = new EventSource('/stream/field');
         this.fieldStream.onmessage = (e) => {
             try {
@@ -1336,36 +845,34 @@ export class SentientApp extends BaseComponent {
     disconnectStreams() {
         if (this.statusStream) { this.statusStream.close(); this.statusStream = null; }
         if (this.fieldStream) { this.fieldStream.close(); this.fieldStream = null; }
-        if (this.learningStream) { this.learningStream.close(); this.learningStream = null; }
     }
     
     updateConnectionStatus() {
-        const badge = this.$('.status-badge');
-        const dot = this.$('.status-dot');
-        if (badge) badge.classList.toggle('listening', this._state.connected);
-        if (dot) dot.classList.toggle('active', this._state.connected);
+        const indicator = this.$('.status-indicator');
+        if (indicator) {
+            indicator.classList.toggle('connected', this._state.connected);
+            indicator.classList.toggle('offline', !this._state.connected);
+            const label = indicator.querySelector('span:last-child');
+            if (label) label.textContent = this._state.connected ? 'Live' : 'Offline';
+        }
     }
     
     handleStatusUpdate(data) {
-        // Update header metrics
-        const entropyEl = this.$('#headerEntropy');
-        const coherenceEl = this.$('#headerCoherence');
-        
-        if (entropyEl && data.entropy !== undefined) {
-            entropyEl.textContent = data.entropy.toFixed(2) + '↓';
+        // Update metrics in the unified metrics bar
+        if (data.coherence !== undefined) {
+            this._state.coherence = data.coherence;
+            const el = this.$('#metricCoherence');
+            if (el) el.textContent = data.coherence.toFixed(3);
         }
-        if (coherenceEl && data.coherence !== undefined) {
-            coherenceEl.textContent = data.coherence.toFixed(2);
+        if (data.entropy !== undefined) {
+            this._state.entropy = data.entropy;
+            const el = this.$('#metricEntropy');
+            if (el) el.textContent = data.entropy.toFixed(3);
         }
-        
-        // Update sidebar stats
-        const sidebarCoh = this.$('#sidebarCoherence');
-        const cohBar = this.$('#coherenceBar');
-        if (sidebarCoh && data.coherence !== undefined) {
-            sidebarCoh.textContent = data.coherence.toFixed(3);
-        }
-        if (cohBar && data.coherence !== undefined) {
-            cohBar.style.width = `${data.coherence * 100}%`;
+        if (data.activePrimes !== undefined) {
+            this._state.activePrimes = data.activePrimes;
+            const el = this.$('#metricPrimes');
+            if (el) el.textContent = data.activePrimes;
         }
     }
     
@@ -1375,23 +882,17 @@ export class SentientApp extends BaseComponent {
             this.fieldHistory.shift();
         }
         
-        // Update oscillator viz
-        if (data.osc && this.bottomOsc) {
-            this.bottomOsc.setData(data.osc.top, data.coherence);
-            this.bottomOsc.setFieldHistory(this.fieldHistory);
-        }
-        
-        // Update field panel viz
+        // Update field panel
         if (data.smf && this.fieldPanel) {
             this.fieldPanel.setData(data.smf);
             this.fieldPanel.setFieldHistory(this.fieldHistory);
         }
         
-        // Update lambda label
+        // Update lambda metric
         if (data.lambda !== undefined) {
-            const label = this.$('#lambdaLabel');
-            const state = data.lambda < -0.1 ? 'COLLAPSED' : data.lambda > 0.1 ? 'EXPANDING' : 'TRANSITIONAL';
-            if (label) label.textContent = `${data.lambda.toFixed(3)} • ${state}`;
+            this._state.lambda = data.lambda;
+            const el = this.$('#metricLambda');
+            if (el) el.textContent = data.lambda.toFixed(3);
         }
     }
     
@@ -1402,21 +903,11 @@ export class SentientApp extends BaseComponent {
                 const status = await statusRes.json();
                 this.handleStatusUpdate(status);
             }
-            
-            // Node polling is now handled by network-panel component
-            // Learning stream is now handled by learning-panel component
         } catch (err) {
             console.warn('Failed to load initial data:', err);
         }
     }
     
-    // Node fetching and updating is now handled by network-panel component
-    
-    // Learning controls, stats, and log are now handled by learning-panel component
-    
-    /**
-     * Switch the main panel view
-     */
     switchMainView(viewName) {
         if (this._state.mainView === viewName) return;
         
@@ -1433,39 +924,26 @@ export class SentientApp extends BaseComponent {
         this.emit('view-change', { view: viewName });
     }
     
-    /**
-     * Show artifact editor with optional content
-     * Can be called from chat responses or tools
-     */
     showArtifact(options = {}) {
-        // Switch to artifact view
         this.switchMainView('artifact');
         
-        // Set content if provided
         if (options.content && this.mainArtifact) {
             this.mainArtifact.setContent(options.content);
         }
         
-        // Set title if provided
         if (options.title && this.mainArtifact) {
             this.mainArtifact.setAttribute('title', options.title);
         }
     }
     
-    /**
-     * Get the artifact editor content
-     */
     getArtifactContent() {
         return this.mainArtifact?.getContent?.() || null;
     }
     
-    /**
-     * Get the combined HTML from artifact editor
-     */
     getArtifactHTML() {
         return this.mainArtifact?.getCombinedHTML?.() || '';
     }
 }
 
 defineComponent('sentient-app', SentientApp);
-                
+    

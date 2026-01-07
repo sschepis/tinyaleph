@@ -1,11 +1,13 @@
 
 /**
  * Structure Panel Component
- * 
- * Enhanced Structure tab with:
+ *
+ * Simplified Structure panel with:
  * - Live prime→concept maps (Canvas visualization)
- * - Memory browser (searchable, filterable)
  * - Knowledge graph (force-directed visualization)
+ *
+ * Supports `view` attribute to show single view (prime|graph) without tabs.
+ * Memory browser removed - now handled by memory-panel.js
  */
 
 import { BaseComponent, sharedStyles, defineComponent } from './base-component.js';
@@ -36,23 +38,24 @@ const PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 
                 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229];
 
 export class StructurePanel extends BaseComponent {
+    static get observedAttributes() {
+        return ['view'];
+    }
+    
     constructor() {
         super();
         
         this._state = {
-            activeTab: 'primes',
+            activeTab: 'primes', // primes or graph
+            singleView: null, // If set via attribute, hide tabs and show only this view
             primeConceptMap: new Map(),
             activeOscillators: [],
             selectedPrime: null,
-            memories: [],
-            memorySearch: '',
-            memoryFilter: 'all',
-            selectedMemory: null,
             graphNodes: [],
             graphEdges: [],
             selectedNode: null,
             graphLayout: 'force',
-            loading: { primes: false, memory: false, graph: false }
+            loading: { primes: false, graph: false }
         };
         
         this.primeCanvas = null;
@@ -61,6 +64,18 @@ export class StructurePanel extends BaseComponent {
         this.refreshInterval = null;
         this.graphZoom = 1;
         this.graphOffset = { x: 0, y: 0 };
+    }
+    
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'view' && newValue) {
+            // Map view attribute to internal tab names
+            const viewMap = { 'prime': 'primes', 'graph': 'graph' };
+            this._state.singleView = viewMap[newValue] || null;
+            this._state.activeTab = viewMap[newValue] || 'primes';
+            if (this.shadowRoot) {
+                this.render();
+            }
+        }
     }
     
     styles() {
@@ -85,6 +100,8 @@ export class StructurePanel extends BaseComponent {
                 border-bottom: 1px solid var(--border-color);
                 padding: 0 var(--space-xs);
             }
+            
+            .panel-tabs.hidden { display: none; }
             
             .panel-tab {
                 flex: 1;
@@ -174,7 +191,7 @@ export class StructurePanel extends BaseComponent {
             .prime-amplitude-fill { height: 100%; background: var(--accent-primary); transition: width var(--transition-normal); }
             
             /* Memory View */
-            .memory-view { display: flex; flex-direction: column; padding: var(--space-sm); }
+            .memory-view { padding: var(--space-sm); }
             .memory-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm); }
             
             .memory-search {
@@ -340,18 +357,17 @@ export class StructurePanel extends BaseComponent {
     }
     
     template() {
-        const { activeTab } = this._state;
+        const { activeTab, singleView } = this._state;
+        
+        // If singleView is set, hide tabs and show only that view
+        const hideTabs = singleView !== null;
         
         return `
             <div class="structure-panel">
-                <div class="panel-tabs">
+                <div class="panel-tabs ${hideTabs ? 'hidden' : ''}">
                     <button class="panel-tab ${activeTab === 'primes' ? 'active' : ''}" data-tab="primes">
                         <span class="tab-icon">⊗</span>
                         <span>Prime Map</span>
-                    </button>
-                    <button class="panel-tab ${activeTab === 'memory' ? 'active' : ''}" data-tab="memory">
-                        <span class="tab-icon">🧠</span>
-                        <span>Memory</span>
                     </button>
                     <button class="panel-tab ${activeTab === 'graph' ? 'active' : ''}" data-tab="graph">
                         <span class="tab-icon">🕸</span>
@@ -362,10 +378,6 @@ export class StructurePanel extends BaseComponent {
                 <div class="panel-content">
                     <div class="tab-view prime-map-view ${activeTab === 'primes' ? 'active' : ''}" data-view="primes">
                         ${this.renderPrimeMapView()}
-                    </div>
-                    
-                    <div class="tab-view memory-view ${activeTab === 'memory' ? 'active' : ''}" data-view="memory">
-                        ${this.renderMemoryView()}
                     </div>
                     
                     <div class="tab-view graph-view ${activeTab === 'graph' ? 'active' : ''}" data-view="graph">
@@ -545,7 +557,7 @@ export class StructurePanel extends BaseComponent {
     // =============== LIFECYCLE ===============
     
     onMount() {
-        this.setupEventListeners();
+        this.setupTabClickHandlers();
         this.loadInitialData();
         this.initializeCanvases();
         this.refreshInterval = setInterval(() => this.refreshData(), 2000);
@@ -559,12 +571,56 @@ export class StructurePanel extends BaseComponent {
     setupEventListeners() {
         this.$$('.panel-tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                this._state.activeTab = tab.dataset.tab;
-                this.updateTabs();
-                setTimeout(() => this.initializeCanvases(), 50);
+                const previousTab = this._state.activeTab;
+                const newTab = tab.dataset.tab;
+                
+                if (previousTab === newTab) return; // No change
+                
+                this._state.activeTab = newTab;
+                
+                // Re-render the entire panel to ensure correct view
+                this.render();
+                this.setupTabClickHandlers();
+                
+                setTimeout(() => {
+                    this.initializeCanvases();
+                    // Reload data when switching to graph tab
+                    if (newTab === 'graph') {
+                        this.loadGraphData();
+                    }
+                }, 50);
             });
         });
         
+    }
+    
+    /**
+     * Setup tab click handlers (called after re-render)
+     */
+    setupTabClickHandlers() {
+        this.$$('.panel-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const previousTab = this._state.activeTab;
+                const newTab = tab.dataset.tab;
+                
+                if (previousTab === newTab) return;
+                
+                this._state.activeTab = newTab;
+                
+                // Re-render the entire panel to ensure correct view
+                this.render();
+                this.setupTabClickHandlers();
+                
+                setTimeout(() => {
+                    this.initializeCanvases();
+                    if (newTab === 'graph') {
+                        this.loadGraphData();
+                    }
+                }, 50);
+            });
+        });
+        
+        // Also setup click handlers for items
         this.addEventListener('click', (e) => {
             const primeCell = e.target.closest('.prime-cell');
             if (primeCell) {
@@ -593,7 +649,11 @@ export class StructurePanel extends BaseComponent {
     }
     
     async refreshData() {
-        if (this._state.activeTab === 'primes') await this.loadOscillatorData();
+        if (this._state.activeTab === 'primes') {
+            await this.loadOscillatorData();
+        } else if (this._state.activeTab === 'graph') {
+            await this.loadGraphData();
+        }
     }
     
     async loadOscillatorData() {
@@ -624,16 +684,193 @@ export class StructurePanel extends BaseComponent {
     
     async loadGraphData() {
         this._state.loading.graph = true;
+        
         try {
+            // Fetch SMF data for base structure
             const smfRes = await fetch('/smf');
+            let smfData = null;
             if (smfRes.ok) {
-                const smfData = await smfRes.json();
-                this.buildKnowledgeGraph(smfData);
+                smfData = await smfRes.json();
             }
-        } catch (err) { console.warn('Failed to load graph data:', err); }
+            
+            // Fetch learning status for learned concepts
+            let learnedConcepts = [];
+            try {
+                const learningRes = await fetch('/learning/status');
+                if (learningRes.ok) {
+                    const learningData = await learningRes.json();
+                    learnedConcepts = learningData.session?.conceptsLearned || [];
+                }
+            } catch (e) {
+                console.warn('Failed to fetch learning status:', e);
+            }
+            
+            // Build graph with both SMF and learned concepts
+            if (smfData) {
+                this.buildKnowledgeGraph(smfData, learnedConcepts);
+            } else {
+                console.warn('SMF endpoint not available, using default graph');
+                this.buildDefaultGraph(learnedConcepts);
+            }
+        } catch (err) {
+            console.warn('Failed to load graph data:', err);
+            // Create default graph if SMF not available
+            this.buildDefaultGraph([]);
+        }
         this._state.loading.graph = false;
-        this.drawKnowledgeGraph();
+        
+        // Re-initialize canvas after loading
+        const graphCanvas = this.$('#graphCanvas');
+        if (graphCanvas) {
+            this.graphCanvas = graphCanvas;
+            this.graphCtx = graphCanvas.getContext('2d');
+            this.resizeCanvas(graphCanvas);
+            this.drawKnowledgeGraph();
+        }
     }
+    
+    /**
+     * Build default knowledge graph from SMF_AXES when server data unavailable
+     * @param {Array} learnedConcepts - Concepts learned from the learning system
+     */
+    buildDefaultGraph(learnedConcepts = []) {
+        const nodes = [];
+        const edges = [];
+        
+        const centerX = 200;
+        const centerY = 150;
+        
+        // Add SMF axis nodes in a circle
+        SMF_AXES.forEach((axis, i) => {
+            const angle = (i / 16) * Math.PI * 2 - Math.PI / 2;
+            nodes.push({
+                id: axis.name,
+                label: axis.name,
+                symbol: axis.symbol,
+                color: axis.color,
+                value: 0.5,
+                type: 'axis',
+                x: centerX + Math.cos(angle) * 100,
+                y: centerY + Math.sin(angle) * 100,
+                vx: 0, vy: 0
+            });
+        });
+        
+        // Circular edges between adjacent axes
+        for (let i = 0; i < 16; i++) {
+            edges.push({ source: SMF_AXES[i].name, target: SMF_AXES[(i + 1) % 16].name, weight: 0.5 });
+        }
+        
+        // Complementary edges (opposite axes)
+        for (let i = 0; i < 8; i++) {
+            edges.push({ source: SMF_AXES[i].name, target: SMF_AXES[i + 8].name, weight: 0.3, type: 'complementary' });
+        }
+        
+        // Add learned concept nodes
+        this.addLearnedConceptNodes(nodes, edges, learnedConcepts, centerX, centerY);
+        
+        this._state.graphNodes = nodes;
+        this._state.graphEdges = edges;
+    }
+    
+    /**
+     * Add learned concept nodes to the graph
+     * @param {Array} nodes - Nodes array to add to
+     * @param {Array} edges - Edges array to add to
+     * @param {Array} learnedConcepts - Learned concepts from learning system
+     * @param {number} centerX - Center X coordinate
+     * @param {number} centerY - Center Y coordinate
+     */
+    addLearnedConceptNodes(nodes, edges, learnedConcepts, centerX, centerY) {
+        if (!learnedConcepts || learnedConcepts.length === 0) return;
+        
+        // Deduplicate concepts by topic
+        const uniqueConcepts = new Map();
+        for (const concept of learnedConcepts) {
+            if (concept.topic && !uniqueConcepts.has(concept.topic)) {
+                uniqueConcepts.set(concept.topic, concept);
+            }
+        }
+        
+        const conceptArray = Array.from(uniqueConcepts.values()).slice(0, 20); // Limit to 20 concepts
+        
+        conceptArray.forEach((concept, i) => {
+            // Position learned concepts in an outer ring
+            const angle = (i / Math.max(conceptArray.length, 1)) * Math.PI * 2 - Math.PI / 2;
+            const radius = 160; // Outer ring
+            
+            const nodeId = `concept_${i}`;
+            const label = concept.topic.length > 15 ? concept.topic.slice(0, 15) + '…' : concept.topic;
+            
+            nodes.push({
+                id: nodeId,
+                label: label,
+                fullLabel: concept.topic,
+                symbol: '◇',
+                color: '#22d3ee', // Cyan for learned concepts
+                value: 0.4,
+                type: 'learned',
+                timestamp: concept.timestamp,
+                x: centerX + Math.cos(angle) * radius,
+                y: centerY + Math.sin(angle) * radius,
+                vx: 0, vy: 0
+            });
+            
+            // Connect to a related SMF axis based on keyword matching
+            const relatedAxis = this.findRelatedAxis(concept.topic);
+            if (relatedAxis) {
+                edges.push({
+                    source: nodeId,
+                    target: relatedAxis,
+                    weight: 0.4,
+                    type: 'learned'
+                });
+            }
+        });
+    }
+    
+    /**
+     * Find a related SMF axis for a concept based on keyword matching
+     * @param {string} topic - The concept topic
+     * @returns {string|null} - The axis name or null
+     */
+    findRelatedAxis(topic) {
+        if (!topic) return null;
+        
+        const topicLower = topic.toLowerCase();
+        
+        // Keyword mappings to axes
+        const axisKeywords = {
+            'coherence': ['consistent', 'coherent', 'unified', 'aligned', 'logical'],
+            'identity': ['self', 'identity', 'who', 'person', 'individual'],
+            'duality': ['dual', 'opposite', 'binary', 'contrast', 'balance'],
+            'structure': ['structure', 'organize', 'system', 'framework', 'architecture'],
+            'change': ['change', 'transform', 'evolve', 'adapt', 'modify'],
+            'life': ['life', 'living', 'biological', 'organic', 'vital'],
+            'harmony': ['harmony', 'peace', 'balance', 'unity', 'cooperation'],
+            'wisdom': ['wisdom', 'knowledge', 'insight', 'understanding', 'learn'],
+            'infinity': ['infinite', 'endless', 'eternal', 'unlimited', 'boundless'],
+            'creation': ['create', 'make', 'build', 'generate', 'produce'],
+            'truth': ['truth', 'true', 'fact', 'real', 'authentic'],
+            'love': ['love', 'care', 'connection', 'relationship', 'emotion'],
+            'power': ['power', 'energy', 'force', 'strength', 'ability'],
+            'time': ['time', 'temporal', 'duration', 'moment', 'history'],
+            'space': ['space', 'spatial', 'location', 'distance', 'dimension'],
+            'consciousness': ['conscious', 'aware', 'mind', 'thought', 'cognition']
+        };
+        
+        for (const [axis, keywords] of Object.entries(axisKeywords)) {
+            for (const keyword of keywords) {
+                if (topicLower.includes(keyword)) {
+                    return axis;
+                }
+            }
+        }
+        
+        // Default to wisdom for learning-related concepts
+        return 'wisdom';
+    }
+    
     
     // =============== PRIME CONCEPT MAP ===============
     
@@ -839,9 +1076,17 @@ export class StructurePanel extends BaseComponent {
     
     // =============== KNOWLEDGE GRAPH ===============
     
-    buildKnowledgeGraph(smfData) {
+    /**
+     * Build knowledge graph from SMF data and learned concepts
+     * @param {Object} smfData - SMF state from server
+     * @param {Array} learnedConcepts - Concepts learned from learning system
+     */
+    buildKnowledgeGraph(smfData, learnedConcepts = []) {
         const nodes = [];
         const edges = [];
+        
+        const centerX = 200;
+        const centerY = 150;
         
         if (smfData && smfData.components) {
             smfData.components.forEach((comp, i) => {
@@ -853,20 +1098,25 @@ export class StructurePanel extends BaseComponent {
                     color: axis.color,
                     value: Math.abs(comp.value),
                     type: 'axis',
-                    x: 200 + Math.cos(i * Math.PI / 8) * 120,
-                    y: 150 + Math.sin(i * Math.PI / 8) * 120,
+                    x: centerX + Math.cos(i * Math.PI / 8) * 120,
+                    y: centerY + Math.sin(i * Math.PI / 8) * 120,
                     vx: 0, vy: 0
                 });
             });
             
+            // Circular edges
             for (let i = 0; i < 16; i++) {
                 edges.push({ source: SMF_AXES[i].name, target: SMF_AXES[(i + 1) % 16].name, weight: 0.5 });
             }
             
+            // Complementary edges
             for (let i = 0; i < 8; i++) {
                 edges.push({ source: SMF_AXES[i].name, target: SMF_AXES[i + 8].name, weight: 0.3, type: 'complementary' });
             }
         }
+        
+        // Add learned concept nodes
+        this.addLearnedConceptNodes(nodes, edges, learnedConcepts, centerX, centerY);
         
         this._state.graphNodes = nodes;
         this._state.graphEdges = edges;

@@ -33,7 +33,7 @@ function createLLMClient(options = {}) {
             console.log('[AlephChat] Using Vertex AI provider');
             return new VertexAIClient({
                 projectId: options.projectId || process.env.GOOGLE_CLOUD_PROJECT,
-                location: options.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
+                location: options.location || process.env.GOOGLE_CLOUD_LOCATION || 'global',
                 model: options.model || 'gemini-3-pro-preview',
                 temperature: options.temperature ?? 0.7,
                 maxTokens: options.maxTokens || 32768,

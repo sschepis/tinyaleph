@@ -10,7 +10,7 @@
  *
  * Environment variables:
  * - GOOGLE_CLOUD_PROJECT: Your GCP project ID
- * - GOOGLE_CLOUD_LOCATION: Region (default: us-central1)
+ * - GOOGLE_CLOUD_LOCATION: Region (default: global)
  * - GOOGLE_APPLICATION_CREDENTIALS: Path to service account JSON
  */
 
@@ -183,7 +183,7 @@ class VertexAIClient {
      * Create a new Vertex AI client
      * @param {Object} options - Configuration options
      * @param {string} options.projectId - Google Cloud project ID
-     * @param {string} options.location - Region (default: us-central1)
+     * @param {string} options.location - Region (default: global)
      * @param {string} options.model - Model identifier (default: gemini-3-pro-preview)
      * @param {number} options.temperature - Sampling temperature (default: 0.7)
      * @param {number} options.maxTokens - Maximum response tokens (default: 8192)
@@ -208,7 +208,7 @@ class VertexAIClient {
         }
         
         this.projectId = options.projectId || process.env.GOOGLE_CLOUD_PROJECT || serviceAccountProjectId;
-        this.location = options.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+        this.location = options.location || process.env.GOOGLE_CLOUD_LOCATION || 'global';
         this.model = options.model || 'gemini-3-pro-preview';
         this.temperature = options.temperature ?? 0.7;
         this.maxTokens = options.maxTokens || 32768;
@@ -217,7 +217,13 @@ class VertexAIClient {
         this._tokenExpiry = 0;
         
         // Construct API endpoint
-        this.apiEndpoint = `${this.location}-aiplatform.googleapis.com`;
+        // For 'global' location, use aiplatform.googleapis.com without region prefix
+        // For regional locations, use {location}-aiplatform.googleapis.com
+        if (this.location === 'global') {
+            this.apiEndpoint = 'aiplatform.googleapis.com';
+        } else {
+            this.apiEndpoint = `${this.location}-aiplatform.googleapis.com`;
+        }
         
         if (!this.projectId) {
             console.warn('[VertexAI] Warning: No project ID set. Set GOOGLE_CLOUD_PROJECT env var or provide credentials file.');

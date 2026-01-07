@@ -1,9 +1,9 @@
 /**
  * Sentient Observer Library
- * 
+ *
  * Exports all components for the Sentient Observer implementation
  * based on "A Design for a Sentient Observer" paper.
- * 
+ *
  * Components:
  * - SMF: Sedenion Memory Field (16D semantic orientation)
  * - PRSC: Prime Resonance Semantic Computation (oscillator dynamics)
@@ -15,6 +15,12 @@
  * - Boundary: Self/other distinction and I/O
  * - Safety: Constraints, ethics, and monitoring
  * - Core: Unified SentientObserver integration
+ *
+ * Enhanced with formal semantics from core modules:
+ * - TypeChecker: Formal type inference (Γ ⊢ e : T)
+ * - ReductionSystem: Strong normalization with proofs
+ * - Translator: λ-calculus model-theoretic semantics
+ * - EnochianVocabulary: Full 21-letter alphabet and vocabulary
  */
 
 // Sedenion Memory Field
@@ -98,7 +104,7 @@ const {
     AssaySuite
 } = require('./assays');
 
-// Prime Calculus Kernel (Section 6)
+// Prime Calculus Kernel (Section 6) - Enhanced with formal semantics
 const {
     TermType,
     NounTerm,
@@ -111,10 +117,23 @@ const {
     PrimeCalculusEvaluator,
     PrimeCalculusVerifier,
     PrimeCalculusBuilder,
-    SemanticObject
+    SemanticObject,
+    // Re-exported formal semantics
+    TypeChecker,
+    Types,
+    ReductionSystem,
+    ResonanceOperator,
+    NextPrimeOperator,
+    ModularOperator,
+    IdentityOperator,
+    demonstrateStrongNormalization,
+    testLocalConfluence,
+    Translator,
+    LambdaEvaluator,
+    Semantics
 } = require('./prime-calculus');
 
-// Enochian Packet Layer (Section 7.4)
+// Enochian Packet Layer (Section 7.4) - Enhanced with vocabulary
 const {
     ENOCHIAN_PRIMES,
     MODES,
@@ -125,7 +144,22 @@ const {
     EnochianPacket,
     EnochianEncoder,
     EnochianDecoder,
-    EnochianPacketBuilder
+    EnochianPacketBuilder,
+    // Enhanced classes
+    EnhancedEnochianEncoder,
+    EnhancedEnochianDecoder,
+    // Vocabulary re-exports
+    EnochianVocabulary,
+    ENOCHIAN_ALPHABET,
+    PRIME_BASIS,
+    CORE_VOCABULARY,
+    THE_NINETEEN_CALLS,
+    EnochianWord,
+    EnochianCall,
+    EnochianEngine,
+    SedenionElement,
+    TwistOperator,
+    validateTwistClosure
 } = require('./enochian');
 
 // Distributed Sentience Network (Section 7)
@@ -231,6 +265,20 @@ module.exports = {
     PrimeCalculusBuilder,
     SemanticObject,
     
+    // Formal Semantics (from core modules, re-exported via prime-calculus)
+    TypeChecker,
+    Types,
+    ReductionSystem,
+    ResonanceOperator,
+    NextPrimeOperator,
+    ModularOperator,
+    IdentityOperator,
+    demonstrateStrongNormalization,
+    testLocalConfluence,
+    Translator,
+    LambdaEvaluator,
+    Semantics,
+    
     // Enochian Packet Layer (Section 7.4)
     ENOCHIAN_PRIMES,
     MODES,
@@ -242,6 +290,21 @@ module.exports = {
     EnochianEncoder,
     EnochianDecoder,
     EnochianPacketBuilder,
+    
+    // Enhanced Enochian with Vocabulary
+    EnhancedEnochianEncoder,
+    EnhancedEnochianDecoder,
+    EnochianVocabulary,
+    ENOCHIAN_ALPHABET,
+    PRIME_BASIS,
+    CORE_VOCABULARY,
+    THE_NINETEEN_CALLS,
+    EnochianWord,
+    EnochianCall,
+    EnochianEngine,
+    SedenionElement,
+    TwistOperator,
+    validateTwistClosure,
     
     // Distributed Sentience Network (Section 7)
     LocalField,

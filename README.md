@@ -10,14 +10,19 @@ A novel computational paradigm that encodes meaning as prime number signatures, 
 ## Features
 
 - **Prime Semantics**: Encode concepts as unique prime number signatures
-- **Hypercomplex Algebra**: 16-dimensional sedenion space with non-commutative multiplication
+- **Hypercomplex Algebra**: 16-dimensional sedenion space with non-commutative multiplication, exp/log/slerp
 - **Oscillator Dynamics**: Kuramoto-model synchronization for coherent reasoning
+- **Stochastic Dynamics**: Noise-robust Kuramoto with Langevin, colored, and thermal noise models
+- **Prime Entanglement**: Graph-based tracking of prime relationships and co-occurrences
+- **Event Streaming**: Real-time monitoring with EventEmitter pattern and async iteration
 - **Entropy Minimization**: Reasoning as reduction of semantic uncertainty
 - **Multiple Backends**: Semantic (NLP), Cryptographic (hashing), Scientific (quantum-inspired)
 - **Formal Type System**: Typed term calculus with N(p)/A(p)/S types and ordering constraints
 - **Reduction Semantics**: Strong normalization with prime-preserving operators
 - **Lambda Translation**: Model-theoretic semantics via λ-calculus embedding
 - **Enochian Vocabulary**: 21-letter angelic alphabet with prime basis and sedenion operations
+- **ResoFormer Architecture**: Complete prime-indexed transformer with multi-head attention
+- **Multi-Z Memory**: Hierarchical memory with fast/slow/permanent channels
 
 ## Installation
 
@@ -205,6 +210,103 @@ const multi = new MultiSystemCoupling([system1, system2, system3]);
 console.log('Inter-system coherence:', multi.interSystemCoherence());
 ```
 
+### Stochastic Kuramoto Models
+
+Noise-robust synchronization with Langevin dynamics:
+
+```javascript
+const {
+  StochasticKuramoto,      // White noise Langevin dynamics
+  ColoredNoiseKuramoto,    // Ornstein-Uhlenbeck noise
+  ThermalKuramoto          // Temperature-dependent coupling
+} = require('@aleph-ai/tinyaleph');
+
+// White noise model
+const stochastic = new StochasticKuramoto(frequencies, {
+  coupling: 0.5,
+  noiseIntensity: 0.1
+});
+
+stochastic.evolve(100, 0.01);
+const { mean, stdDev } = stochastic.orderParameterWithUncertainty(50, 0.01);
+
+// Colored noise (Ornstein-Uhlenbeck process)
+const colored = new ColoredNoiseKuramoto(frequencies, {
+  correlationTime: 2.0,
+  noiseIntensity: 0.1
+});
+
+// Thermal model with temperature-dependent noise
+const thermal = new ThermalKuramoto(frequencies, { temperature: 2.0 });
+thermal.setTemperature(4.0);  // Higher temp = more noise
+const Tc = thermal.estimateCriticalTemperature();
+```
+
+### Prime Entanglement Graph
+
+Track prime relationships from co-occurrence and resonance:
+
+```javascript
+const { PrimeEntanglementGraph } = require('@aleph-ai/tinyaleph');
+
+const graph = new PrimeEntanglementGraph([2, 3, 5, 7, 11]);
+
+// Record co-occurrences
+graph.observe([2, 3], [5, 7], 0.8);
+graph.observe([5, 7], [11], 0.6);
+
+// Query relationships
+const neighbors = graph.neighbors(7, 2);  // 2-hop neighborhood
+const path = graph.shortestPath(2, 11);
+
+// Graph metrics
+const cc = graph.clusteringCoefficient(5);
+const stats = graph.stats();
+
+// Convert to Kuramoto network
+const adjacency = graph.toAdjacencyMatrix([2, 3, 5, 7, 11]);
+```
+
+### Event-Driven Streaming
+
+Real-time monitoring and async iteration:
+
+```javascript
+const {
+  AlephEventEmitter,
+  AlephMonitor,
+  EvolutionStream
+} = require('@aleph-ai/tinyaleph');
+
+// Event emitter with throttling
+const emitter = new AlephEventEmitter();
+emitter.throttle('tick', 100);  // Max once per 100ms
+
+emitter.on('collapse', ({ from, to, probability }) => {
+  console.log(`Collapsed with p=${probability}`);
+});
+
+emitter.on('sync', ({ orderParameter }) => {
+  console.log(`Synchronized: r=${orderParameter}`);
+});
+
+// Promise-based waiting
+const data = await emitter.waitFor('ready', 5000);
+
+// Async iteration over evolution
+const stream = EvolutionStream.fromEvolvable(kuramoto);
+
+for await (const state of stream.take(100)) {
+  console.log(state.orderParameter);
+}
+
+// Stream operators
+const filtered = stream
+  .filter(s => s.entropy < 2.0)
+  .map(s => s.orderParameter)
+  .take(50);
+```
+
 ### Entropy and Stability
 
 ```javascript
@@ -216,6 +318,96 @@ const entropy = stateEntropy(state);
 // Estimate Lyapunov exponent for stability
 const lambda = estimateLyapunov(entropyTimeSeries);
 console.log('Stable:', lambda < 0);
+```
+
+### Hypercomplex Algebra Extensions
+
+Extended operations for smooth interpolation and rotations:
+
+```javascript
+const { Hypercomplex } = require('@aleph-ai/tinyaleph');
+
+const q1 = Hypercomplex.fromArray([1, 0, 0, 0]);
+const q2 = Hypercomplex.fromAxisAngle(4, [0, 0, 1], Math.PI/2);
+
+// Exponential and logarithm
+const expQ = q1.exp();
+const logQ = q2.log();
+
+// Smooth interpolation (slerp)
+for (let t = 0; t <= 1; t += 0.1) {
+  const interpolated = q1.slerp(q2, t);
+}
+
+// Rotation operations
+const rotated = q2.sandwich(vector);
+const axis = q2.toAxisAngle();
+
+// Power operations
+const squared = q1.pow(2);
+const cubed = q1.powInt(3);
+```
+
+### Multi-Z Channel Primeon Ladder
+
+Hierarchical memory with different decay rates:
+
+```javascript
+const { PrimeonZLadderMulti, createAdiabaticSchedule } = require('@aleph-ai/tinyaleph');
+
+const ladder = new PrimeonZLadderMulti({
+  N: 32,
+  zChannels: [
+    { name: 'fast', dz: 1, leak: 0.2, decay: 0.1 },
+    { name: 'slow', dz: 1, leak: 0.01, decay: 0.001 },
+    { name: 'permanent', dz: 1, leak: 0.0, decay: 0.0 }
+  ],
+  J: 0.25
+});
+
+// Per-channel metrics
+const metrics = ladder.channelMetrics();
+console.log('Fast entropy:', metrics.fast.entropy);
+console.log('Slow Z-flux:', metrics.slow.totalFlux);
+
+// Adiabatic parameter schedules
+const Jt = createAdiabaticSchedule(0.1, 0.5, 100, 'sinusoidal');
+const ladder2 = new PrimeonZLadderMulti({ N: 16, Jt });
+```
+
+### ResoFormer Architecture
+
+Complete prime-indexed transformer:
+
+```javascript
+const {
+  ResoFormer,
+  ResoFormerBlock,
+  ResonantMultiHeadAttention,
+  PrimeFFN,
+  SparsePrimeState
+} = require('@aleph-ai/tinyaleph');
+
+// Create sparse prime states
+const state1 = SparsePrimeState.fromPrimes([2, 3, 5]);
+const state2 = SparsePrimeState.fromPrimes([7, 11, 13]);
+
+// Multi-head attention
+const attention = new ResonantMultiHeadAttention({
+  numHeads: 8,
+  numPrimes: 4096
+});
+
+const result = attention.forward(state1, [state2], [state2]);
+
+// Full ResoFormer model
+const model = new ResoFormer({
+  numLayers: 6,
+  numHeads: 8,
+  hiddenDim: 256
+});
+
+const outputs = model.forward([state1, state2]);
 ```
 
 ## Formal Semantics
@@ -349,7 +541,7 @@ console.log(CORE_VOCABULARY['ZORGE']);  // "be friendly unto"
 | `SemanticBackend` | Natural language processing |
 | `CryptographicBackend` | Hashing and key derivation |
 | `ScientificBackend` | Quantum-inspired computation |
-| `Hypercomplex` | Sedenion algebra |
+| `Hypercomplex` | Sedenion algebra with exp/log/slerp |
 | `Oscillator` / `OscillatorBank` | Phase-amplitude oscillators |
 | `KuramotoModel` | Coupled oscillator synchronization |
 | `NetworkKuramoto` | Topology-aware coupling |
@@ -357,6 +549,16 @@ console.log(CORE_VOCABULARY['ZORGE']);  // "be friendly unto"
 | `SakaguchiKuramoto` | Phase frustration / chimera states |
 | `SmallWorldKuramoto` | Watts-Strogatz topology |
 | `MultiSystemCoupling` | Cross-system synchronization |
+| `StochasticKuramoto` | Langevin noise dynamics |
+| `ColoredNoiseKuramoto` | Ornstein-Uhlenbeck noise |
+| `ThermalKuramoto` | Temperature-dependent coupling |
+| `PrimeEntanglementGraph` | Prime relationship tracking |
+| `AlephEventEmitter` | Event-driven monitoring |
+| `AlephMonitor` | Engine state monitoring |
+| `EvolutionStream` | Async iteration over evolution |
+| `PrimeonZLadderMulti` | Multi-channel Z memory |
+| `ResoFormer` | Prime-indexed transformer |
+| `SparsePrimeState` | Sparse prime activations |
 | `hash(input)` | Quick semantic hash |
 | `deriveKey(pass, salt)` | Quick key derivation |
 
@@ -394,6 +596,32 @@ const physics = require('@aleph-ai/tinyaleph/physics');
 const backends = require('@aleph-ai/tinyaleph/backends');
 const engine = require('@aleph-ai/tinyaleph/engine');
 ```
+
+### New Physics Exports
+
+| Export | Description |
+|--------|-------------|
+| `StochasticKuramoto` | White noise Langevin dynamics |
+| `ColoredNoiseKuramoto` | Ornstein-Uhlenbeck colored noise |
+| `ThermalKuramoto` | Temperature-dependent coupling |
+| `PrimeonZLadderMulti` | Hierarchical Z memory channels |
+| `createAdiabaticSchedule` | Parameter sweep schedules |
+
+### New Core Exports
+
+| Export | Description |
+|--------|-------------|
+| `PrimeEntanglementGraph` | Prime co-occurrence tracking |
+| `AlephEventEmitter` | Event pub/sub system |
+| `AlephMonitor` | Engine monitoring wrapper |
+| `EvolutionStream` | Async iteration for dynamics |
+| `ResoFormer` | Full transformer model |
+| `ResoFormerBlock` | Single transformer block |
+| `ResonantMultiHeadAttention` | Multi-head attention |
+| `PrimeFFN` | Feed-forward network |
+| `PrimeLayerNorm` | Prime-preserving normalization |
+| `PositionalPrimeEncoding` | Position as prime phases |
+| `SparsePrimeState` | Sparse activation storage |
 
 ## Documentation
 

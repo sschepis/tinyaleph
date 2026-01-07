@@ -117,9 +117,14 @@ class SentientServer {
     
     /**
      * Add a message to conversation history
+     * @param {string} role - 'user' or 'assistant'
+     * @param {string} content - Message content
+     * @param {Object} options - Optional metadata
+     * @param {number} options.timestamp - Custom timestamp (defaults to Date.now())
      */
-    addToHistory(role, content) {
-        this.conversationHistory.push({ role, content, timestamp: Date.now() });
+    addToHistory(role, content, options = {}) {
+        const timestamp = options.timestamp || Date.now();
+        this.conversationHistory.push({ role, content, timestamp });
         if (this.conversationHistory.length > 100) {
             this.conversationHistory = this.conversationHistory.slice(-100);
         }
@@ -487,6 +492,11 @@ class SentientServer {
         
         if (pathname === '/memory' && req.method === 'GET') {
             await observer.getMemory(req, res, url);
+            return true;
+        }
+        
+        if (pathname === '/memory/search' && req.method === 'POST') {
+            await observer.searchMemory(req, res);
             return true;
         }
         

@@ -36,9 +36,13 @@ function cleanControlTokens(text, isStreaming = false) {
     // Pattern: "to=functions/something" anywhere (standalone)
     cleaned = cleaned.replace(/\bto=\S+/g, ' ');
     
-    // Pattern: standalone channel names at start of line or text (replace with space)
-    cleaned = cleaned.replace(/^\s*(commentary|system|user|assistant|tool)\s*/gim, ' ');
-    cleaned = cleaned.replace(/\b(commentary|system|user|assistant|tool)\b\s*/gi, ' ');
+    // Pattern: standalone channel names ONLY at start of line followed by colon or specific markers
+    // This targets control tokens like "user:" or "assistant:" at line starts, not normal word usage
+    cleaned = cleaned.replace(/^\s*(commentary|system|user|assistant|tool)\s*:/gim, ' ');
+    
+    // Pattern: channel names followed by message markers (from structured output)
+    // e.g., "user message:" or "assistant response:"
+    cleaned = cleaned.replace(/\b(commentary|system|user|assistant|tool)\s+(message|response|output|input)\s*:/gi, ' ');
     
     // If streaming, we skip the aggressive JSON detection and whitespace normalization
     // because we might only have a partial chunk

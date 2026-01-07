@@ -42,6 +42,32 @@ const {
   createPeerCoupling
 } = require('./sync-models');
 
+// Stochastic Kuramoto models
+const {
+  StochasticKuramoto,
+  ColoredNoiseKuramoto,
+  ThermalKuramoto,
+  gaussianRandom
+} = require('./stochastic-kuramoto');
+
+// Primeon Z-Ladder with canonical U evolution
+const {
+  PrimeonZLadderU,
+  createPrimeonLadder,
+  shannonEntropyNats,
+  probsOf,
+  normalize: normalizeComplex,
+  C: Complex
+} = require('./primeon_z_ladder_u');
+
+// Multi-channel Primeon Z-Ladder
+const {
+  ZChannel,
+  PrimeonZLadderMulti,
+  createMultiChannelLadder,
+  createAdiabaticSchedule
+} = require('./primeon_z_ladder_multi');
+
 module.exports = {
   // Oscillators
   Oscillator,
@@ -56,6 +82,26 @@ module.exports = {
   MultiSystemCoupling,
   createHierarchicalCoupling,
   createPeerCoupling,
+  
+  // Stochastic Kuramoto models
+  StochasticKuramoto,
+  ColoredNoiseKuramoto,
+  ThermalKuramoto,
+  gaussianRandom,
+  
+  // Primeon Z-Ladder (canonical U evolution)
+  PrimeonZLadderU,
+  createPrimeonLadder,
+  shannonEntropyNats,
+  probsOf,
+  normalizeComplex,
+  Complex,
+  
+  // Multi-channel Primeon Z-Ladder
+  ZChannel,
+  PrimeonZLadderMulti,
+  createMultiChannelLadder,
+  createAdiabaticSchedule,
   
   // Entropy & Information
   shannonEntropy,

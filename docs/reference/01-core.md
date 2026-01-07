@@ -693,3 +693,517 @@ const QUATERNION_DIMENSION = 4;
 
 ```javascript
 const EPSILON = 1e-10;  // Floating point comparison threshold
+```
+
+---
+
+## Hypercomplex Extensions
+
+Additional methods added to the Hypercomplex class for advanced algebra.
+
+### Exponential and Logarithm
+
+#### exp()
+
+Compute the hypercomplex exponential.
+
+```javascript
+state.exp()
+```
+
+**Returns:** Hypercomplex - e^q
+
+**Notes:**
+- Uses generalized Euler formula: e^q = e^a(cos|v| + v̂·sin|v|)
+- Where a is scalar part, v is vector part
+
+**Example:**
+```javascript
+const q = Hypercomplex.fromArray([1, 0.5, 0, 0]);
+const expQ = q.exp();
+```
+
+#### log()
+
+Compute the hypercomplex logarithm.
+
+```javascript
+state.log()
+```
+
+**Returns:** Hypercomplex - log(q)
+
+**Notes:**
+- log(q) = log|q| + v̂·arccos(a/|q|)
+- Inverse of exp()
+
+---
+
+### Power Operations
+
+#### pow(n)
+
+Raise to a power using exp/log.
+
+```javascript
+state.pow(n)
+```
+
+**Parameters:**
+- `n` (number): Exponent (integer or fractional)
+
+**Returns:** Hypercomplex - q^n
+
+#### powInt(n)
+
+Efficient integer power by repeated multiplication.
+
+```javascript
+state.powInt(n)
+```
+
+**Parameters:**
+- `n` (number): Integer exponent
+
+**Returns:** Hypercomplex - q^n
+
+---
+
+### Interpolation
+
+#### slerp(other, t)
+
+Spherical linear interpolation.
+
+```javascript
+state.slerp(other, t)
+```
+
+**Parameters:**
+- `other` (Hypercomplex): Target state
+- `t` (number): Parameter in [0, 1]
+
+**Returns:** Hypercomplex - Interpolated state
+
+**Example:**
+```javascript
+const q1 = Hypercomplex.fromAxisAngle(4, [1,0,0], 0);
+const q2 = Hypercomplex.fromAxisAngle(4, [0,0,1], Math.PI/2);
+
+for (let t = 0; t <= 1; t += 0.1) {
+  const interpolated = q1.slerp(q2, t);
+}
+```
+
+#### squad(q1, q2, q3, t)
+
+Spherical cubic interpolation for smooth paths.
+
+```javascript
+state.squad(q1, q2, q3, t)
+```
+
+**Parameters:**
+- `q1, q2, q3` (Hypercomplex): Control points
+- `t` (number): Parameter in [0, 1]
+
+**Returns:** Hypercomplex - Smoothly interpolated state
+
+---
+
+### Rotation Operations
+
+#### sandwich(v)
+
+Apply rotation to a vector: q·v·q*
+
+```javascript
+state.sandwich(v)
+```
+
+**Parameters:**
+- `v` (Hypercomplex): Vector to rotate
+
+**Returns:** Hypercomplex - Rotated vector
+
+#### rotateVector(v)
+
+Rotate a 3D vector using quaternion.
+
+```javascript
+state.rotateVector(v)
+```
+
+**Parameters:**
+- `v` (Array<number>): 3D vector [x, y, z]
+
+**Returns:** Array<number> - Rotated vector
+
+#### fromAxisAngle(dim, axis, angle)
+
+Create rotation from axis and angle.
+
+```javascript
+Hypercomplex.fromAxisAngle(dim, axis, angle)
+```
+
+**Parameters:**
+- `dim` (number): Dimension (4 for quaternion)
+- `axis` (Array<number>): Rotation axis [x, y, z]
+- `angle` (number): Rotation angle in radians
+
+**Returns:** Hypercomplex - Unit quaternion
+
+#### toAxisAngle()
+
+Extract axis and angle from rotation.
+
+```javascript
+state.toAxisAngle()
+```
+
+**Returns:** Object - `{ axis: [x,y,z], angle: number }`
+
+---
+
+### Helper Methods
+
+#### scalar()
+
+Get scalar (real) part.
+
+```javascript
+state.scalar()
+```
+
+**Returns:** number - c[0]
+
+#### vector()
+
+Get vector (imaginary) part.
+
+```javascript
+state.vector()
+```
+
+**Returns:** Hypercomplex - State with c[0] = 0
+
+#### isUnit(epsilon)
+
+Check if unit norm.
+
+```javascript
+state.isUnit(epsilon)
+```
+
+**Returns:** boolean - |norm - 1| < epsilon
+
+---
+
+## Prime Entanglement Graph (`core/entanglement.js`)
+
+Track prime relationships from co-occurrence and resonance.
+
+### PrimeEntanglementGraph
+
+```javascript
+new PrimeEntanglementGraph(primes, options)
+```
+
+**Parameters:**
+- `primes` (number | Array): Number of primes or explicit list
+- `options` (Object):
+  - `decayRate` (number): Edge weight decay (default 0.01)
+  - `learningRate` (number): Weight update rate (default 0.1)
+  - `pruneThreshold` (number): Minimum edge weight (default 0.01)
+
+**Example:**
+```javascript
+const graph = new PrimeEntanglementGraph([2, 3, 5, 7, 11]);
+
+// Record co-occurrence
+graph.observe([2, 3], [5, 7], 0.8);
+
+// Query relationships
+const neighbors = graph.neighbors(7, 2);
+const path = graph.shortestPath(2, 11);
+```
+
+#### Methods
+
+| Method | Description |
+|--------|-------------|
+| `observe(from, to, strength)` | Record co-occurrence |
+| `neighbors(prime, depth)` | Get k-hop neighborhood |
+| `shortestPath(from, to)` | Find shortest path |
+| `clusteringCoefficient(prime)` | Get local clustering |
+| `decay(factor)` | Apply decay to all edges |
+| `prune(threshold)` | Remove weak edges |
+| `toAdjacencyMatrix(primeList)` | Convert to matrix |
+| `toNetworkKuramoto(options)` | Create Kuramoto model |
+| `stats()` | Get graph statistics |
+
+---
+
+## Event System (`core/events.js`)
+
+Event-driven monitoring for real-time applications.
+
+### AlephEventEmitter
+
+EventEmitter compatible with Node.js pattern.
+
+```javascript
+new AlephEventEmitter(options)
+```
+
+**Parameters:**
+- `options` (Object):
+  - `maxHistory` (number): Event history size (default 1000)
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `on(event, callback)` | Add listener |
+| `once(event, callback)` | Add one-time listener |
+| `off(event, callback)` | Remove listener |
+| `emit(event, data)` | Emit event |
+| `throttle(event, interval)` | Throttle event |
+| `pause()` / `resume()` | Pause/resume emissions |
+| `waitFor(event, timeout)` | Promise for next event |
+| `getHistory(event, limit)` | Get event history |
+
+**Example:**
+```javascript
+const emitter = new AlephEventEmitter();
+
+emitter.throttle('tick', 100);  // Max 10/sec
+
+emitter.on('collapse', ({ from, to }) => {
+  console.log(`Collapsed: ${from} → ${to}`);
+});
+
+const data = await emitter.waitFor('ready', 5000);
+```
+
+---
+
+### AlephMonitor
+
+High-level monitoring wrapper for AlephEngine.
+
+```javascript
+new AlephMonitor(engine, options)
+```
+
+**Parameters:**
+- `engine` (AlephEngine): Engine to monitor
+- `options` (Object):
+  - `entropyLow` (number): Low entropy threshold
+  - `entropyHigh` (number): High entropy threshold
+  - `syncThreshold` (number): Sync detection threshold
+
+**Events emitted:**
+- `tick`: Each time step
+- `collapse`: State collapse
+- `entropy:low` / `entropy:high`: Threshold crossings
+- `sync`: Synchronization detected
+- `coherence:high`: High coherence detected
+
+---
+
+### EvolutionStream
+
+Async iterator for engine evolution.
+
+```javascript
+new EvolutionStream(engine, options)
+// or
+EvolutionStream.fromEvolvable(evolvable, options)
+```
+
+**Parameters:**
+- `engine` (Object): Engine or evolvable object
+- `options` (Object):
+  - `dt` (number): Time step (default 0.01)
+  - `maxSteps` (number): Maximum steps
+  - `stopCondition` (Function): Stop predicate
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `take(n)` | Take first n items |
+| `filter(predicate)` | Filter stream |
+| `map(transform)` | Transform stream |
+| `batch(size)` | Group into batches |
+| `reduce(fn, init)` | Reduce to value |
+| `collect(max)` | Collect to array |
+
+**Example:**
+```javascript
+const stream = EvolutionStream.fromEvolvable(kuramoto);
+
+for await (const state of stream.take(100)) {
+  console.log(state.orderParameter);
+}
+
+// With operators
+const result = await stream
+  .filter(s => s.entropy < 2.0)
+  .map(s => s.orderParameter)
+  .take(50)
+  .collect();
+```
+
+---
+
+## ResoFormer Layers (`core/rformer-layers.js`)
+
+Complete transformer architecture for prime-indexed states.
+
+### ResonantMultiHeadAttention
+
+Multi-head attention with different resonance weights per head.
+
+```javascript
+new ResonantMultiHeadAttention(config)
+```
+
+**Parameters:**
+- `config` (Object):
+  - `numHeads` (number): Number of heads (default 8)
+  - `numPrimes` (number): Prime vocabulary size (default 4096)
+  - `activeK` (number): Sparsity per state (default 32)
+  - `temperature` (number): Softmax temperature (default 1.0)
+
+**Example:**
+```javascript
+const attention = new ResonantMultiHeadAttention({ numHeads: 8 });
+
+const result = attention.forward(query, keys, values);
+console.log(result.result);           // Combined output
+console.log(result.headOutputs);      // Per-head outputs
+console.log(result.attentionWeights); // Attention weights
+```
+
+---
+
+### PrimeFFN
+
+Prime-indexed feed-forward network.
+
+```javascript
+new PrimeFFN(config)
+```
+
+**Parameters:**
+- `config` (Object):
+  - `hiddenDim` (number): Hidden dimension (default 256)
+  - `activation` (string): 'relu', 'gelu', 'swish', 'tanh'
+  - `dropout` (number): Dropout probability
+
+---
+
+### PrimeLayerNorm
+
+Layer normalization preserving prime structure.
+
+```javascript
+new PrimeLayerNorm(config)
+```
+
+**Parameters:**
+- `config` (Object):
+  - `eps` (number): Epsilon for stability
+  - `gamma` (number): Scale parameter
+  - `beta` (number): Shift parameter
+
+---
+
+### PositionalPrimeEncoding
+
+Position encoding using prime phases.
+
+```javascript
+new PositionalPrimeEncoding(config)
+```
+
+**Parameters:**
+- `config` (Object):
+  - `maxLength` (number): Maximum sequence length
+  - `type` (string): 'sinusoidal', 'prime', or 'golden'
+
+**Methods:**
+- `getEncoding(pos)`: Get encoding for position
+- `encode(state, pos)`: Add encoding to state
+- `encodeSequence(states)`: Encode entire sequence
+
+---
+
+### ResoFormerBlock
+
+Complete transformer block.
+
+```javascript
+new ResoFormerBlock(config)
+```
+
+**Parameters:**
+- `config` (Object):
+  - `numHeads` (number): Attention heads
+  - `hiddenDim` (number): FFN dimension
+  - `preNorm` (boolean): Pre-norm style (default true)
+  - `dropout` (number): Dropout rate
+
+**Example:**
+```javascript
+const block = new ResoFormerBlock({
+  numHeads: 8,
+  hiddenDim: 256
+});
+
+const result = block.forward(input, context);
+```
+
+---
+
+### ResoFormer
+
+Full multi-layer transformer model.
+
+```javascript
+new ResoFormer(config)
+```
+
+**Parameters:**
+- `config` (Object):
+  - `numLayers` (number): Number of blocks (default 6)
+  - `numHeads` (number): Heads per block (default 8)
+  - `hiddenDim` (number): FFN dimension (default 256)
+  - `numPrimes` (number): Prime vocabulary (default 4096)
+  - `activeK` (number): Sparsity parameter (default 32)
+  - `usePositionalEncoding` (boolean): Add position (default true)
+
+**Methods:**
+- `forward(input)`: Process input state(s)
+- `train(mode)` / `eval()`: Set training mode
+- `getParameterCount()`: Get parameter count
+
+**Example:**
+```javascript
+const model = new ResoFormer({
+  numLayers: 6,
+  numHeads: 8,
+  hiddenDim: 256
+});
+
+const sequence = [
+  SparsePrimeState.fromPrimes([2, 3, 5]),
+  SparsePrimeState.fromPrimes([7, 11, 13])
+];
+
+const outputs = model.forward(sequence);
+console.log(outputs.output);        // Final outputs
+console.log(outputs.layerOutputs);  // Per-layer outputs

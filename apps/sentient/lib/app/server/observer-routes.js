@@ -14,10 +14,23 @@ const { loggers, sendJson, readBody, getSenseSummary, SMF_AXES, SMF_AXIS_DESCRIP
 function createObserverRoutes(server) {
     return {
         /**
-         * Get observer status
+         * Get observer status (with connection flags for UI)
          */
         getStatus: async (req, res) => {
-            sendJson(res, server.observer.getStatus());
+            const baseStatus = server.observer.getStatus();
+            
+            // Add connection status flags for UI indicators
+            const enhancedStatus = {
+                ...baseStatus,
+                llmConnected: !!(server.chat?.llm?.connected !== false),
+                wsConnected: server.webrtcCoordinator ? true : false,
+                providerStatus: server.providerManager?.getActiveProvider?.()?.id || 'unknown',
+                nodeId: server.nodeId,
+                uptime: Date.now() - server.startTime,
+                learningActive: server.learner?.isRunning || false
+            };
+            
+            sendJson(res, enhancedStatus);
         },
 
         /**
@@ -237,10 +250,94 @@ function createObserverRoutes(server) {
          */
         getMemory: async (req, res, url) => {
             const count = parseInt(url.searchParams.get('count')) || 5;
+            const memories = server.observer.memory.getRecent(count);
+            
+            // Transform to UI-expected format with traces array
+            const traces = memories.map(t => {
+                const json = t.toJSON();
+                // Compute quaternion from SMF if available, otherwise use identity
+                const quaternion = t.quaternion || t.smfOrientation || { w: 1, x: 0, y: 0, z: 0 };
+                
+                return {
+                    id: json.id || t.id || Math.random().toString(36).substr(2, 9),
+                    type: json.type || t.type || 'output',
+                    content: json.content || json.text || t.text || '',
+                    timestamp: json.timestamp || t.timestamp || Date.now(),
+                    importance: json.importance || t.importance || 0.5,
+                    quaternion: {
+                        w: quaternion.w ?? 1,
+                        x: quaternion.x ?? 0,
+                        y: quaternion.y ?? 0,
+                        z: quaternion.z ?? 0
+                    }
+                };
+            });
+            
             sendJson(res, {
-                recent: server.observer.memory.getRecent(count).map(t => t.toJSON()),
+                traces,
+                recent: traces, // Keep backward compatibility
                 stats: server.observer.memory.getStats()
             });
+        },
+
+        /**
+         * Search memory
+         */
+        searchMemory: async (req, res) => {
+            try {
+                const body = await readBody(req);
+                const { query, limit = 10 } = JSON.parse(body);
+                
+                if (!query) {
+                    sendJson(res, { success: false, error: 'Query required' }, 400);
+                    return;
+                }
+                
+                // Get all memories and filter by query
+                const allMemories = server.observer.memory.getRecent(100);
+                const queryLower = query.toLowerCase();
+                
+                const results = allMemories
+                    .filter(t => {
+                        const content = (t.text || t.content || '').toLowerCase();
+                        return content.includes(queryLower);
+                    })
+                    .slice(0, limit)
+                    .map(t => {
+                        const json = t.toJSON ? t.toJSON() : t;
+                        const content = json.content || json.text || t.text || '';
+                        
+                        // Compute simple relevance score
+                        const queryLower = query.toLowerCase();
+                        const contentLower = content.toLowerCase();
+                        let score = 0;
+                        let pos = 0;
+                        while ((pos = contentLower.indexOf(queryLower, pos)) !== -1) {
+                            score += 0.3;
+                            pos++;
+                        }
+                        if (contentLower.startsWith(queryLower)) score += 0.5;
+                        
+                        return {
+                            id: json.id || t.id || Math.random().toString(36).substr(2, 9),
+                            type: json.type || t.type || 'output',
+                            content,
+                            timestamp: json.timestamp || t.timestamp || Date.now(),
+                            importance: json.importance || t.importance || 0.5,
+                            score
+                        };
+                    })
+                    .sort((a, b) => b.score - a.score);
+                
+                sendJson(res, {
+                    success: true,
+                    results,
+                    query,
+                    count: results.length
+                });
+            } catch (error) {
+                sendJson(res, { success: false, error: error.message }, 500);
+            }
         },
 
         /**

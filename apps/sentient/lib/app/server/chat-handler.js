@@ -30,8 +30,9 @@ function createChatHandlers(server) {
                     return;
                 }
                 
+                const timestamp = Date.now();
                 server.observer.processText(message);
-                server.addToHistory('user', message);
+                server.addToHistory('user', message, { timestamp });
                 
                 // Record to senses
                 if (server.senses) {
@@ -66,7 +67,7 @@ function createChatHandlers(server) {
                 const { hasTools, results, cleanedResponse } = await processToolCalls(response, server.toolExecutor);
                 
                 // Store the clean response in history (without tool call XML)
-                server.addToHistory('assistant', cleanedResponse);
+                server.addToHistory('assistant', cleanedResponse, { timestamp: Date.now() });
                 
                 // Format tool results for the response
                 const toolResults = results.map(r => ({
@@ -126,8 +127,9 @@ function createChatHandlers(server) {
                     'Access-Control-Allow-Origin': '*'
                 });
                 
+                const timestamp = Date.now();
                 server.observer.processText(message);
-                server.addToHistory('user', message);
+                server.addToHistory('user', message, { timestamp });
                 
                 // Record to senses
                 if (server.senses) {
@@ -327,7 +329,7 @@ function createChatHandlers(server) {
                 // Store the clean response in history
                 const finalResponseText = cleanedResponse || fullResponse;
                 if (finalResponseText && finalResponseText.trim()) {
-                    server.addToHistory('assistant', finalResponseText);
+                    server.addToHistory('assistant', finalResponseText, { timestamp: Date.now() });
                 } else {
                     logStream('Skipping empty response for history');
                 }

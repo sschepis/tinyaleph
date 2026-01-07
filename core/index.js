@@ -84,6 +84,32 @@ const {
   applyResonanceOperator
 } = require('./rformer');
 
+// ResoFormer complete layers
+const {
+  ResonantMultiHeadAttention,
+  PrimeFFN,
+  PrimeLayerNorm,
+  PositionalPrimeEncoding,
+  ResoFormerBlock,
+  ResoFormer
+} = require('./rformer-layers');
+
+// Prime Entanglement Graph
+const {
+  EntanglementEdge,
+  PrimeEntanglementGraph,
+  createEntanglementGraph
+} = require('./entanglement');
+
+// Event system and streaming
+const {
+  AlephEventEmitter,
+  AlephMonitor,
+  EvolutionStream,
+  createEvolutionStream,
+  createMonitor
+} = require('./events');
+
 // TensorFlow.js layers (lazy load - may not be available)
 let rformerTF = null;
 try {
@@ -154,6 +180,26 @@ module.exports = {
   generateAttractorCodebook,
   PRGraphMemory,
   applyResonanceOperator,
+  
+  // ResoFormer Complete Layers
+  ResonantMultiHeadAttention,
+  PrimeFFN,
+  PrimeLayerNorm,
+  PositionalPrimeEncoding,
+  ResoFormerBlock,
+  ResoFormer,
+  
+  // Prime Entanglement Graph
+  EntanglementEdge,
+  PrimeEntanglementGraph,
+  createEntanglementGraph,
+  
+  // Event System and Streaming
+  AlephEventEmitter,
+  AlephMonitor,
+  EvolutionStream,
+  createEvolutionStream,
+  createMonitor,
   
   // TensorFlow.js ResoFormer layers (if available)
   ...(rformerTF || {}),

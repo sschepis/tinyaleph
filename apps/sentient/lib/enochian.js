@@ -1,17 +1,23 @@
 /**
  * Enochian Packet Layer (Section 7.4 of Whitepaper)
- * 
+ *
  * Low-bandwidth prime-mode surface language for robust symbolic packets.
  * Uses a geometric validity gate based on twist angles derived from primes.
- * 
+ *
  * Key features:
  * - Prime alphabet PE = {7, 11, 13, 17, 19, 23, 29}
  * - Mode set M = {α, μ, ω} (alpha, mu, omega)
  * - Twist angle κ(p) = 360/p degrees
  * - Twist-closure validation: T(P) mod 360 ∈ [0,ε) ∪ (360-ε, 360]
- * 
+ *
  * This layer provides fast structural validation before expensive
  * decoding and network verification.
+ *
+ * Enhanced with enochian-vocabulary.js integration:
+ * - Full 21-letter Enochian alphabet
+ * - Core vocabulary (35+ words)
+ * - The 19 Calls
+ * - Sedenion operations (16D)
  */
 
 // Try to load resolang for WASM-accelerated operations
@@ -21,6 +27,9 @@ try {
 } catch (e) {
     // Will use JS fallback
 }
+
+// Import the comprehensive Enochian vocabulary system
+const EnochianVocabulary = require('./enochian-vocabulary');
 
 /**
  * Enochian prime alphabet (Section 7.4)
@@ -536,6 +545,161 @@ function findClosedSequences(length, epsilon = 1.0, maxResults = 10) {
     return results;
 }
 
+/**
+ * EnhancedEnochianEncoder - Extends EnochianEncoder with vocabulary support
+ */
+class EnhancedEnochianEncoder extends EnochianEncoder {
+    constructor(options = {}) {
+        super(options);
+        this.engine = new EnochianVocabulary.EnochianEngine();
+        this.vocabulary = EnochianVocabulary.wordLookup;
+    }
+    
+    /**
+     * Encode an Enochian word from vocabulary
+     * @param {string} word - Enochian word (e.g., 'ZACAR', 'ZORGE')
+     */
+    encodeWord(word) {
+        const enochianWord = this.vocabulary.get(word.toUpperCase());
+        if (enochianWord) {
+            // Use the word's primes directly
+            return this.encodeFromPrimes(enochianWord.primes);
+        }
+        // Fall back to parsing as text
+        return this.encodeText(word);
+    }
+    
+    /**
+     * Encode from a sequence of primes
+     */
+    encodeFromPrimes(primes) {
+        const symbols = [];
+        for (let i = 0; i < primes.length; i++) {
+            const prime = primes[i];
+            // Map to ENOCHIAN_PRIMES or use closest
+            const mappedPrime = this.findClosestEnochianPrime(prime);
+            const modeIdx = i % 3;
+            symbols.push(new EnochianSymbol(mappedPrime, MODES[modeIdx]));
+        }
+        return this.closeTwist(new EnochianPacket(symbols));
+    }
+    
+    /**
+     * Find closest prime in ENOCHIAN_PRIMES
+     */
+    findClosestEnochianPrime(prime) {
+        let closest = ENOCHIAN_PRIMES[0];
+        let minDiff = Math.abs(prime - closest);
+        for (const p of ENOCHIAN_PRIMES) {
+            const diff = Math.abs(prime - p);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closest = p;
+            }
+        }
+        return closest;
+    }
+    
+    /**
+     * Encode a Call by number
+     */
+    encodeCall(callNumber) {
+        const call = EnochianVocabulary.THE_NINETEEN_CALLS.find(c => c.number === callNumber);
+        if (!call) {
+            throw new Error(`Call ${callNumber} not found`);
+        }
+        
+        const primes = call.getAllPrimes();
+        return this.encodeFromPrimes(primes);
+    }
+    
+    /**
+     * Get vocabulary entry for a word
+     */
+    getVocabularyEntry(word) {
+        return this.vocabulary.get(word.toUpperCase());
+    }
+    
+    /**
+     * Compute sedenion representation of encoded packet
+     */
+    toSedenion(packet) {
+        const primes = packet.primes();
+        let result = new EnochianVocabulary.SedenionElement();
+        
+        for (const p of primes) {
+            const elem = EnochianVocabulary.SedenionElement.fromBasis([p / 100]);
+            result = result.add(elem);
+        }
+        
+        return result;
+    }
+}
+
+/**
+ * EnhancedEnochianDecoder - Extends EnochianDecoder with vocabulary support
+ */
+class EnhancedEnochianDecoder extends EnochianDecoder {
+    constructor(options = {}) {
+        super(options);
+        this.engine = new EnochianVocabulary.EnochianEngine();
+    }
+    
+    /**
+     * Decode and attempt to match to vocabulary
+     */
+    decodeWithVocabulary(input) {
+        const result = this.decode(input);
+        if (!result.valid) return result;
+        
+        // Try to match primes to vocabulary words
+        const matchedWords = this.findMatchingWords(result.primes);
+        
+        return {
+            ...result,
+            vocabularyMatches: matchedWords,
+            sedenion: this.toSedenion(result.packet)
+        };
+    }
+    
+    /**
+     * Find vocabulary words that share primes with the packet
+     */
+    findMatchingWords(primes) {
+        const primeSet = new Set(primes);
+        const matches = [];
+        
+        for (const [word, wordObj] of EnochianVocabulary.wordLookup) {
+            const sharedPrimes = wordObj.primes.filter(p => primeSet.has(p));
+            if (sharedPrimes.length > 0) {
+                matches.push({
+                    word: word,
+                    meaning: wordObj.meaning,
+                    sharedPrimes: sharedPrimes,
+                    matchScore: sharedPrimes.length / wordObj.primes.length
+                });
+            }
+        }
+        
+        return matches.sort((a, b) => b.matchScore - a.matchScore).slice(0, 5);
+    }
+    
+    /**
+     * Convert packet to sedenion
+     */
+    toSedenion(packet) {
+        const primes = packet.primes();
+        let result = new EnochianVocabulary.SedenionElement();
+        
+        for (const p of primes) {
+            const elem = EnochianVocabulary.SedenionElement.fromBasis([p / 100]);
+            result = result.add(elem);
+        }
+        
+        return result;
+    }
+}
+
 module.exports = {
     // Constants
     ENOCHIAN_PRIMES,
@@ -554,5 +718,24 @@ module.exports = {
     EnochianPacket,
     EnochianEncoder,
     EnochianDecoder,
-    EnochianPacketBuilder
+    EnochianPacketBuilder,
+    
+    // Enhanced classes with vocabulary support
+    EnhancedEnochianEncoder,
+    EnhancedEnochianDecoder,
+    
+    // Re-export vocabulary module
+    EnochianVocabulary,
+    
+    // Convenience re-exports from vocabulary
+    ENOCHIAN_ALPHABET: EnochianVocabulary.ENOCHIAN_ALPHABET,
+    PRIME_BASIS: EnochianVocabulary.PRIME_BASIS,
+    CORE_VOCABULARY: EnochianVocabulary.CORE_VOCABULARY,
+    THE_NINETEEN_CALLS: EnochianVocabulary.THE_NINETEEN_CALLS,
+    EnochianWord: EnochianVocabulary.EnochianWord,
+    EnochianCall: EnochianVocabulary.EnochianCall,
+    EnochianEngine: EnochianVocabulary.EnochianEngine,
+    SedenionElement: EnochianVocabulary.SedenionElement,
+    TwistOperator: EnochianVocabulary.TwistOperator,
+    validateTwistClosure: EnochianVocabulary.validateTwistClosure
 };

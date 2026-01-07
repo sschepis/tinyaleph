@@ -1,17 +1,22 @@
 /**
  * Prime Calculus Kernel (Section 6 of Whitepaper)
- * 
+ *
  * Deterministic discrete semantic kernel for the Sentient Observer Network.
  * Implements prime-indexed calculus with:
  * - Noun terms N(p) - atomic semantic objects
  * - Adjective terms A(p) - modifiers
  * - Fusion terms FUSE(p,q,r) - triadic combination
  * - Normal form evaluation for network verification
- * 
+ *
  * Key features:
  * - Strong normalization (all evaluations terminate)
  * - Confluence under canonical fusion selection
  * - Deterministic for cross-node verification
+ *
+ * Enhanced with formal semantics from core modules:
+ * - TypeChecker for formal typing judgments
+ * - ReductionSystem for strong normalization proofs
+ * - Translator for model-theoretic semantics
  */
 
 // Try to load resolang for WASM-accelerated operations
@@ -21,6 +26,38 @@ try {
 } catch (e) {
     // Will use JS fallback
 }
+
+// Import formal semantics modules from core
+const {
+    TypeChecker,
+    Types,
+    NounTerm: CoreNounTerm,
+    AdjTerm: CoreAdjTerm,
+    ChainTerm: CoreChainTerm,
+    FusionTerm: CoreFusionTerm,
+    NounSentence,
+    SeqSentence,
+    ImplSentence
+} = require('../../../core/types');
+
+const {
+    ReductionSystem,
+    ResonanceOperator,
+    NextPrimeOperator,
+    ModularOperator,
+    IdentityOperator,
+    FusionCanonicalizer,
+    NormalFormVerifier,
+    demonstrateStrongNormalization,
+    testLocalConfluence
+} = require('../../../core/reduction');
+
+const {
+    Translator,
+    LambdaEvaluator,
+    Semantics,
+    ConceptInterpreter
+} = require('../../../core/lambda');
 
 /**
  * Small primes for prime checking
@@ -624,63 +661,242 @@ class PrimeCalculusBuilder {
 }
 
 /**
- * Prime Calculus Verifier
- * Implements network verification logic from Section 6.2
+ * Prime Calculus Verifier (Enhanced with Formal Semantics)
+ *
+ * Implements network verification logic from Section 6.2 with:
+ * - Formal type checking via TypeChecker (Γ ⊢ e : T)
+ * - Strong normalization proofs with reduction system
+ * - Confluence verification via Newman's Lemma
+ * - Model-theoretic interpretation via λ-calculus translation
  */
 class PrimeCalculusVerifier {
-    constructor() {
-        this.evaluator = new PrimeCalculusEvaluator({ trace: false });
+    constructor(options = {}) {
+        this.evaluator = new PrimeCalculusEvaluator({ trace: options.trace || false });
+        
+        // Initialize formal type checker
+        this.typeChecker = new TypeChecker();
+        
+        // Initialize reduction system with prime-preserving operators
+        this.reductionSystem = new ReductionSystem();
+        this.reductionSystem.addOperator(new IdentityOperator());
+        this.reductionSystem.addOperator(new NextPrimeOperator());
+        if (options.resonanceBase) {
+            this.reductionSystem.addOperator(new ResonanceOperator(options.resonanceBase));
+        }
+        
+        // Initialize fusion canonicalizer
+        this.fusionCanonicalizer = new FusionCanonicalizer();
+        
+        // Initialize normal form verifier
+        this.normalFormVerifier = new NormalFormVerifier();
+        
+        // Initialize lambda translation (optional)
+        this.translator = options.enableLambda ? new Translator() : null;
+        this.lambdaEvaluator = options.enableLambda ? new LambdaEvaluator() : null;
+    }
+    
+    /**
+     * Convert local term to core type system term for formal checking
+     */
+    toCoreTerm(term) {
+        switch (term.type) {
+            case TermType.NOUN:
+                return new CoreNounTerm(term.prime);
+            case TermType.ADJ:
+                return new CoreAdjTerm(term.prime);
+            case TermType.CHAIN:
+                const operators = term.adjPrimes.map(p => new CoreAdjTerm(p));
+                const noun = new CoreNounTerm(term.nounPrime);
+                return new CoreChainTerm(operators, noun);
+            case TermType.FUSE:
+                return new CoreFusionTerm(term.p, term.q, term.r);
+            case TermType.SEQ:
+                return new SeqSentence(
+                    new NounSentence(this.toCoreTerm(term.left)),
+                    new NounSentence(this.toCoreTerm(term.right))
+                );
+            case TermType.IMPL:
+                return new ImplSentence(
+                    new NounSentence(this.toCoreTerm(term.antecedent)),
+                    new NounSentence(this.toCoreTerm(term.consequent))
+                );
+            default:
+                return null;
+        }
+    }
+    
+    /**
+     * Formal type inference using TypeChecker
+     * Returns typing judgment Γ ⊢ e : T
+     */
+    inferType(term) {
+        try {
+            const coreTerm = this.toCoreTerm(term);
+            if (!coreTerm) {
+                return { valid: false, type: null, reason: 'cannot_convert_term' };
+            }
+            
+            const type = this.typeChecker.inferType(coreTerm);
+            const judgment = this.typeChecker.derive(coreTerm);
+            
+            return {
+                valid: type !== null,
+                type: type,
+                judgment: judgment ? judgment.toString() : null
+            };
+        } catch (e) {
+            return { valid: false, type: null, reason: e.message };
+        }
+    }
+    
+    /**
+     * Check application constraint (p < q) using formal type system
+     */
+    checkApplication(adjTerm, nounTerm) {
+        try {
+            const adj = new CoreAdjTerm(adjTerm.prime);
+            const noun = new CoreNounTerm(nounTerm.prime);
+            return this.typeChecker.checkApplication(adj, noun);
+        } catch (e) {
+            return { valid: false, reason: e.message };
+        }
+    }
+    
+    /**
+     * Check fusion well-formedness using formal type system
+     */
+    checkFusion(fusionTerm) {
+        try {
+            const fusion = new CoreFusionTerm(fusionTerm.p, fusionTerm.q, fusionTerm.r);
+            return this.typeChecker.checkFusion(fusion);
+        } catch (e) {
+            return { valid: false, reason: e.message };
+        }
+    }
+    
+    /**
+     * Generate strong normalization proof
+     * Returns proof trace demonstrating guaranteed termination
+     */
+    proveStrongNormalization(term) {
+        // Extract primes from term
+        const primes = this.extractPrimes(term);
+        
+        // Use formal reduction system to demonstrate termination
+        const proof = demonstrateStrongNormalization(primes, this.reductionSystem);
+        
+        return {
+            terminates: proof.terminates,
+            steps: proof.steps,
+            initialMeasure: proof.initialMeasure,
+            finalMeasure: proof.finalMeasure,
+            trace: proof.trace
+        };
+    }
+    
+    /**
+     * Test local confluence (for distributed verification)
+     * Uses Newman's Lemma approach
+     */
+    verifyConfluence(term) {
+        const primes = this.extractPrimes(term);
+        return testLocalConfluence(primes, this.reductionSystem);
+    }
+    
+    /**
+     * Extract all primes from a term (for reduction system)
+     */
+    extractPrimes(term) {
+        switch (term.type) {
+            case TermType.NOUN:
+                return [term.prime];
+            case TermType.ADJ:
+                return [term.prime];
+            case TermType.CHAIN:
+                return [...term.adjPrimes, term.nounPrime];
+            case TermType.FUSE:
+                return [term.p, term.q, term.r, term.fusedPrime];
+            case TermType.SEQ:
+                return [...this.extractPrimes(term.left), ...this.extractPrimes(term.right)];
+            case TermType.IMPL:
+                return [...this.extractPrimes(term.antecedent), ...this.extractPrimes(term.consequent)];
+            default:
+                return [];
+        }
     }
     
     /**
      * Verify a claimed normal form (equation 19 NF_ok)
-     * @param {Object} term - Original term e
-     * @param {Object} claimedNF - Claimed normal form ΩNF
-     * @returns {Object} Verification result
+     * Enhanced with formal type checking and normalization proof
      */
     verifyNormalForm(term, claimedNF) {
         const computed = this.evaluator.evaluate(term);
         const matches = computed.signature() === claimedNF.signature();
         
+        // Also verify with formal normal form verifier
+        const primes = this.extractPrimes(computed);
+        const formalVerification = this.normalFormVerifier.verify(primes);
+        
         return {
-            valid: matches,
+            valid: matches && formalVerification.isNormal,
             computedNF: computed.signature(),
             claimedNF: claimedNF.signature(),
-            agreement: matches
+            agreement: matches,
+            formallyNormal: formalVerification.isNormal,
+            normalFormReason: formalVerification.reason
         };
     }
     
     /**
-     * Verify well-formedness of a term
+     * Verify well-formedness of a term using formal type system
      */
     verifyWellFormed(term) {
         try {
             // Attempt to clone (validates structure)
             term.clone();
-            return { wellFormed: true, error: null };
+            
+            // Also check formal type
+            const typeResult = this.inferType(term);
+            
+            return {
+                wellFormed: true,
+                error: null,
+                type: typeResult.type,
+                judgment: typeResult.judgment
+            };
         } catch (e) {
-            return { wellFormed: false, error: e.message };
+            return { wellFormed: false, error: e.message, type: null };
         }
     }
     
     /**
      * Full verification for network proposals
-     * @param {Object} proposal - {term, claimedNF, proofs}
+     * Enhanced with formal proofs for distributed consensus
      */
     verify(proposal) {
         const { term, claimedNF, proofs } = proposal;
         
-        // 1. Check well-formedness
+        // 1. Check well-formedness with formal typing
         const wfCheck = this.verifyWellFormed(term);
         if (!wfCheck.wellFormed) {
-            return { 
-                valid: false, 
-                reason: 'ill_formed', 
-                details: wfCheck.error 
+            return {
+                valid: false,
+                reason: 'ill_formed',
+                details: wfCheck.error
             };
         }
         
-        // 2. Verify normal form agreement
+        // 2. Verify formal type
+        const typeCheck = this.inferType(term);
+        if (!typeCheck.valid) {
+            return {
+                valid: false,
+                reason: 'type_inference_failed',
+                details: typeCheck.reason
+            };
+        }
+        
+        // 3. Verify normal form agreement
         const nfCheck = this.verifyNormalForm(term, claimedNF);
         if (!nfCheck.valid) {
             return {
@@ -691,11 +907,58 @@ class PrimeCalculusVerifier {
             };
         }
         
-        // 3. All checks passed
+        // 4. Generate strong normalization proof (for network consensus)
+        const normProof = this.proveStrongNormalization(term);
+        if (!normProof.terminates) {
+            return {
+                valid: false,
+                reason: 'normalization_failed',
+                details: 'Strong normalization proof failed'
+            };
+        }
+        
+        // 5. Verify confluence (optional, for distributed verification)
+        const confluenceCheck = this.verifyConfluence(term);
+        
+        // 6. All checks passed
         return {
             valid: true,
-            normalForm: nfCheck.computedNF
+            normalForm: nfCheck.computedNF,
+            type: typeCheck.type,
+            judgment: wfCheck.judgment,
+            normalizationProof: {
+                terminates: normProof.terminates,
+                steps: normProof.steps
+            },
+            confluent: confluenceCheck.confluent
         };
+    }
+    
+    /**
+     * Translate term to λ-calculus for model-theoretic semantics
+     * (Only available if enableLambda was set in options)
+     */
+    translateToLambda(term) {
+        if (!this.translator) {
+            return { error: 'Lambda translation not enabled' };
+        }
+        
+        try {
+            const coreTerm = this.toCoreTerm(term);
+            if (!coreTerm) {
+                return { error: 'Cannot convert term for translation' };
+            }
+            
+            const lambda = this.translator.translate(coreTerm);
+            const normalized = this.lambdaEvaluator.normalize(lambda);
+            
+            return {
+                lambda: lambda.toString(),
+                normalized: normalized.toString()
+            };
+        } catch (e) {
+            return { error: e.message };
+        }
     }
 }
 
@@ -780,5 +1043,19 @@ module.exports = {
     // Utilities
     isPrime,
     isOddPrime,
-    SMALL_PRIMES
+    SMALL_PRIMES,
+    
+    // Re-export formal semantics utilities for convenience
+    TypeChecker,
+    Types,
+    ReductionSystem,
+    ResonanceOperator,
+    NextPrimeOperator,
+    ModularOperator,
+    IdentityOperator,
+    demonstrateStrongNormalization,
+    testLocalConfluence,
+    Translator,
+    LambdaEvaluator,
+    Semantics
 };

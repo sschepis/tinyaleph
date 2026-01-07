@@ -594,6 +594,62 @@ export class ChatMessage extends BaseComponent {
                 border-radius: var(--radius-sm);
                 color: var(--accent-tertiary);
             }
+            
+            /* Next-step action buttons */
+            .next-steps-container {
+                margin-top: var(--space-md);
+                padding: var(--space-sm);
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
+                border-radius: var(--radius-md);
+                border: 1px solid rgba(99, 102, 241, 0.2);
+            }
+            
+            .next-steps-label {
+                font-size: 0.65rem;
+                font-weight: 600;
+                color: var(--text-dim);
+                text-transform: uppercase;
+                margin-bottom: var(--space-xs);
+                display: flex;
+                align-items: center;
+                gap: var(--space-xs);
+            }
+            
+            .next-steps-buttons {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--space-xs);
+            }
+            
+            .next-step-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: var(--space-xs);
+                padding: var(--space-xs) var(--space-sm);
+                font-size: 0.7rem;
+                font-weight: 500;
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border-color);
+                border-radius: var(--radius-sm);
+                color: var(--text-secondary);
+                cursor: pointer;
+                transition: all var(--transition-fast);
+                max-width: 250px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            .next-step-btn:hover {
+                background: var(--accent-primary);
+                border-color: var(--accent-primary);
+                color: white;
+                transform: translateY(-1px);
+            }
+            
+            .next-step-btn .step-icon {
+                flex-shrink: 0;
+            }
         `;
     }
     
@@ -871,32 +927,91 @@ export class ChatMessage extends BaseComponent {
     
     /**
      * Finish streaming
+     * @param {string} finalContent - The final response content
+     * @param {object} meta - Metadata about the response
+     * @param {number} meta.coherence - Coherence value 0-1
+     * @param {number} meta.toolCount - Number of tools used
+     * @param {Array<string>} meta.nextSteps - Suggested next actions
      */
     finishStreaming(finalContent, meta = {}) {
         this.removeAttribute('streaming');
         this.setAttribute('content', finalContent);
         this.render();
         
+        const body = this.$('.message-body');
+        if (!body) return;
+        
         // Add meta info
-        if (Object.keys(meta).length > 0) {
-            const body = this.$('.message-body');
-            if (body) {
-                const metaEl = document.createElement('div');
-                metaEl.className = 'message-meta';
-                
-                const parts = [];
-                parts.push(`<span>${new Date().toLocaleTimeString()}</span>`);
-                if (meta.coherence !== undefined) {
-                    parts.push(`<span>C: ${(meta.coherence * 100).toFixed(0)}%</span>`);
-                }
-                if (meta.toolCount > 0) {
-                    parts.push(`<span>🔧 ${meta.toolCount} tool${meta.toolCount > 1 ? 's' : ''}</span>`);
-                }
-                
-                metaEl.innerHTML = parts.join('');
-                body.appendChild(metaEl);
+        if (Object.keys(meta).length > 0 && !meta.stopped) {
+            const metaEl = document.createElement('div');
+            metaEl.className = 'message-meta';
+            
+            const parts = [];
+            parts.push(`<span>${new Date().toLocaleTimeString()}</span>`);
+            if (meta.coherence !== undefined) {
+                parts.push(`<span>C: ${(meta.coherence * 100).toFixed(0)}%</span>`);
             }
+            if (meta.toolCount > 0) {
+                parts.push(`<span>🔧 ${meta.toolCount} tool${meta.toolCount > 1 ? 's' : ''}</span>`);
+            }
+            
+            metaEl.innerHTML = parts.join('');
+            body.appendChild(metaEl);
         }
+        
+        // Add next step buttons if provided
+        if (meta.nextSteps && Array.isArray(meta.nextSteps) && meta.nextSteps.length > 0) {
+            const container = document.createElement('div');
+            container.className = 'next-steps-container';
+            container.innerHTML = `
+                <div class="next-steps-label">
+                    <span>💡</span>
+                    <span>Suggested next steps</span>
+                </div>
+                <div class="next-steps-buttons">
+                    ${meta.nextSteps.slice(0, 4).map((step, i) => `
+                        <button class="next-step-btn" data-step="${this.escapeHtml(step)}" title="${this.escapeHtml(step)}">
+                            <span class="step-icon">${this.getStepIcon(step)}</span>
+                            <span>${this.truncateStep(step)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            body.appendChild(container);
+            
+            // Add click handlers for next step buttons
+            container.querySelectorAll('.next-step-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const stepText = btn.dataset.step;
+                    this.emit('next-step-click', { step: stepText });
+                });
+            });
+        }
+    }
+    
+    /**
+     * Get an appropriate icon for a next step suggestion
+     */
+    getStepIcon(step) {
+        const lower = step.toLowerCase();
+        if (lower.includes('explain') || lower.includes('what')) return '❓';
+        if (lower.includes('code') || lower.includes('implement') || lower.includes('create')) return '💻';
+        if (lower.includes('example') || lower.includes('show')) return '📋';
+        if (lower.includes('test') || lower.includes('debug')) return '🧪';
+        if (lower.includes('more') || lower.includes('detail')) return '🔍';
+        if (lower.includes('compare') || lower.includes('difference')) return '⚖️';
+        if (lower.includes('why') || lower.includes('reason')) return '🤔';
+        if (lower.includes('next') || lower.includes('then')) return '➡️';
+        return '→';
+    }
+    
+    /**
+     * Truncate step text for button display
+     */
+    truncateStep(step) {
+        const maxLen = 40;
+        if (step.length <= maxLen) return step;
+        return step.substring(0, maxLen - 3) + '...';
     }
     
     /**

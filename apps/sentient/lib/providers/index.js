@@ -29,7 +29,7 @@ const PROVIDER_REGISTRY = {
         requiresCredentials: true,
         aliases: ['google', 'gemini'],
         defaultConfig: {
-            location: 'us-central1',
+            location: 'global',
             model: 'gemini-3-pro-preview'
         }
     },

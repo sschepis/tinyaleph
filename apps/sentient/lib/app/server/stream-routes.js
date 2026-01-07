@@ -1,10 +1,10 @@
 /**
  * Stream Routes
- * 
+ *
  * Handles SSE (Server-Sent Events) streaming endpoints for real-time updates.
  */
 
-const { loggers, setCorsHeaders } = require('./utils');
+const { loggers, setCorsHeaders, SMF_AXES } = require('./utils');
 
 /**
  * Creates stream route handlers
@@ -73,10 +73,17 @@ function createStreamRoutes(server) {
                     const smf = server.observer.smf;
                     const prsc = server.observer.prsc;
                     
+                    // Transform SMF components to named objects for UI
+                    const namedComponents = smf.s.map((value, index) => ({
+                        index,
+                        name: SMF_AXES[index] || `axis_${index}`,
+                        value
+                    }));
+                    
                     const fieldData = {
                         timestamp: Date.now(),
                         smf: {
-                            components: smf.s.slice(),
+                            components: namedComponents,
                             entropy: smf.smfEntropy(),
                             norm: smf.norm(),
                             dominant: smf.dominantAxes(3).map(a => ({ name: a.name, value: a.value }))
@@ -184,8 +191,30 @@ function createStreamRoutes(server) {
                     if (currentCount !== lastThoughtCount) {
                         lastThoughtCount = currentCount;
                         
+                        // Transform to UI-expected format with traces
+                        const memories = memory.getRecent(5);
+                        const traces = memories.map(t => {
+                            const json = t.toJSON ? t.toJSON() : t;
+                            const quaternion = t.quaternion || t.smfOrientation || { w: 1, x: 0, y: 0, z: 0 };
+                            
+                            return {
+                                id: json.id || t.id || Math.random().toString(36).substr(2, 9),
+                                type: json.type || t.type || 'output',
+                                content: json.content || json.text || t.text || '',
+                                timestamp: json.timestamp || t.timestamp || Date.now(),
+                                importance: json.importance || t.importance || 0.5,
+                                quaternion: {
+                                    w: quaternion.w ?? 1,
+                                    x: quaternion.x ?? 0,
+                                    y: quaternion.y ?? 0,
+                                    z: quaternion.z ?? 0
+                                }
+                            };
+                        });
+                        
                         sendEvent(res, 'memory', {
-                            recent: memory.getRecent(5).map(t => t.toJSON()),
+                            traces,
+                            recent: traces, // backward compatibility
                             stats: memory.getStats(),
                             totalCount: currentCount
                         });

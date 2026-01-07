@@ -92,7 +92,7 @@ Mathematical foundations.
 | [math/04-vector-spaces.js](./math/04-vector-spaces.js) | Vector space operations |
 | [math/05-gaussian-primes.js](./math/05-gaussian-primes.js) | Gaussian primes |
 
-### 🌊 Physics Simulation (5 examples)
+### 🌊 Physics Simulation (6 examples)
 Physics and dynamics.
 
 | File | Description |
@@ -102,6 +102,7 @@ Physics and dynamics.
 | [physics/03-collapse.js](./physics/03-collapse.js) | State collapse |
 | [physics/04-kuramoto.js](./physics/04-kuramoto.js) | Kuramoto synchronization |
 | [physics/05-entropy.js](./physics/05-entropy.js) | Entropy analysis |
+| [physics/06-primeon-ladder.js](./physics/06-primeon-ladder.js) | Primeon Z-ladder dynamics |
 
 ## Running Examples
 
