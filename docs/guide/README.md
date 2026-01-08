@@ -9,7 +9,8 @@ This section provides hands-on guidance for using Aleph in your projects. Whethe
 3. [Cryptographic Applications](./03-cryptographic.md) - Hashing and key derivation
 4. [Scientific Computing](./04-scientific.md) - Quantum simulation
 5. [LLM Integration](./05-llm-integration.md) - Coupling with language models
-6. [Advanced Techniques](./06-advanced.md) - Power user guide
+6. [Symbolic AI & Resonance](./06-symbolic-ai.md) - Symbol inference with attention
+7. [Advanced Techniques](./07-advanced.md) - Power user guide
 
 ---
 

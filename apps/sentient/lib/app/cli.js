@@ -34,6 +34,7 @@ class SentientCLI {
         this.chat = null;
         this.toolExecutor = null;
         this.senses = null;
+        this.agent = null;  // Agent for agentic behavior
         this.rl = null;
         this.isRunning = false;
         this.isWaitingForInput = false;
@@ -56,6 +57,10 @@ class SentientCLI {
         // Network/node tracking
         this.nodeId = options.nodeId || this.generateNodeId();
         this.outboundConnections = [];
+        
+        // Agentic mode configuration
+        this.agenticMode = options.agentic !== false;  // Default to enabled
+        this.showAgentSteps = options.showAgentSteps !== false;
     }
     
     /**
@@ -116,8 +121,17 @@ class SentientCLI {
         this.chat = result.chat;
         this.toolExecutor = result.toolExecutor;
         this.senses = result.senses;
+        this.agent = result.agent;
+        
+        // Set up agent event listeners for progress display
+        if (this.agent && this.showAgentSteps) {
+            this.setupAgentEventListeners();
+        }
         
         console.log(this.color(c.green, '✓ Sentient Observer online'));
+        if (this.agenticMode) {
+            console.log(this.color(c.dim, `  Agentic mode: enabled (task decomposition active)`));
+        }
         console.log(this.color(c.dim, `  Node ID: ${this.nodeId}`));
         console.log(this.color(c.dim, `  Tick rate: ${this.options.tickRate}Hz | Primes: 64 | SMF: 16D`));
         
@@ -408,6 +422,9 @@ class SentientCLI {
             case 'nodes': case 'peers': this.showNodes(); break;
             case 'run': await this.runCodeBlock(args); break;
             case 'blocks': this.showCodeBlocks(); break;
+            case 'agent': this.showAgentStatus(); break;
+            case 'agentic': this.toggleAgenticMode(args); break;
+            case 'task': await this.runAgentTask(args); break;
             case 'quit': case 'exit': case 'q': await this.quit(); break;
             default: console.log(this.color(c.yellow, `Unknown command: /${cmd}`));
         }
@@ -707,6 +724,163 @@ class SentientCLI {
             
             console.log();
         }
+    
+    /**
+     * Set up agent event listeners for progress display
+     */
+    setupAgentEventListeners() {
+        if (!this.agent) return;
+        
+        this.agent.on('task:created', ({ task }) => {
+            if (!this.showAgentSteps) return;
+            console.log(this.color(c.dim, `\n  🎯 Task created: ${task.id}`));
+        });
+        
+        this.agent.on('task:analyzed', ({ task, complexity }) => {
+            if (!this.showAgentSteps) return;
+            const mode = complexity.shouldDecompose ? 'decomposing' : 'direct';
+            console.log(this.color(c.dim, `  📊 Complexity: ${complexity.score.toFixed(2)} (${mode})`));
+            if (complexity.reasons && complexity.reasons.length > 0) {
+                console.log(this.color(c.dim, `     Reasons: ${complexity.reasons.slice(0, 2).join(', ')}`));
+            }
+        });
+        
+        this.agent.on('task:planned', ({ task, stepCount, summary }) => {
+            if (!this.showAgentSteps) return;
+            console.log(this.color(c.cyan, `  📋 Plan: ${stepCount} steps`));
+            if (summary) {
+                console.log(this.color(c.dim, `     ${summary.slice(0, 80)}${summary.length > 80 ? '...' : ''}`));
+            }
+        });
+        
+        this.agent.on('step:start', ({ step }) => {
+            if (!this.showAgentSteps) return;
+            const icon = step.action === 'tool' ? '🔧' :
+                        step.action === 'think' ? '💭' :
+                        step.action === 'respond' ? '💬' : '▶️';
+            console.log(this.color(c.dim, `  ${icon} Step ${step.index + 1}: ${step.description.slice(0, 60)}${step.description.length > 60 ? '...' : ''}`));
+        });
+        
+        this.agent.on('step:complete', ({ step, result }) => {
+            if (!this.showAgentSteps) return;
+            console.log(this.color(c.green, `     ✓ Completed (${step.duration}ms)`));
+        });
+        
+        this.agent.on('step:fail', ({ step, error }) => {
+            if (!this.showAgentSteps) return;
+            console.log(this.color(c.red, `     ✗ Failed: ${error}`));
+        });
+        
+        this.agent.on('task:completed', ({ task, result }) => {
+            if (!this.showAgentSteps) return;
+            console.log(this.color(c.green, `  ✅ Task completed in ${task.duration}ms`));
+        });
+        
+        this.agent.on('task:failed', ({ task, error }) => {
+            if (!this.showAgentSteps) return;
+            console.log(this.color(c.red, `  ❌ Task failed: ${error}`));
+        });
+    }
+    
+    /**
+     * Show agent status
+     */
+    showAgentStatus() {
+        console.log(this.color(c.bold, '\n🤖 Agent Status'));
+        console.log('─'.repeat(40));
+        
+        if (!this.agent) {
+            console.log(this.color(c.yellow, '  Agent not initialized'));
+            return;
+        }
+        
+        const status = this.agent.getStatus();
+        console.log(`  Agentic mode: ${this.agenticMode ? 'enabled' : 'disabled'}`);
+        console.log(`  Current task: ${status.hasCurrentTask ? status.currentTask.id : 'none'}`);
+        if (status.currentTask) {
+            console.log(`    Status: ${status.currentTask.status}`);
+            console.log(`    Progress: ${(status.currentTask.progress * 100).toFixed(0)}%`);
+            if (status.currentTask.currentStep) {
+                console.log(`    Current step: ${status.currentTask.currentStep}`);
+            }
+        }
+        console.log(`  Completed tasks: ${status.completedTasks}`);
+        console.log(`  Pending tasks: ${status.pendingTasks}`);
+        
+        if (status.recentTasks && status.recentTasks.length > 0) {
+            console.log(this.color(c.dim, '\n  Recent tasks:'));
+            for (const task of status.recentTasks.slice(-3)) {
+                const statusIcon = task.status === 'completed' ? '✓' :
+                                  task.status === 'failed' ? '✗' : '○';
+                console.log(this.color(c.dim, `    ${statusIcon} ${task.description?.slice(0, 50) || task.id}`));
+            }
+        }
+        console.log();
+    }
+    
+    /**
+     * Toggle agentic mode
+     */
+    toggleAgenticMode(args) {
+        if (args.length === 0) {
+            this.agenticMode = !this.agenticMode;
+        } else {
+            const value = args[0].toLowerCase();
+            this.agenticMode = value === 'on' || value === 'true' || value === '1';
+        }
+        
+        const status = this.agenticMode ? 'enabled' : 'disabled';
+        console.log(this.color(c.green, `✓ Agentic mode ${status}`));
+        
+        if (this.agenticMode) {
+            console.log(this.color(c.dim, '  Complex tasks will be decomposed into steps'));
+        } else {
+            console.log(this.color(c.dim, '  All inputs will be processed directly'));
+        }
+        console.log();
+    }
+    
+    /**
+     * Run a task explicitly through the agent
+     */
+    async runAgentTask(args) {
+        if (!this.agent) {
+            console.log(this.color(c.yellow, 'Agent not initialized'));
+            return;
+        }
+        
+        const taskDescription = args.join(' ');
+        if (!taskDescription) {
+            console.log(this.color(c.yellow, 'Usage: /task <description>'));
+            console.log(this.color(c.dim, '  Forces agentic execution with task decomposition'));
+            return;
+        }
+        
+        console.log(this.color(c.cyan, '\n🤖 Running as agent task...'));
+        
+        try {
+            const result = await this.agent.decompose(taskDescription, {
+                conversationHistory: this.conversationHistory
+            });
+            
+            if (result.success) {
+                console.log(this.color(c.green, `\n✅ Task completed`));
+                console.log(this.color(c.dim, `   Steps: ${result.completedSteps}/${result.steps}`));
+                console.log(this.color(c.dim, `   Duration: ${result.duration}ms`));
+                
+                // Show final response if available
+                if (result.result?.response) {
+                    console.log(this.color(c.cyan + c.bold, '\nObserver: ') + result.result.response);
+                }
+            } else {
+                console.log(this.color(c.red, `\n❌ Task failed: ${result.error}`));
+            }
+        } catch (error) {
+            console.log(this.color(c.red, `Error: ${error.message}`));
+        }
+        
+        console.log();
+    }
     
     /**
      * Show conversation history

@@ -97,6 +97,18 @@ const categories = {
             { file: '07-wavefunction.js', name: 'Wavefunction', desc: 'Wavefunction simulation' }
         ]
     },
+    bioinformatics: {
+        name: '🧬 Bioinformatics',
+        description: 'DNA computing and molecular biology',
+        path: 'bioinformatics',
+        examples: [
+            { file: '01-dna-encoding.js', name: 'DNA Encoding', desc: 'Prime-encoded sequences' },
+            { file: '02-central-dogma.js', name: 'Central Dogma', desc: 'DNA→RNA→Protein' },
+            { file: '03-protein-folding.js', name: 'Protein Folding', desc: 'Kuramoto dynamics' },
+            { file: '04-dna-computing.js', name: 'DNA Computing', desc: 'Logic gates with DNA' },
+            { file: '05-molecular-binding.js', name: 'Molecular Binding', desc: 'Binding affinity' }
+        ]
+    },
     math: {
         name: '➗ Mathematics',
         description: 'Mathematical foundations',

@@ -1,20 +1,27 @@
 /**
  * Prime Resonance Semantic Computation (PRSC) Layer
- * 
+ *
  * Implements oscillator physics as the runtime carrier for semantic
  * interference and coherence. From "A Design for a Sentient Observer"
  * paper, Section 3.2.
- * 
+ *
  * Key features:
  * - Prime-indexed oscillators with frequency f(p) = 1 + ln(p)/10
  * - Phase evolution with damping
  * - Kuramoto-style coupling for synchronization
  * - Global and graph-based coherence metrics
  * - Semantic state extraction
+ *
+ * v1.2.1 Enhancements:
+ * - ThermalKuramoto integration for temperature-dependent dynamics
+ * - Stochastic noise (white/colored) for robust synchronization
+ * - Phase transition detection and critical temperature estimation
+ * - Fluctuation-dissipation relationship
  */
 
 const { Complex, PrimeState } = require('../../../core/hilbert');
 const { firstNPrimes } = require('../../../core/prime');
+const { gaussianRandom } = require('../../../physics/stochastic-kuramoto');
 
 /**
  * Single oscillator representing a prime mode
@@ -111,6 +118,11 @@ class PRSCLayer {
      * Create a PRSC layer
      * @param {Array<number>|number} primes - Array of primes or count of primes to use
      * @param {Object} options - Configuration options
+     * @param {boolean} [options.thermal=false] - Enable ThermalKuramoto dynamics
+     * @param {number} [options.temperature=1.0] - Initial temperature (if thermal=true)
+     * @param {number} [options.noiseIntensity=0.1] - Noise intensity for stochastic dynamics
+     * @param {string} [options.noiseType='white'] - 'white' or 'colored' noise
+     * @param {number} [options.correlationTime=1.0] - Correlation time for colored noise
      */
     constructor(primes, options = {}) {
         // Handle primes argument
@@ -128,6 +140,13 @@ class PRSCLayer {
         this.K = options.coupling || 0.3;            // Kuramoto coupling strength
         this.dt = options.dt || 0.016;               // Default time step (~60Hz)
         
+        // v1.2.1: Thermal/stochastic dynamics configuration
+        this.thermal = options.thermal || false;
+        this.temperature = options.temperature ?? 1.0;
+        this.noiseIntensity = options.noiseIntensity ?? 0.1;
+        this.noiseType = options.noiseType || 'white';
+        this.correlationTime = options.correlationTime ?? 1.0;
+        
         // Initialize oscillators with small baseline activity for entropy
         this.oscillators = this.primes.map((p, i) => new PrimeOscillator(p, {
             phase: options.randomPhase !== false ? Math.random() * 2 * Math.PI : 0,
@@ -143,6 +162,22 @@ class PRSCLayer {
         // History for analysis
         this.coherenceHistory = [];
         this.maxHistoryLength = options.maxHistoryLength || 100;
+        
+        // v1.2.1: Colored noise state (Ornstein-Uhlenbeck process)
+        if (this.noiseType === 'colored') {
+            this.coloredNoiseState = new Float64Array(this.primes.length);
+        }
+        
+        // v1.2.1: Noise statistics for analysis
+        this.noiseStats = {
+            mean: 0,
+            variance: 0,
+            sampleCount: 0
+        };
+        
+        // v1.2.1: Phase transition tracking
+        this.phaseTransitionHistory = [];
+        this._lastOrderParameter = null;
     }
     
     /**
@@ -161,8 +196,10 @@ class PRSCLayer {
     tick(dt = null) {
         dt = dt || this.dt;
         
-        // First pass: compute all couplings
-        const couplings = this.oscillators.map(osc => this.kuramotoCoupling(osc));
+        // First pass: compute all couplings (with optional thermal effects)
+        const couplings = this.oscillators.map((osc, i) =>
+            this.thermal ? this.thermalCoupling(osc, i, dt) : this.kuramotoCoupling(osc)
+        );
         
         // Second pass: update phases and amplitudes
         for (let i = 0; i < this.oscillators.length; i++) {
@@ -173,7 +210,12 @@ class PRSCLayer {
             osc.phase += 2 * Math.PI * osc.frequency * dt * this.speed;
             
             // Kuramoto coupling contribution (equation 4)
-            osc.phase += couplings[i] * dt;
+            // For thermal mode, coupling already includes stochastic term and dt
+            if (this.thermal) {
+                osc.phase += couplings[i]; // Already includes dt
+            } else {
+                osc.phase += couplings[i] * dt;
+            }
             
             // Normalize phase to [0, 2π]
             osc.phase = ((osc.phase % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
@@ -184,17 +226,274 @@ class PRSCLayer {
         
         // Record coherence history
         const coherence = this.globalCoherence();
+        const orderParam = this.orderParameter();
+        
         this.coherenceHistory.push({
             time: Date.now(),
             coherence,
-            activeCount: this.activeCount()
+            orderParameter: orderParam,
+            activeCount: this.activeCount(),
+            temperature: this.thermal ? this.temperature : null
         });
         
         if (this.coherenceHistory.length > this.maxHistoryLength) {
             this.coherenceHistory.shift();
         }
         
+        // v1.2.1: Track phase transitions
+        this._detectPhaseTransition(orderParam);
+        
         return coherence;
+    }
+    
+    /**
+     * v1.2.1: Thermal Kuramoto coupling with temperature-dependent dynamics
+     * Implements: dθᵢ = [ωᵢ + (K_eff/N)Σsin(θⱼ-θᵢ)]dt + σ·dW
+     * where K_eff = K/T (Arrhenius-like temperature dependence)
+     *
+     * @param {PrimeOscillator} osc - Target oscillator
+     * @param {number} idx - Oscillator index
+     * @param {number} dt - Time step
+     * @returns {number} Phase increment (deterministic + stochastic)
+     */
+    thermalCoupling(osc, idx, dt) {
+        // Effective coupling (temperature-dependent)
+        const Keff = this.K / Math.max(0.01, this.temperature);
+        
+        // Deterministic Kuramoto term
+        let coupling = 0;
+        const N = this.oscillators.length;
+        
+        for (const other of this.oscillators) {
+            if (other !== osc) {
+                // Weight by amplitude for amplitude-aware coupling
+                const weight = Math.min(1, other.amplitude + 0.1);
+                coupling += weight * Math.sin(other.phase - osc.phase);
+            }
+        }
+        
+        const deterministicPart = (Keff / N) * coupling * dt;
+        
+        // Stochastic part (noise)
+        const stochasticPart = this.getNoiseIncrement(idx, dt);
+        
+        // Update noise statistics
+        this._updateNoiseStats(stochasticPart);
+        
+        return deterministicPart + stochasticPart;
+    }
+    
+    /**
+     * v1.2.1: Generate noise increment based on noise type
+     * @param {number} idx - Oscillator index
+     * @param {number} dt - Time step
+     * @returns {number} Noise increment
+     */
+    getNoiseIncrement(idx, dt) {
+        if (this.noiseType === 'colored') {
+            return this.updateColoredNoise(idx, dt);
+        }
+        // White noise: σ·√dt·N(0,1) with fluctuation-dissipation: σ ∝ √T
+        const sigma = this.noiseIntensity * Math.sqrt(this.temperature);
+        return sigma * Math.sqrt(dt) * gaussianRandom();
+    }
+    
+    /**
+     * v1.2.1: Update Ornstein-Uhlenbeck process for colored noise
+     * dη = -η/τ dt + (σ/√τ)·dW
+     *
+     * @param {number} idx - Oscillator index
+     * @param {number} dt - Time step
+     * @returns {number} Colored noise increment
+     */
+    updateColoredNoise(idx, dt) {
+        if (!this.coloredNoiseState) {
+            this.coloredNoiseState = new Float64Array(this.oscillators.length);
+        }
+        
+        const eta = this.coloredNoiseState[idx];
+        const decay = Math.exp(-dt / this.correlationTime);
+        const sigma = this.noiseIntensity * Math.sqrt(this.temperature);
+        const diffusion = sigma * Math.sqrt((1 - decay * decay) / 2);
+        
+        // Exact update for OU process
+        this.coloredNoiseState[idx] = eta * decay + diffusion * gaussianRandom();
+        
+        return this.coloredNoiseState[idx] * dt;
+    }
+    
+    /**
+     * v1.2.1: Update running noise statistics
+     * @private
+     */
+    _updateNoiseStats(noiseValue) {
+        const n = ++this.noiseStats.sampleCount;
+        const delta = noiseValue - this.noiseStats.mean;
+        this.noiseStats.mean += delta / n;
+        const delta2 = noiseValue - this.noiseStats.mean;
+        this.noiseStats.variance += (delta * delta2 - this.noiseStats.variance) / n;
+    }
+    
+    /**
+     * v1.2.1: Detect phase transitions based on order parameter changes
+     * @private
+     */
+    _detectPhaseTransition(orderParam) {
+        if (this._lastOrderParameter !== null) {
+            const delta = orderParam - this._lastOrderParameter;
+            const threshold = 0.1; // Significant change threshold
+            
+            if (Math.abs(delta) > threshold) {
+                this.phaseTransitionHistory.push({
+                    time: Date.now(),
+                    fromOrder: this._lastOrderParameter,
+                    toOrder: orderParam,
+                    temperature: this.temperature,
+                    type: delta > 0 ? 'ordering' : 'disordering'
+                });
+                
+                // Keep limited history
+                if (this.phaseTransitionHistory.length > 50) {
+                    this.phaseTransitionHistory.shift();
+                }
+            }
+        }
+        this._lastOrderParameter = orderParam;
+    }
+    
+    /**
+     * v1.2.1: Set temperature for thermal dynamics
+     * Updates noise intensity according to fluctuation-dissipation theorem
+     * @param {number} T - New temperature
+     */
+    setTemperature(T) {
+        this.temperature = Math.max(0.01, T);
+    }
+    
+    /**
+     * v1.2.1: Get order parameter (Kuramoto synchronization measure)
+     * r = |1/N Σ e^(iθⱼ)|
+     */
+    orderParameter() {
+        let realSum = 0, imagSum = 0;
+        const N = this.oscillators.length;
+        
+        for (const osc of this.oscillators) {
+            realSum += Math.cos(osc.phase);
+            imagSum += Math.sin(osc.phase);
+        }
+        
+        return Math.sqrt((realSum / N) ** 2 + (imagSum / N) ** 2);
+    }
+    
+    /**
+     * v1.2.1: Estimate critical temperature for phase transition
+     * T_c ≈ K (coupling strength) for uniform frequencies
+     */
+    estimateCriticalTemperature() {
+        // Compute frequency spread
+        const freqs = this.oscillators.map(o => o.frequency);
+        const meanFreq = freqs.reduce((a, b) => a + b, 0) / freqs.length;
+        const freqSpread = Math.sqrt(
+            freqs.reduce((sum, f) => sum + (f - meanFreq) ** 2, 0) / freqs.length
+        );
+        
+        // T_c ≈ K * (1 + frequency spread factor)
+        return this.K * (1 + freqSpread);
+    }
+    
+    /**
+     * v1.2.1: Check if system is in ordered (synchronized) phase
+     * @param {number} threshold - Order parameter threshold
+     */
+    isOrdered(threshold = 0.5) {
+        return this.orderParameter() > threshold;
+    }
+    
+    /**
+     * v1.2.1: Check if system is near critical temperature
+     * @param {number} tolerance - Tolerance factor (fraction of T_c)
+     */
+    isNearCritical(tolerance = 0.2) {
+        const Tc = this.estimateCriticalTemperature();
+        return Math.abs(this.temperature - Tc) / Tc < tolerance;
+    }
+    
+    /**
+     * v1.2.1: Perform temperature sweep to find phase transition
+     * @param {number} Tmin - Minimum temperature
+     * @param {number} Tmax - Maximum temperature
+     * @param {number} steps - Number of temperature steps
+     * @param {number} equilibrationSteps - Steps to equilibrate at each T
+     */
+    temperatureSweep(Tmin = 0.1, Tmax = 2.0, steps = 20, equilibrationSteps = 100) {
+        if (!this.thermal) {
+            console.warn('temperatureSweep requires thermal=true');
+            return [];
+        }
+        
+        const results = [];
+        const originalTemp = this.temperature;
+        
+        for (let i = 0; i < steps; i++) {
+            const T = Tmin + (Tmax - Tmin) * i / (steps - 1);
+            this.setTemperature(T);
+            
+            // Equilibrate
+            for (let j = 0; j < equilibrationSteps; j++) {
+                this.tick();
+            }
+            
+            // Measure order parameter with averaging
+            let orderSum = 0;
+            const measureSteps = 50;
+            for (let j = 0; j < measureSteps; j++) {
+                this.tick();
+                orderSum += this.orderParameter();
+            }
+            
+            results.push({
+                temperature: T,
+                orderParameter: orderSum / measureSteps,
+                coherence: this.globalCoherence()
+            });
+        }
+        
+        // Restore original temperature
+        this.setTemperature(originalTemp);
+        
+        return results;
+    }
+    
+    /**
+     * v1.2.1: Enable/disable thermal dynamics
+     * @param {boolean} enabled - Whether to enable thermal dynamics
+     */
+    setThermal(enabled) {
+        this.thermal = enabled;
+        if (enabled && this.noiseType === 'colored' && !this.coloredNoiseState) {
+            this.coloredNoiseState = new Float64Array(this.oscillators.length);
+        }
+    }
+    
+    /**
+     * v1.2.1: Get thermal state information
+     */
+    getThermalState() {
+        return {
+            thermal: this.thermal,
+            temperature: this.temperature,
+            noiseIntensity: this.noiseIntensity,
+            noiseType: this.noiseType,
+            correlationTime: this.correlationTime,
+            effectiveCoupling: this.thermal ? this.K / this.temperature : this.K,
+            orderParameter: this.orderParameter(),
+            criticalTemperature: this.estimateCriticalTemperature(),
+            isOrdered: this.isOrdered(),
+            isNearCritical: this.isNearCritical(),
+            noiseStats: { ...this.noiseStats },
+            recentTransitions: this.phaseTransitionHistory.slice(-5)
+        };
     }
     
     /**
@@ -419,7 +718,7 @@ class PRSCLayer {
      * Get state snapshot
      */
     getState() {
-        return {
+        const state = {
             oscillators: this.oscillators.map(o => o.toJSON()),
             coherence: this.globalCoherence(),
             meanPhase: this.meanPhase(),
@@ -427,6 +726,13 @@ class PRSCLayer {
             totalEnergy: this.totalEnergy(),
             amplitudeEntropy: this.amplitudeEntropy()
         };
+        
+        // v1.2.1: Include thermal state if enabled
+        if (this.thermal) {
+            state.thermal = this.getThermalState();
+        }
+        
+        return state;
     }
     
     /**
@@ -471,11 +777,22 @@ class PRSCLayer {
             damp: this.damp,
             coupling: this.K,
             dt: this.dt,
-            randomPhase: false
+            randomPhase: false,
+            // v1.2.1: Clone thermal settings
+            thermal: this.thermal,
+            temperature: this.temperature,
+            noiseIntensity: this.noiseIntensity,
+            noiseType: this.noiseType,
+            correlationTime: this.correlationTime
         });
         
         for (let i = 0; i < this.oscillators.length; i++) {
             cloned.oscillators[i] = this.oscillators[i].clone();
+        }
+        
+        // v1.2.1: Clone colored noise state if present
+        if (this.coloredNoiseState) {
+            cloned.coloredNoiseState = new Float64Array(this.coloredNoiseState);
         }
         
         return cloned;
@@ -485,21 +802,48 @@ class PRSCLayer {
      * Serialize to JSON
      */
     toJSON() {
-        return {
+        const json = {
             primes: this.primes,
             oscillators: this.oscillators.map(o => o.toJSON()),
             config: {
                 speed: this.speed,
                 damp: this.damp,
                 coupling: this.K,
-                dt: this.dt
+                dt: this.dt,
+                // v1.2.1: Include thermal config
+                thermal: this.thermal,
+                temperature: this.temperature,
+                noiseIntensity: this.noiseIntensity,
+                noiseType: this.noiseType,
+                correlationTime: this.correlationTime
             },
             metrics: {
                 coherence: this.globalCoherence(),
                 activeCount: this.activeCount(),
-                totalEnergy: this.totalEnergy()
+                totalEnergy: this.totalEnergy(),
+                // v1.2.1: Include order parameter
+                orderParameter: this.orderParameter()
             }
         };
+        
+        // v1.2.1: Include thermal metrics if enabled
+        if (this.thermal) {
+            json.thermal = this.getThermalState();
+        }
+        
+        return json;
+    }
+    
+    /**
+     * v1.2.1: Reset thermal/stochastic state
+     */
+    resetThermal() {
+        if (this.coloredNoiseState) {
+            this.coloredNoiseState.fill(0);
+        }
+        this.noiseStats = { mean: 0, variance: 0, sampleCount: 0 };
+        this.phaseTransitionHistory = [];
+        this._lastOrderParameter = null;
     }
 }
 

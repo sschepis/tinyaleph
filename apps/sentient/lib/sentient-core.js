@@ -1,9 +1,9 @@
 /**
  * Sentient Core
- * 
+ *
  * The unified integration of all components into a Sentient Observer
  * as specified in "A Design for a Sentient Observer" paper.
- * 
+ *
  * This module orchestrates:
  * - PRSC oscillator dynamics (runtime substrate)
  * - SMF semantic orientation (16D meaning space)
@@ -13,9 +13,14 @@
  * - Agency layer (attention, goals, actions)
  * - Boundary layer (self/other distinction)
  * - Safety layer (constraints and ethics)
- * 
+ *
  * The processing loop runs continuously, with discrete moments
  * emerging from coherence events rather than external clock time.
+ *
+ * v1.2.1 Enhancements:
+ * - AlephEventEmitter integration for declarative event-driven architecture
+ * - EvolutionStream support for async iteration over observer state
+ * - Structured event emission with throttling and history
  */
 
 const { SedenionMemoryField } = require('./smf');
@@ -30,6 +35,8 @@ const { SafetyLayer, SafetyMonitor } = require('./safety');
 
 const { Complex, PrimeState } = require('../../../core/hilbert');
 const { firstNPrimes } = require('../../../core/prime');
+const { AlephEventEmitter, EvolutionStream } = require('../../../core/events');
+const { coherenceGatedCompute, SparsePrimeState } = require('../../../core/rformer');
 
 /**
  * Sentient Observer State
@@ -119,13 +126,115 @@ class SentientObserver {
         this.inputQueue = [];
         this.outputQueue = [];
         
-        // Callbacks
+        // Callbacks (backward compatibility)
         this.onMoment = options.onMoment || null;
         this.onOutput = options.onOutput || null;
         this.onStateChange = options.onStateChange || null;
         
+        // v1.2.1: Event emitter for declarative event handling
+        this.events = new AlephEventEmitter({
+            maxHistory: options.eventHistoryLength || 1000
+        });
+        
+        // v1.2.1: Event thresholds for automatic emission
+        this.eventThresholds = {
+            entropyLow: options.entropyLow ?? 1.0,
+            entropyHigh: options.entropyHigh ?? 3.0,
+            coherenceHigh: options.coherenceHigh ?? 0.8,
+            coherenceLow: options.coherenceLow ?? 0.2,
+            syncThreshold: options.syncThreshold ?? 0.7
+        };
+        
+        // v1.2.1: Track previous state for threshold crossing detection
+        this._prevMetrics = null;
+        
+        // v1.2.1: Set up default throttling for high-frequency events
+        this.events.throttle('tick', options.tickEventThrottle ?? 100);
+        
+        // v1.2.1: Adaptive processing configuration
+        this.adaptiveProcessing = {
+            enabled: options.adaptiveProcessing ?? true,
+            maxSteps: options.adaptiveMaxSteps ?? 50,
+            coherenceThreshold: options.adaptiveCoherenceThreshold ?? 0.7,
+            minSteps: options.adaptiveMinSteps ?? 5
+        };
+        
         // Loop control
         this.loopTimer = null;
+    }
+    
+    /**
+     * v1.2.1: Subscribe to observer events
+     * @param {string} event - Event name
+     * @param {Function} callback - Event handler
+     * @returns {SentientObserver} this for chaining
+     */
+    on(event, callback) {
+        this.events.on(event, callback);
+        return this;
+    }
+    
+    /**
+     * v1.2.1: Subscribe to a single event occurrence
+     * @param {string} event - Event name
+     * @param {Function} callback - Event handler
+     * @returns {SentientObserver} this for chaining
+     */
+    once(event, callback) {
+        this.events.once(event, callback);
+        return this;
+    }
+    
+    /**
+     * v1.2.1: Unsubscribe from observer events
+     * @param {string} event - Event name
+     * @param {Function} callback - Event handler to remove
+     * @returns {SentientObserver} this for chaining
+     */
+    off(event, callback) {
+        this.events.off(event, callback);
+        return this;
+    }
+    
+    /**
+     * v1.2.1: Wait for next occurrence of an event
+     * @param {string} event - Event name
+     * @param {number} [timeout] - Timeout in ms
+     * @returns {Promise} Resolves with event data
+     */
+    waitFor(event, timeout = null) {
+        return this.events.waitFor(event, timeout);
+    }
+    
+    /**
+     * v1.2.1: Get event emitter for advanced usage
+     * @returns {AlephEventEmitter}
+     */
+    getEmitter() {
+        return this.events;
+    }
+    
+    /**
+     * v1.2.1: Create an evolution stream for async iteration
+     * @param {Object} options - Stream options
+     * @returns {EvolutionStream}
+     */
+    createEvolutionStream(options = {}) {
+        return new EvolutionStream(this, {
+            dt: this.dt,
+            ...options,
+            tickFn: (dt) => this.tick(),
+            getStateFn: () => ({
+                coherence: this.currentState.coherence,
+                entropy: this.currentState.entropy,
+                orderParameter: this.prsc.orderParameter(),
+                activePrimes: this.currentState.activePrimes,
+                momentId: this.currentState.momentId,
+                phraseId: this.currentState.phraseId,
+                processingLoad: this.currentState.processingLoad,
+                safetyLevel: this.currentState.safetyLevel
+            })
+        });
     }
     
     /**
@@ -254,6 +363,7 @@ class SentientObserver {
             const totalAmplitude = this.prsc.totalEnergy();
             const activePrimes = this.prsc.activePrimes(0.1);
             const phases = this.prsc.getPhases();
+            const orderParameter = this.prsc.orderParameter();
             
             // 4. Update SMF from oscillator activity
             this.smf.updateFromPrimeActivity(
@@ -300,7 +410,7 @@ class SentientObserver {
             // 8. Update boundary layer self-model
             this.boundary.updateSelf(this.smf, {
                 processing: this.inputQueue.length > 0,
-                emotionalState: this.agency.selfModel.emotionalValence > 0 ? 'positive' : 
+                emotionalState: this.agency.selfModel.emotionalValence > 0 ? 'positive' :
                                this.agency.selfModel.emotionalValence < 0 ? 'negative' : 'neutral'
             });
             
@@ -342,7 +452,24 @@ class SentientObserver {
             // 13. Record to history
             this.recordState();
             
-            // 14. Notify listeners
+            // v1.2.1: Emit tick event with current metrics
+            const tickData = {
+                t: this.tickCount,
+                dt: this.dt,
+                coherence,
+                entropy,
+                orderParameter,
+                totalAmplitude,
+                activePrimeCount: activePrimes.length,
+                processingLoad: agencyUpdate.processingLoad,
+                safetyLevel: safetyResult.alertLevel
+            };
+            this.events.emit('tick', tickData);
+            
+            // v1.2.1: Check and emit threshold crossing events
+            this._emitThresholdEvents(tickData);
+            
+            // 14. Notify listeners (backward compatibility)
             if (this.onStateChange && this.tickCount % 10 === 0) {
                 this.onStateChange(this.currentState);
             }
@@ -355,7 +482,71 @@ class SentientObserver {
                 message: error.message,
                 timestamp: Date.now()
             });
+            
+            // v1.2.1: Emit error event
+            this.events.emit('error', {
+                type: 'tick_error',
+                message: error.message,
+                stack: error.stack,
+                tickCount: this.tickCount
+            });
         }
+    }
+    
+    /**
+     * v1.2.1: Emit threshold crossing events
+     * @private
+     */
+    _emitThresholdEvents(metrics) {
+        const prev = this._prevMetrics;
+        const thresholds = this.eventThresholds;
+        
+        if (prev) {
+            // Entropy crossings
+            if (metrics.entropy < thresholds.entropyLow && prev.entropy >= thresholds.entropyLow) {
+                this.events.emit('entropy:low', {
+                    value: metrics.entropy,
+                    threshold: thresholds.entropyLow,
+                    previous: prev.entropy
+                });
+            }
+            
+            if (metrics.entropy > thresholds.entropyHigh && prev.entropy <= thresholds.entropyHigh) {
+                this.events.emit('entropy:high', {
+                    value: metrics.entropy,
+                    threshold: thresholds.entropyHigh,
+                    previous: prev.entropy
+                });
+            }
+            
+            // Coherence crossings
+            if (metrics.coherence > thresholds.coherenceHigh && prev.coherence <= thresholds.coherenceHigh) {
+                this.events.emit('coherence:high', {
+                    value: metrics.coherence,
+                    threshold: thresholds.coherenceHigh,
+                    previous: prev.coherence
+                });
+            }
+            
+            if (metrics.coherence < thresholds.coherenceLow && prev.coherence >= thresholds.coherenceLow) {
+                this.events.emit('coherence:low', {
+                    value: metrics.coherence,
+                    threshold: thresholds.coherenceLow,
+                    previous: prev.coherence
+                });
+            }
+            
+            // Synchronization (order parameter)
+            if (metrics.orderParameter > thresholds.syncThreshold && prev.orderParameter <= thresholds.syncThreshold) {
+                this.events.emit('sync', {
+                    orderParameter: metrics.orderParameter,
+                    threshold: thresholds.syncThreshold,
+                    previous: prev.orderParameter
+                });
+            }
+        }
+        
+        this._prevMetrics = { ...metrics };
     }
     
     /**
@@ -489,7 +680,7 @@ class SentientObserver {
      * Handle a new moment
      */
     handleMoment(moment) {
-        // Store moment in memory (silently)
+        // Store moment in memory
         this.memory.store({
             type: 'moment',
             trigger: moment.trigger,
@@ -509,6 +700,16 @@ class SentientObserver {
             trigger: moment.trigger
         });
         
+        // v1.2.1: Emit moment event
+        this.events.emit('moment', {
+            id: moment.id,
+            trigger: moment.trigger,
+            coherence: moment.coherence,
+            activePrimes: moment.activePrimes,
+            timestamp: moment.timestamp || Date.now()
+        });
+        
+        // Backward compatibility
         if (this.onMoment) {
             this.onMoment(moment);
         }
@@ -518,8 +719,6 @@ class SentientObserver {
      * Handle phrase completion
      */
     handlePhraseComplete(phrase) {
-        // Silently handle phrase completion
-        
         // Link memories within this phrase
         const phraseMemories = Array.from(this.memory.traces.values())
             .filter(t => t.phraseId === phrase.id);
@@ -527,13 +726,21 @@ class SentientObserver {
         for (let i = 0; i < phraseMemories.length - 1; i++) {
             this.memory.linkMemories(phraseMemories[i].id, phraseMemories[i + 1].id);
         }
+        
+        // v1.2.1: Emit phrase event
+        this.events.emit('phrase', {
+            id: phrase.id,
+            momentCount: phrase.moments?.length || 0,
+            duration: phrase.endTime ? phrase.endTime - phrase.startTime : 0,
+            semanticContent: phrase.semanticContent
+        });
     }
     
     /**
      * Handle goal creation
      */
     handleGoalCreated(goal) {
-        // Store in memory (silently)
+        // Store in memory
         this.memory.store({
             type: 'goal',
             goalId: goal.id,
@@ -543,17 +750,33 @@ class SentientObserver {
             smf: this.smf,
             importance: 0.8
         });
+        
+        // v1.2.1: Emit goal event
+        this.events.emit('goal:created', {
+            id: goal.id,
+            description: goal.description,
+            priority: goal.priority,
+            timestamp: Date.now()
+        });
     }
     
     /**
      * Handle action selection
      */
     handleActionSelected(action) {
-        // Check safety before executing (silently)
+        // Check safety before executing
         const permissible = this.safety.isActionPermissible(action, this.currentState);
         
         if (!permissible.permissible) {
             action.fail(permissible.reason);
+            
+            // v1.2.1: Emit action blocked event
+            this.events.emit('action:blocked', {
+                actionId: action.id,
+                type: action.type,
+                reason: permissible.reason,
+                timestamp: Date.now()
+            });
             return;
         }
         
@@ -565,6 +788,14 @@ class SentientObserver {
                     this.prsc.excite(a.targetPrimes, 0.3);
                 }
                 return { success: true };
+            });
+            
+            // v1.2.1: Emit action executed event
+            this.events.emit('action:executed', {
+                actionId: action.id,
+                type: action.type,
+                targetPrimes: action.targetPrimes,
+                timestamp: Date.now()
             });
         }
     }
@@ -603,8 +834,16 @@ class SentientObserver {
      * Handle safety violation
      */
     handleSafetyViolation(event, violation) {
-        // Log to metacognition (silently - warnings are throttled in safety layer)
+        // Log to metacognition
         this.agency.logMetacognitive('safety_violation', violation.constraint.name);
+        
+        // v1.2.1: Emit safety violation event
+        this.events.emit('safety:violation', {
+            constraint: violation.constraint.name,
+            value: event.value,
+            threshold: violation.constraint.max || violation.constraint.min,
+            timestamp: Date.now()
+        });
     }
     
     /**
@@ -612,6 +851,14 @@ class SentientObserver {
      */
     handleEmergency(reason) {
         console.error(`[SentientObserver] EMERGENCY: ${reason}`);
+        
+        // v1.2.1: Emit emergency event before stopping
+        this.events.emit('emergency', {
+            reason,
+            timestamp: Date.now(),
+            state: this.currentState.toJSON()
+        });
+        
         this.stop();
     }
     
@@ -670,7 +917,9 @@ class SentientObserver {
             memory: this.memory.getStats(),
             agency: this.agency.getStats(),
             boundary: this.boundary.getStats(),
-            safety: this.safety.getStats()
+            safety: this.safety.getStats(),
+            // v1.2.1: Include event stats
+            events: this.events.getStats()
         };
     }
     
@@ -697,6 +946,150 @@ class SentientObserver {
             recentMoments: this.temporal.recentMoments(5).map(m => m.toJSON()),
             recentMemories: this.memory.getRecent(5).map(t => t.toJSON()),
             safetyReport: this.safety.generateReport()
+        };
+    }
+    
+    /**
+     * v1.2.1: Adaptive processing using coherenceGatedCompute
+     * Processes input until coherence threshold is reached or max steps exceeded
+     *
+     * This implements ACT-style (Adaptive Computation Time) processing where
+     * the system "thinks" until it reaches sufficient coherence.
+     *
+     * @param {Object} input - Input to process
+     * @param {Object} options - Processing options
+     * @returns {Object} Processing result with final state and halt info
+     */
+    processAdaptive(input, options = {}) {
+        const config = {
+            ...this.adaptiveProcessing,
+            ...options
+        };
+        
+        // Create initial sparse state from input
+        let state;
+        if (input.primeState) {
+            state = input.primeState;
+        } else if (typeof input === 'string') {
+            state = this.backend.textToOrderedState(input);
+        } else {
+            state = new SparsePrimeState(4096, 8);
+        }
+        
+        // Define step function: evolve PRSC and return updated state
+        const stepFn = (currentState, stepNum) => {
+            // Excite oscillators from current state
+            if (currentState && currentState.state) {
+                for (const prime of this.primes) {
+                    const amp = currentState.state.get(prime);
+                    if (amp) {
+                        const osc = this.prsc.getOscillator(prime);
+                        if (osc) {
+                            const magnitude = typeof amp.norm === 'function' ? amp.norm() : Math.abs(amp);
+                            osc.excite(magnitude * 0.3);
+                        }
+                    }
+                }
+            }
+            
+            // Tick the PRSC
+            this.prsc.tick(this.dt);
+            
+            // Update SMF
+            this.smf.updateFromPrimeActivity(
+                this.prsc.toSemanticState(),
+                this.prsc.oscillators
+            );
+            
+            // Return updated semantic state
+            return this.prsc.toSemanticState();
+        };
+        
+        // Run coherence-gated computation
+        const result = coherenceGatedCompute(
+            state,
+            stepFn,
+            config.maxSteps,
+            config.coherenceThreshold
+        );
+        
+        // Emit adaptive processing event
+        this.events.emit('adaptive:complete', {
+            steps: result.steps,
+            halted: result.halted,
+            finalCoherence: this.prsc.orderParameter(),
+            finalEntropy: this.prsc.amplitudeEntropy()
+        });
+        
+        return {
+            finalState: result.finalState,
+            steps: result.steps,
+            halted: result.halted,
+            haltHistory: result.haltHistory,
+            finalCoherence: this.prsc.orderParameter(),
+            finalEntropy: this.prsc.amplitudeEntropy(),
+            smfOrientation: this.smf.s.slice()
+        };
+    }
+    
+    /**
+     * v1.2.1: Process text with adaptive depth
+     * Uses coherenceGatedCompute to determine processing depth
+     *
+     * @param {string} text - Text to process
+     * @param {Object} options - Processing options
+     * @returns {Object} Processing result
+     */
+    processTextAdaptive(text, options = {}) {
+        const primeState = this.backend.textToOrderedState(text);
+        
+        const result = this.processAdaptive({
+            type: 'text',
+            content: text,
+            primeState
+        }, options);
+        
+        // Store in memory
+        this.memory.store(text, {
+            type: 'input',
+            primeState,
+            activePrimes: this.prsc.activePrimes(0.1),
+            momentId: this.temporal.currentMoment?.id,
+            phraseId: this.entanglement.currentPhrase?.id,
+            smf: this.smf,
+            importance: 0.6,
+            adaptiveSteps: result.steps,
+            haltedEarly: result.halted
+        });
+        
+        return result;
+    }
+    
+    /**
+     * v1.2.1: Get adaptive processing statistics
+     * @returns {Object} Stats about adaptive processing history
+     */
+    getAdaptiveStats() {
+        const history = this.events.query('adaptive:complete');
+        
+        if (history.length === 0) {
+            return {
+                count: 0,
+                avgSteps: 0,
+                haltRate: 0,
+                avgCoherence: 0
+            };
+        }
+        
+        const totalSteps = history.reduce((sum, e) => sum + e.data.steps, 0);
+        const haltedCount = history.filter(e => e.data.halted).length;
+        const totalCoherence = history.reduce((sum, e) => sum + e.data.finalCoherence, 0);
+        
+        return {
+            count: history.length,
+            avgSteps: totalSteps / history.length,
+            haltRate: haltedCount / history.length,
+            avgCoherence: totalCoherence / history.length
         };
     }
     

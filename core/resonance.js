@@ -1,695 +1,324 @@
 /**
- * Prime Resonance Network Components
+ * Resonance Calculator
  * 
- * Implementation of:
- * - Prime Resonance Identity (PRI) = (P_G, P_E, P_Q)
- * - Entanglement and Coherence
- * - Phase-Locked Prime Rings
- * - Holographic Memory Fields
+ * Implements Prime Resonance Theory from symprime:
+ * Calculates "resonance" between prime numbers using golden ratio detection.
  * 
- * From "Prime Resonance Network Specification (PRNS)"
+ * Theory: Primes whose ratio approximates the golden ratio (φ ≈ 1.618) 
+ * have "natural harmony" - a mathematically grounded measure of affinity.
+ * 
+ * R(p1, p2) = 1/ratio + φ_bonus
+ * where φ_bonus = 0.3 if |ratio - φ| < threshold
  */
 
-const { GaussianInteger, EisensteinInteger, isPrime, firstNPrimes } = require('./prime');
-const { Complex, PrimeState } = require('./hilbert');
-
-// Golden ratio and its conjugate (for irrational phase locks)
-const PHI = (1 + Math.sqrt(5)) / 2;           // 1.618...
-const PHI_CONJ = (1 - Math.sqrt(5)) / 2;      // -0.618...
-const DELTA_S = Math.sqrt(2);                  // Another irrational for phase locks
+// Golden ratio constant
+const PHI = 1.618033988749895;
+const PHI_THRESHOLD = 0.1;  // How close to φ counts as "golden"
+const PHI_BONUS = 0.3;      // Bonus for golden ratio relationships
 
 /**
- * Quaternionic Prime representation
- * Using Hamilton quaternions: q = a + bi + cj + dk
+ * ResonanceCalculator - Measures harmonic relationships between primes
  */
-class QuaternionPrime {
-  constructor(a, b, c, d) {
-    this.a = a;
-    this.b = b;
-    this.c = c;
-    this.d = d;
+class ResonanceCalculator {
+  constructor(cacheSize = 1000) {
+    this.cacheSize = cacheSize;
+    this.cache = new Map();
   }
-  
-  static fromPrime(p) {
-    // Embed a prime in quaternion space using a specific encoding
-    // p → (p, 0, 0, 0) for simplicity, or a more interesting embedding
-    const sqrt = Math.sqrt(p);
-    return new QuaternionPrime(p, 0, 0, 0);
-  }
-  
-  static fromGaussian(g) {
-    return new QuaternionPrime(g.real, g.imag, 0, 0);
-  }
-  
-  norm() {
-    return Math.sqrt(this.a*this.a + this.b*this.b + this.c*this.c + this.d*this.d);
-  }
-  
-  add(other) {
-    return new QuaternionPrime(
-      this.a + other.a,
-      this.b + other.b,
-      this.c + other.c,
-      this.d + other.d
-    );
-  }
-  
-  mul(other) {
-    // Hamilton product
-    return new QuaternionPrime(
-      this.a*other.a - this.b*other.b - this.c*other.c - this.d*other.d,
-      this.a*other.b + this.b*other.a + this.c*other.d - this.d*other.c,
-      this.a*other.c - this.b*other.d + this.c*other.a + this.d*other.b,
-      this.a*other.d + this.b*other.c - this.c*other.b + this.d*other.a
-    );
-  }
-  
-  conjugate() {
-    return new QuaternionPrime(this.a, -this.b, -this.c, -this.d);
-  }
-  
-  isHurwitzPrime() {
-    // A Hurwitz quaternion is prime if its norm is a rational prime
-    const n = this.norm();
-    return isPrime(Math.round(n * n));
-  }
-  
-  toArray() {
-    return [this.a, this.b, this.c, this.d];
-  }
-  
-  toString() {
-    return `${this.a} + ${this.b}i + ${this.c}j + ${this.d}k`;
-  }
-}
 
-/**
- * Prime Resonance Identity (PRI)
- * A triadic identity composed of:
- * - P_G: Gaussian prime
- * - P_E: Eisenstein prime
- * - P_Q: Quaternionic prime
- */
-class PrimeResonanceIdentity {
-  constructor(gaussianPrime, eisensteinPrime, quaternionPrime) {
-    this.gaussian = gaussianPrime;      // GaussianInteger
-    this.eisenstein = eisensteinPrime;  // EisensteinInteger
-    this.quaternion = quaternionPrime;  // QuaternionPrime
-    
-    // Compute combined signature
-    this._computeSignature();
-  }
-  
-  _computeSignature() {
-    const gNorm = this.gaussian.norm();
-    const eNorm = this.eisenstein.norm();
-    const qNorm = this.quaternion.norm();
-    
-    // Signature is a triple of norms
-    this.signature = [gNorm, eNorm, qNorm];
-    
-    // Hash from signature
-    this.hash = (gNorm * 997 + eNorm * 991 + Math.round(qNorm) * 983) % 1000000007;
-  }
-  
   /**
-   * Generate a PRI from a seed integer
+   * Calculate resonance between two primes
+   * R(p1, p2) = 1/ratio + φ_bonus
+   * 
+   * @param {number|bigint} p1 - First prime
+   * @param {number|bigint} p2 - Second prime
+   * @returns {number} Resonance value between 0 and ~1.3
    */
-  static fromSeed(seed) {
-    // Use seed to generate three primes
-    const p1 = firstNPrimes(seed + 10)[seed % 10 + 5];
-    const p2 = firstNPrimes(seed + 15)[seed % 10 + 8];
-    const p3 = firstNPrimes(seed + 20)[seed % 10 + 12];
+  calculateResonance(p1, p2) {
+    // Convert to numbers for calculation
+    const n1 = Number(p1);
+    const n2 = Number(p2);
     
-    // Create Gaussian prime: find a + bi where a² + b² is prime
-    const g = new GaussianInteger(p1 % 100, (seed * 7) % 50);
-    
-    // Create Eisenstein prime: find a + bω where a² - ab + b² ≡ 2 (mod 3)
-    const e = new EisensteinInteger(p2 % 100, (seed * 11) % 50);
-    
-    // Create Quaternion prime
-    const q = new QuaternionPrime(p3, seed % 10, (seed * 3) % 10, (seed * 7) % 10);
-    
-    return new PrimeResonanceIdentity(g, e, q);
-  }
-  
-  /**
-   * Generate a random PRI
-   */
-  static random() {
-    const primes = firstNPrimes(50);
-    
-    const idx1 = Math.floor(Math.random() * primes.length);
-    const idx2 = Math.floor(Math.random() * primes.length);
-    const idx3 = Math.floor(Math.random() * primes.length);
-    
-    const p1 = primes[idx1];
-    const p2 = primes[idx2];
-    const p3 = primes[idx3];
-    
-    const g = new GaussianInteger(p1, Math.floor(Math.random() * 10));
-    const e = new EisensteinInteger(p2, Math.floor(Math.random() * 10));
-    const q = new QuaternionPrime(p3, 
-      Math.floor(Math.random() * 5),
-      Math.floor(Math.random() * 5),
-      Math.floor(Math.random() * 5)
-    );
-    
-    return new PrimeResonanceIdentity(g, e, q);
-  }
-  
-  /**
-   * Compute entanglement strength with another PRI
-   */
-  entanglementStrength(other) {
-    // Based on phase alignment and norm similarity
-    const gPhase = Math.atan2(this.gaussian.imag, this.gaussian.real);
-    const gPhaseOther = Math.atan2(other.gaussian.imag, other.gaussian.real);
-    
-    const ePhase = Math.atan2(this.eisenstein.b * Math.sqrt(3)/2, 
-                              this.eisenstein.a - this.eisenstein.b/2);
-    const ePhaseOther = Math.atan2(other.eisenstein.b * Math.sqrt(3)/2,
-                                   other.eisenstein.a - other.eisenstein.b/2);
-    
-    const gAlignment = Math.cos(gPhase - gPhaseOther);
-    const eAlignment = Math.cos(ePhase - ePhaseOther);
-    
-    // Quaternion alignment via normalized dot product
-    const qNorm = this.quaternion.norm() * other.quaternion.norm();
-    const qDot = (this.quaternion.a * other.quaternion.a +
-                  this.quaternion.b * other.quaternion.b +
-                  this.quaternion.c * other.quaternion.c +
-                  this.quaternion.d * other.quaternion.d);
-    const qAlignment = qNorm > 0 ? qDot / qNorm : 0;
-    
-    // Combined entanglement strength
-    return (gAlignment + eAlignment + qAlignment) / 3;
-  }
-  
-  toJSON() {
-    return {
-      gaussian: { real: this.gaussian.real, imag: this.gaussian.imag },
-      eisenstein: { a: this.eisenstein.a, b: this.eisenstein.b },
-      quaternion: this.quaternion.toArray(),
-      signature: this.signature,
-      hash: this.hash
-    };
-  }
-}
+    // Check cache
+    const cacheKey = n1 < n2 ? `${n1},${n2}` : `${n2},${n1}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
 
-/**
- * Phase-Locked Prime Ring
- * Implements stable communication via irrational phase locks
- */
-class PhaseLockedRing {
-  constructor(primes, phaseType = 'phi') {
-    this.primes = primes;
-    this.n = primes.length;
-    this.phases = new Float64Array(this.n);
-    
-    // Select irrational phase lock
-    this.phaseMultiplier = phaseType === 'phi' ? PHI : 
-                           phaseType === 'deltaS' ? DELTA_S :
-                           2 * Math.PI / PHI;  // 2π/φ
-    
-    // Initialize phases using irrational multiples
-    for (let i = 0; i < this.n; i++) {
-      this.phases[i] = (i * this.phaseMultiplier) % (2 * Math.PI);
-    }
-  }
-  
-  /**
-   * Advance all phases by one step
-   */
-  tick(dt = 0.01) {
-    for (let i = 0; i < this.n; i++) {
-      // Each prime oscillates at frequency proportional to log(p)
-      const freq = Math.log(this.primes[i]);
-      this.phases[i] = (this.phases[i] + freq * dt * this.phaseMultiplier) % (2 * Math.PI);
-    }
-  }
-  
-  /**
-   * Compute order parameter (Kuramoto-style)
-   * r = |1/N Σ e^(iθ_j)|
-   */
-  orderParameter() {
-    let sumReal = 0, sumImag = 0;
-    for (let i = 0; i < this.n; i++) {
-      sumReal += Math.cos(this.phases[i]);
-      sumImag += Math.sin(this.phases[i]);
-    }
-    return Math.sqrt(sumReal*sumReal + sumImag*sumImag) / this.n;
-  }
-  
-  /**
-   * Mean phase
-   */
-  meanPhase() {
-    let sumReal = 0, sumImag = 0;
-    for (let i = 0; i < this.n; i++) {
-      sumReal += Math.cos(this.phases[i]);
-      sumImag += Math.sin(this.phases[i]);
-    }
-    return Math.atan2(sumImag, sumReal);
-  }
-  
-  /**
-   * Synchronization measure
-   * How well are phases aligned?
-   */
-  synchronization() {
-    const order = this.orderParameter();
-    return order; // 0 = no sync, 1 = perfect sync
-  }
-  
-  /**
-   * Apply phase correction toward target
-   */
-  correctPhase(targetPhase, strength = 0.1) {
-    for (let i = 0; i < this.n; i++) {
-      const diff = targetPhase - this.phases[i];
-      const correction = Math.sin(diff) * strength;
-      this.phases[i] = (this.phases[i] + correction) % (2 * Math.PI);
-    }
-  }
-  
-  /**
-   * Get phase vector as complex amplitudes
-   */
-  toPrimeState(primesList = null) {
-    const state = new PrimeState(primesList || this.primes);
-    for (let i = 0; i < this.n && i < state.primes.length; i++) {
-      const p = this.primes[i];
-      if (state.amplitudes.has(p)) {
-        state.set(p, Complex.fromPolar(1, this.phases[i]));
-      }
-    }
-    return state.normalize();
-  }
-  
-  getPhases() {
-    return [...this.phases];
-  }
-}
+    // Handle edge cases
+    if (n1 === 0 || n2 === 0) return 0;
+    if (n1 === n2) return 1.0;  // Self-resonance is perfect
 
-/**
- * Holographic Memory Field
- * 2D spatial representation of prime-encoded information
- * I(x,y) = Σ A_p e^(-S(x,y)) e^(ipθ)
- */
-class HolographicField {
-  constructor(width = 64, height = 64, primes = null) {
-    this.width = width;
-    this.height = height;
-    this.primes = primes || firstNPrimes(25);
-    
-    // Complex amplitude field
-    this.field = new Array(height);
-    for (let y = 0; y < height; y++) {
-      this.field[y] = new Array(width);
-      for (let x = 0; x < width; x++) {
-        this.field[y][x] = Complex.zero();
-      }
-    }
-    
-    // Entropy surface S(x,y)
-    this.entropyField = new Array(height);
-    for (let y = 0; y < height; y++) {
-      this.entropyField[y] = new Float64Array(width);
-    }
-  }
-  
-  /**
-   * Encode a PrimeState into the holographic field
-   */
-  encodeState(state, centerX = null, centerY = null) {
-    centerX = centerX ?? this.width / 2;
-    centerY = centerY ?? this.height / 2;
-    
-    const sigma = Math.min(this.width, this.height) / 4;  // Spread
-    
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const dx = x - centerX;
-        const dy = y - centerY;
-        const r = Math.sqrt(dx*dx + dy*dy);
-        const theta = Math.atan2(dy, dx);
-        
-        // Gaussian envelope
-        const envelope = Math.exp(-r*r / (2*sigma*sigma));
-        
-        // Sum over primes
-        let sum = Complex.zero();
-        for (const p of state.primes) {
-          const amp = state.get(p);
-          const phase = p * theta;  // e^(ipθ)
-          const contribution = amp.mul(Complex.fromPolar(envelope, phase));
-          sum = sum.add(contribution);
-        }
-        
-        this.field[y][x] = this.field[y][x].add(sum);
-        
-        // Update entropy field
-        const intensity = sum.norm2();
-        if (intensity > 1e-10) {
-          this.entropyField[y][x] += -intensity * Math.log2(intensity);
-        }
-      }
-    }
-  }
-  
-  /**
-   * Decode field at a point back to PrimeState
-   */
-  decodeAt(x, y, radius = 5) {
-    const state = new PrimeState(this.primes);
-    
-    // Sample in a small neighborhood
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        const px = Math.floor(x + dx);
-        const py = Math.floor(y + dy);
-        
-        if (px >= 0 && px < this.width && py >= 0 && py < this.height) {
-          const val = this.field[py][px];
-          const theta = Math.atan2(dy, dx);
-          
-          // Recover prime contributions
-          for (const p of this.primes) {
-            const phase = -p * theta;  // Inverse of encoding phase
-            const contribution = val.mul(Complex.fromPolar(1, phase));
-            state.set(p, state.get(p).add(contribution.scale(1 / (4 * radius * radius))));
-          }
-        }
-      }
-    }
-    
-    return state.normalize();
-  }
-  
-  /**
-   * Get total intensity at a point
-   */
-  intensity(x, y) {
-    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-      return this.field[Math.floor(y)][Math.floor(x)].norm2();
-    }
-    return 0;
-  }
-  
-  /**
-   * Get local entropy at a point
-   */
-  localEntropy(x, y) {
-    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-      return this.entropyField[Math.floor(y)][Math.floor(x)];
-    }
-    return 0;
-  }
-  
-  /**
-   * Find regions of high intensity (potential memory fragments)
-   */
-  findPeaks(threshold = 0.1) {
-    const peaks = [];
-    const maxIntensity = this.maxIntensity();
-    
-    for (let y = 1; y < this.height - 1; y++) {
-      for (let x = 1; x < this.width - 1; x++) {
-        const intensity = this.field[y][x].norm2();
-        
-        if (intensity > threshold * maxIntensity) {
-          // Check if local maximum
-          let isMax = true;
-          for (let dy = -1; dy <= 1 && isMax; dy++) {
-            for (let dx = -1; dx <= 1 && isMax; dx++) {
-              if (dx !== 0 || dy !== 0) {
-                if (this.field[y+dy][x+dx].norm2() > intensity) {
-                  isMax = false;
-                }
-              }
-            }
-          }
-          
-          if (isMax) {
-            peaks.push({ x, y, intensity, phase: this.field[y][x].phase() });
-          }
-        }
-      }
-    }
-    
-    return peaks.sort((a, b) => b.intensity - a.intensity);
-  }
-  
-  maxIntensity() {
-    let max = 0;
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const i = this.field[y][x].norm2();
-        if (i > max) max = i;
-      }
-    }
-    return max;
-  }
-  
-  /**
-   * Clear the field
-   */
-  clear() {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        this.field[y][x] = Complex.zero();
-        this.entropyField[y][x] = 0;
-      }
-    }
-  }
-  
-  /**
-   * Export as grayscale image data (intensity map)
-   */
-  toImageData() {
-    const data = new Uint8ClampedArray(this.width * this.height * 4);
-    const max = this.maxIntensity();
-    
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const idx = (y * this.width + x) * 4;
-        const intensity = max > 0 ? this.field[y][x].norm2() / max : 0;
-        const phase = (this.field[y][x].phase() + Math.PI) / (2 * Math.PI);
-        
-        // HSV to RGB (hue = phase, value = intensity)
-        const h = phase * 360;
-        const s = 1;
-        const v = Math.sqrt(intensity);  // sqrt for gamma correction
-        
-        const [r, g, b] = hsvToRgb(h, s, v);
-        data[idx] = r;
-        data[idx + 1] = g;
-        data[idx + 2] = b;
-        data[idx + 3] = 255;
-      }
-    }
-    
-    return { width: this.width, height: this.height, data };
-  }
-}
+    // Calculate ratio (larger / smaller)
+    const [smaller, larger] = n1 < n2 ? [n1, n2] : [n2, n1];
+    const ratio = larger / smaller;
 
-// Helper: HSV to RGB conversion
-function hsvToRgb(h, s, v) {
-  const c = v * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = v - c;
-  
-  let r = 0, g = 0, b = 0;
-  if (h < 60) { r = c; g = x; }
-  else if (h < 120) { r = x; g = c; }
-  else if (h < 180) { g = c; b = x; }
-  else if (h < 240) { g = x; b = c; }
-  else if (h < 300) { r = x; b = c; }
-  else { r = c; b = x; }
-  
-  return [
-    Math.round((r + m) * 255),
-    Math.round((g + m) * 255),
-    Math.round((b + m) * 255)
-  ];
-}
+    // Base resonance: inverse of ratio (closer primes resonate more)
+    let resonance = 1.0 / ratio;
 
-/**
- * Entangled Node (from ResoLang spec)
- * A network node with PRI, phase ring, and holographic memory
- */
-class EntangledNode {
-  constructor(id, pri = null) {
-    this.id = id;
-    this.pri = pri || PrimeResonanceIdentity.random();
-    this.phaseRing = new PhaseLockedRing(firstNPrimes(16));
-    this.holographicMemory = new HolographicField(32, 32);
-    this.entanglementMap = new Map();  // nodeId -> strength
-    this.coherence = 1.0;
-  }
-  
-  /**
-   * Establish entanglement with another node
-   */
-  entangleWith(other) {
-    const strength = this.pri.entanglementStrength(other.pri);
-    this.entanglementMap.set(other.id, strength);
-    other.entanglementMap.set(this.id, strength);
-    return strength;
-  }
-  
-  /**
-   * Store a memory fragment
-   */
-  storeMemory(state, x = null, y = null) {
-    this.holographicMemory.encodeState(state, x, y);
-  }
-  
-  /**
-   * Retrieve memory at position
-   */
-  retrieveMemory(x, y) {
-    return this.holographicMemory.decodeAt(x, y);
-  }
-  
-  /**
-   * Advance node state
-   */
-  tick(dt = 0.01) {
-    this.phaseRing.tick(dt);
-    
-    // Coherence decays slightly over time
-    this.coherence *= (1 - 0.001 * dt);
-    
-    // But increases with synchronization
-    this.coherence = Math.min(1, this.coherence + this.phaseRing.synchronization() * 0.002 * dt);
-  }
-  
-  /**
-   * Get current state as PrimeState
-   */
-  getState() {
-    return this.phaseRing.toPrimeState();
-  }
-  
-  /**
-   * Check if stable (coherent and synchronized)
-   */
-  isStable() {
-    return this.coherence > 0.85 && this.phaseRing.synchronization() > 0.7;
-  }
-  
-  toJSON() {
-    return {
-      id: this.id,
-      pri: this.pri.toJSON(),
-      coherence: this.coherence,
-      synchronization: this.phaseRing.synchronization(),
-      entanglements: Array.from(this.entanglementMap.entries())
-    };
-  }
-}
+    // Add golden ratio bonus if applicable
+    if (this.isGoldenRatio(ratio)) {
+      resonance += PHI_BONUS;
+    }
 
-/**
- * Resonant Fragment (from ResoLang spec)
- * A portable memory fragment that can be teleported
- */
-class ResonantFragment {
-  constructor(state, centerX = 0, centerY = 0) {
-    this.state = state;
-    this.centerX = centerX;
-    this.centerY = centerY;
-    this.entropy = state.entropy();
-    this.createdAt = Date.now();
+    // Cache result
+    this.addToCache(cacheKey, resonance);
+
+    return resonance;
   }
-  
+
   /**
-   * Create from text
+   * Check if a ratio is close to the golden ratio
    */
-  static fromText(text) {
-    const { encodeMemory } = require('./hilbert');
-    const state = encodeMemory(text);
-    return new ResonantFragment(state);
+  isGoldenRatio(ratio) {
+    return Math.abs(ratio - PHI) < PHI_THRESHOLD;
   }
-  
+
   /**
-   * Create from prime list
+   * Find prime pairs near the golden ratio
+   * These are "naturally harmonic" pairs
+   * 
+   * @param {number[]} primes - Array of primes to search
+   * @returns {Array<{p1: number, p2: number, ratio: number, resonance: number}>}
    */
-  static fromPrimes(primes, weights = null) {
-    const state = new PrimeState();
+  findGoldenPairs(primes) {
+    const pairs = [];
+    
     for (let i = 0; i < primes.length; i++) {
-      const p = primes[i];
-      const w = weights ? weights[i] : 1 / primes.length;
-      if (state.amplitudes.has(p)) {
-        state.set(p, new Complex(w, 0));
+      for (let j = i + 1; j < primes.length; j++) {
+        const p1 = primes[i];
+        const p2 = primes[j];
+        const ratio = p2 / p1;
+        
+        if (this.isGoldenRatio(ratio)) {
+          pairs.push({
+            p1,
+            p2,
+            ratio,
+            resonance: this.calculateResonance(p1, p2)
+          });
+        }
       }
     }
-    return new ResonantFragment(state.normalize());
+    
+    return pairs.sort((a, b) => 
+      Math.abs(a.ratio - PHI) - Math.abs(b.ratio - PHI)
+    );
   }
-  
+
   /**
-   * Tensor product with another fragment
+   * Calculate vectorized resonance matrix for multiple primes
+   * 
+   * @param {number[]} primes - Array of primes
+   * @returns {number[][]} NxN matrix of resonance values
    */
-  tensorWith(other) {
-    // Combine states via multiplication (non-commutative in quaternionic extension)
-    const combined = new PrimeState(this.state.primes);
-    for (const p of this.state.primes) {
-      const a = this.state.get(p);
-      const b = other.state.get(p);
-      combined.set(p, a.mul(b));
+  calculateMatrix(primes) {
+    const n = primes.length;
+    const matrix = [];
+
+    for (let i = 0; i < n; i++) {
+      matrix[i] = [];
+      for (let j = 0; j < n; j++) {
+        matrix[i][j] = this.calculateResonance(primes[i], primes[j]);
+      }
     }
-    return new ResonantFragment(combined.normalize());
+
+    return matrix;
   }
-  
+
   /**
-   * Rotate phase of fragment
+   * Calculate average resonance of a prime with a set
+   * 
+   * @param {number} prime - Target prime
+   * @param {number[]} primes - Set of primes to compare
+   * @returns {number} Average resonance
    */
-  rotatePhase(angle) {
-    const rotation = Complex.fromPolar(1, angle);
-    const rotated = this.state.scale(rotation);
-    return new ResonantFragment(rotated);
+  calculateAverageResonance(prime, primes) {
+    if (primes.length === 0) return 0;
+    
+    let sum = 0;
+    for (const p of primes) {
+      sum += this.calculateResonance(prime, p);
+    }
+    
+    return sum / primes.length;
   }
-  
+
   /**
-   * Check coherence with another fragment
+   * Find the most resonant prime from a set
+   * 
+   * @param {number} target - Target prime
+   * @param {number[]} candidates - Candidate primes
+   * @returns {{prime: number, resonance: number}|null}
    */
-  coherenceWith(other) {
-    return this.state.coherence(other.state);
+  findMostResonant(target, candidates) {
+    if (candidates.length === 0) return null;
+
+    let maxResonance = -1;
+    let mostResonant = null;
+
+    for (const candidate of candidates) {
+      const resonance = this.calculateResonance(target, candidate);
+      if (resonance > maxResonance) {
+        maxResonance = resonance;
+        mostResonant = candidate;
+      }
+    }
+
+    return { prime: mostResonant, resonance: maxResonance };
   }
-  
+
   /**
-   * Get dominant primes
+   * Find resonance clusters - groups of primes with high mutual resonance
+   * 
+   * @param {number[]} primes - Primes to cluster
+   * @param {number} threshold - Minimum resonance for cluster membership
+   * @returns {number[][]} Array of clusters
    */
-  dominant(n = 5) {
-    return this.state.dominant(n);
+  findClusters(primes, threshold = 0.5) {
+    const clusters = [];
+    const visited = new Set();
+
+    for (const p of primes) {
+      if (visited.has(p)) continue;
+
+      const cluster = [p];
+      visited.add(p);
+
+      for (const q of primes) {
+        if (visited.has(q)) continue;
+        if (this.calculateResonance(p, q) >= threshold) {
+          cluster.push(q);
+          visited.add(q);
+        }
+      }
+
+      if (cluster.length > 1) {
+        clusters.push(cluster);
+      }
+    }
+
+    return clusters;
   }
-  
-  toJSON() {
+
+  /**
+   * Add entry to cache with LRU eviction
+   */
+  addToCache(key, value) {
+    if (this.cache.size >= this.cacheSize) {
+      // Remove oldest entry (first key)
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
+    this.cache.set(key, value);
+  }
+
+  /**
+   * Clear the resonance cache
+   */
+  clearCache() {
+    this.cache.clear();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats() {
     return {
-      amplitudes: this.state.toArray(),
-      center: [this.centerX, this.centerY],
-      entropy: this.entropy,
-      dominant: this.dominant(3)
+      size: this.cache.size,
+      maxSize: this.cacheSize
     };
   }
 }
+
+/**
+ * Compute resonance signature for a set of primes
+ * This is a composite measure of internal harmony
+ * 
+ * @param {number[]} primes - Set of primes
+ * @param {ResonanceCalculator} calc - Calculator instance
+ * @returns {{mean: number, variance: number, goldenCount: number}}
+ */
+function resonanceSignature(primes, calc = new ResonanceCalculator()) {
+  if (primes.length < 2) {
+    return { mean: 1, variance: 0, goldenCount: 0 };
+  }
+
+  const resonances = [];
+  let goldenCount = 0;
+
+  for (let i = 0; i < primes.length; i++) {
+    for (let j = i + 1; j < primes.length; j++) {
+      const r = calc.calculateResonance(primes[i], primes[j]);
+      resonances.push(r);
+      
+      const ratio = Math.max(primes[i], primes[j]) / Math.min(primes[i], primes[j]);
+      if (calc.isGoldenRatio(ratio)) {
+        goldenCount++;
+      }
+    }
+  }
+
+  const mean = resonances.reduce((a, b) => a + b, 0) / resonances.length;
+  const variance = resonances.reduce((sum, r) => sum + (r - mean) ** 2, 0) / resonances.length;
+
+  return { mean, variance, goldenCount };
+}
+
+/**
+ * Find Fibonacci-like sequences in primes (which approximate golden ratio)
+ * These sequences have naturally high resonance
+ * 
+ * @param {number[]} primes - Sorted array of primes
+ * @param {number} minLength - Minimum sequence length
+ * @returns {number[][]} Fibonacci-like sequences
+ */
+function findFibonacciSequences(primes, minLength = 3) {
+  const sequences = [];
+  
+  for (let i = 0; i < primes.length; i++) {
+    for (let j = i + 1; j < primes.length; j++) {
+      const seq = [primes[i], primes[j]];
+      
+      // Try to extend the sequence
+      let next = primes[i] + primes[j];
+      let k = j + 1;
+      
+      while (k < primes.length) {
+        if (primes[k] === next) {
+          seq.push(primes[k]);
+          next = seq[seq.length - 2] + seq[seq.length - 1];
+          k++;
+        } else if (primes[k] > next) {
+          break;
+        } else {
+          k++;
+        }
+      }
+      
+      if (seq.length >= minLength) {
+        sequences.push(seq);
+      }
+    }
+  }
+  
+  return sequences;
+}
+
+// Singleton instance for convenience
+const defaultCalculator = new ResonanceCalculator();
 
 module.exports = {
-  // Constants
+  ResonanceCalculator,
+  resonanceSignature,
+  findFibonacciSequences,
   PHI,
-  PHI_CONJ,
-  DELTA_S,
+  PHI_THRESHOLD,
+  PHI_BONUS,
   
-  // Classes
-  QuaternionPrime,
-  PrimeResonanceIdentity,
-  PhaseLockedRing,
-  HolographicField,
-  EntangledNode,
-  ResonantFragment,
-  
-  // Helpers
-  hsvToRgb
+  // Convenience functions using default calculator
+  calculateResonance: (p1, p2) => defaultCalculator.calculateResonance(p1, p2),
+  findGoldenPairs: (primes) => defaultCalculator.findGoldenPairs(primes),
+  findMostResonant: (target, candidates) => defaultCalculator.findMostResonant(target, candidates)
 };

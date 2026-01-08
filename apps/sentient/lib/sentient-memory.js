@@ -1,12 +1,17 @@
 /**
  * Sentient Memory System
- * 
+ *
  * Enhanced memory for the Sentient Observer integrating:
  * - Holographic Quantum Encoding (HQE) for distributed storage
  * - Moment-based temporal indexing
  * - Entanglement-based associative recall
  * - SMF-tagged memories for semantic orientation
- * 
+ *
+ * v1.2.1 Enhancements:
+ * - PRGraphMemory integration for resonance-based retrieval
+ * - SparsePrimeState support for quaternionic memory traces
+ * - Entropy-locked stable memories
+ *
  * Builds upon the existing ContextMemory system.
  */
 
@@ -16,6 +21,8 @@ const { HolographicMemory, HolographicEncoder } = require('./hqe');
 const { EntangledPair, Phrase } = require('./entanglement');
 const { Moment } = require('./temporal');
 const { Complex, PrimeState } = require('../../../core/hilbert');
+const { PRGraphMemory, SparsePrimeState, resonanceScore } = require('../../../core/rformer');
+const { PrimeonZLadderMulti, createMultiChannelLadder } = require('../../../physics/primeon_z_ladder_multi');
 
 /**
  * Memory Trace - A single experiential memory
@@ -446,6 +453,26 @@ class SentientMemory {
             primes: options.primes || 64
         });
         
+        // v1.2.1: PRGraph resonance memory
+        this.prGraphMemory = new PRGraphMemory(
+            options.numPrimes || 4096,
+            options.lockThreshold || 0.8
+        );
+        
+        // v1.2.1: Multi-Z Channel Ladder for hierarchical memory
+        // Three memory channels: fast (working), slow (episodic), permanent (semantic)
+        this.zLadder = new PrimeonZLadderMulti({
+            N: options.ladderRungs || 64,
+            d: 1,
+            J: options.ladderCoupling || 0.25,
+            zChannels: options.zChannels || [
+                { name: 'working', dz: 1, leak: 0.2, decay: 0.05 },     // Fast decay - working memory
+                { name: 'episodic', dz: 1, leak: 0.02, decay: 0.005 },  // Medium decay - episodic memory
+                { name: 'semantic', dz: 1, leak: 0.002, decay: 0 }       // No decay - semantic memory
+            ],
+            periodic: true
+        });
+        
         // Temporal index
         this.temporalIndex = new TemporalMemoryIndex();
         
@@ -490,14 +517,30 @@ class SentientMemory {
         
         // Store SMF orientation
         if (context.smf) {
-            trace.smfOrientation = Array.isArray(context.smf) 
-                ? context.smf 
+            trace.smfOrientation = Array.isArray(context.smf)
+                ? context.smf
                 : context.smf.s.slice();
         }
         
         // Holographic encoding
         if (context.primeState) {
             this.holographicBank.store(trace, context.primeState);
+        }
+        
+        // v1.2.1: Store in PRGraph memory for resonance-based retrieval
+        if (context.activePrimes && context.activePrimes.length > 0) {
+            const sparseState = this._createSparseState(context.activePrimes, context.primeState);
+            this.prGraphMemory.put(trace.id, sparseState, {
+                traceId: trace.id,
+                type: trace.type,
+                importance: trace.importance,
+                timestamp: trace.timestamp
+            });
+            
+            // v1.2.1: Excite Z-ladder with active primes for hierarchical storage
+            this.zLadder.excitePrimes(context.activePrimes, trace.importance);
+            // Run a few steps to allow memory propagation to channels
+            this.zLadder.run(10, 0.01);
         }
         
         // Update subjective time
@@ -529,6 +572,37 @@ class SentientMemory {
     }
     
     /**
+     * v1.2.1: Create SparsePrimeState from active primes
+     * @private
+     */
+    _createSparseState(activePrimes, primeState) {
+        const sparseState = new SparsePrimeState(4096, activePrimes.length);
+        
+        for (let i = 0; i < activePrimes.length; i++) {
+            const prime = activePrimes[i];
+            let amplitude = null;
+            
+            // Try to get amplitude from primeState if available
+            if (primeState && primeState.state) {
+                amplitude = primeState.state.get(prime);
+            }
+            
+            if (!amplitude) {
+                // Create default amplitude with phase based on position
+                const phase = (2 * Math.PI * i) / activePrimes.length;
+                amplitude = new Complex(
+                    Math.cos(phase) / Math.sqrt(activePrimes.length),
+                    Math.sin(phase) / Math.sqrt(activePrimes.length)
+                );
+            }
+            
+            sparseState.set(prime, amplitude);
+        }
+        
+        return sparseState.normalize();
+    }
+    
+    /**
      * Recall memories by holographic similarity
      */
     recallBySimilarity(primeState, options = {}) {
@@ -545,12 +619,217 @@ class SentientMemory {
                 results.push({
                     trace,
                     score: result.score,
-                    strength: result.strength
+                    strength: result.strength,
+                    source: 'holographic'
                 });
             }
         }
         
         return results;
+    }
+    
+    /**
+     * v1.2.1: Recall memories by resonance score
+     * Uses PRGraphMemory for prime-resonance-based retrieval
+     * @param {Array<number>} activePrimes - Query primes
+     * @param {Object} options - Retrieval options
+     */
+    recallByResonance(activePrimes, options = {}) {
+        const topK = options.maxResults || 10;
+        
+        // Create query state from active primes
+        const queryState = this._createSparseState(activePrimes);
+        
+        // Query PRGraph memory
+        const prResults = this.prGraphMemory.get(queryState, topK);
+        
+        const results = [];
+        for (const result of prResults) {
+            const trace = this.traces.get(result.metadata?.traceId || result.key);
+            if (trace) {
+                trace.access();
+                results.push({
+                    trace,
+                    score: result.score,
+                    entropy: result.entropy,
+                    locked: result.locked,
+                    source: 'resonance'
+                });
+            }
+        }
+        
+        return results;
+    }
+    
+    /**
+     * v1.2.1: Combined recall using both holographic and resonance methods
+     * Merges results and deduplicates by trace ID
+     * @param {Object} primeState - Prime state for holographic recall
+     * @param {Array<number>} activePrimes - Active primes for resonance recall
+     * @param {Object} options - Retrieval options
+     */
+    recallCombined(primeState, activePrimes, options = {}) {
+        const maxResults = options.maxResults || 10;
+        const holoWeight = options.holoWeight ?? 0.5;
+        const resonanceWeight = 1 - holoWeight;
+        
+        // Get results from both sources
+        const holoResults = this.recallBySimilarity(primeState, {
+            maxResults: maxResults * 2,
+            threshold: options.threshold || 0.3
+        });
+        
+        const resonanceResults = this.recallByResonance(activePrimes, {
+            maxResults: maxResults * 2
+        });
+        
+        // Merge and score
+        const scoreMap = new Map();
+        
+        for (const result of holoResults) {
+            const id = result.trace.id;
+            const existing = scoreMap.get(id) || { trace: result.trace, holoScore: 0, resScore: 0 };
+            existing.holoScore = result.score;
+            scoreMap.set(id, existing);
+        }
+        
+        for (const result of resonanceResults) {
+            const id = result.trace.id;
+            const existing = scoreMap.get(id) || { trace: result.trace, holoScore: 0, resScore: 0 };
+            existing.resScore = result.score;
+            existing.locked = result.locked;
+            scoreMap.set(id, existing);
+        }
+        
+        // Compute combined scores
+        const combined = Array.from(scoreMap.values()).map(entry => ({
+            trace: entry.trace,
+            combinedScore: holoWeight * entry.holoScore + resonanceWeight * entry.resScore,
+            holoScore: entry.holoScore,
+            resonanceScore: entry.resScore,
+            locked: entry.locked,
+            source: 'combined'
+        }));
+        
+        // Sort by combined score
+        combined.sort((a, b) => b.combinedScore - a.combinedScore);
+        
+        return combined.slice(0, maxResults);
+    }
+    
+    /**
+     * v1.2.1: Get locked (stable) memories from PRGraph
+     * These are memories that have been accessed frequently and have low entropy
+     */
+    getLockedMemories() {
+        const lockedEntries = this.prGraphMemory.getLockedMemories();
+        
+        return lockedEntries.map(entry => ({
+            trace: this.traces.get(entry.metadata?.traceId || entry.key),
+            entropy: entry.entropy,
+            accessCount: entry.accessCount
+        })).filter(result => result.trace);
+    }
+    
+    /**
+     * v1.2.1: Get hierarchical memory state from Z-ladder channels
+     * Returns the current state of working, episodic, and semantic memory channels
+     */
+    getHierarchicalMemoryState() {
+        const metrics = this.zLadder.channelMetrics();
+        const rungProbs = this.zLadder.rungProbabilities();
+        
+        return {
+            working: metrics.working,
+            episodic: metrics.episodic,
+            semantic: metrics.semantic,
+            coreCoherence: this.zLadder.coreMetrics().coherence,
+            rungDistribution: rungProbs,
+            entanglementEntropy: this.zLadder.entanglementEntropy()
+        };
+    }
+    
+    /**
+     * v1.2.1: Query a specific memory channel
+     * @param {string} channelName - 'working', 'episodic', or 'semantic'
+     */
+    queryChannel(channelName) {
+        const channel = this.zLadder.getChannel(channelName);
+        if (!channel) {
+            throw new Error(`Unknown memory channel: ${channelName}`);
+        }
+        return channel.metrics();
+    }
+    
+    /**
+     * v1.2.1: Consolidate memory from working to episodic to semantic
+     * Simulates sleep-like memory consolidation process
+     * @param {number} steps - Number of consolidation steps
+     */
+    consolidateMemory(steps = 100) {
+        // Run the Z-ladder to allow natural flow from fast to slow channels
+        const trajectory = this.zLadder.run(steps, 0.01);
+        
+        // Return the final state and trajectory summary
+        const finalMetrics = this.zLadder.metrics();
+        
+        return {
+            stepsRun: steps,
+            finalState: finalMetrics,
+            trajectoryEntropy: trajectory.map(m => m.core.entropy),
+            workingToEpisodicFlux: this.zLadder.getChannel('episodic')?.totalFlux || 0,
+            episodicToSemanticFlux: this.zLadder.getChannel('semantic')?.totalFlux || 0
+        };
+    }
+    
+    /**
+     * v1.2.1: Prime-based recall from Z-ladder
+     * Excites specific primes and measures which channels respond
+     * @param {Array<number>} primes - Primes to query
+     */
+    recallFromHierarchy(primes) {
+        // Excite the ladder with query primes
+        this.zLadder.excitePrimes(primes, 0.5);
+        
+        // Run to let the system respond
+        this.zLadder.run(20, 0.01);
+        
+        // Sample the most active rungs
+        const rungProbs = this.zLadder.rungProbabilities();
+        
+        // Get top responding rungs (these correspond to primes in memory)
+        const topRungs = rungProbs
+            .map((prob, idx) => ({ rung: idx, probability: prob }))
+            .sort((a, b) => b.probability - a.probability)
+            .slice(0, 10);
+        
+        // Get channel contributions
+        const channels = this.getHierarchicalMemoryState();
+        
+        return {
+            topRungs,
+            channels,
+            coreMetrics: this.zLadder.coreMetrics()
+        };
+    }
+    
+    /**
+     * v1.2.1: Measure memory and collapse to most probable rung
+     * Returns the collapsed rung and associated memories
+     */
+    measureAndCollapse() {
+        const result = this.zLadder.measure();
+        
+        // Find memories associated with the measured rung (prime)
+        const measuredPrime = result.outcome;
+        const associatedMemories = this.entanglementIndex.getByPrimes([measuredPrime]);
+        
+        return {
+            collapsedRung: result.outcome,
+            probability: result.probability,
+            associatedMemoryIds: associatedMemories.slice(0, 10),
+            metricsAfter: result.metricsAfter
+        };
     }
     
     /**
@@ -783,13 +1062,35 @@ class SentientMemory {
             typeCount[trace.type] = (typeCount[trace.type] || 0) + 1;
         }
         
+        // v1.2.1: Include PRGraph stats
+        const prGraphStats = this.prGraphMemory.stats();
+        
+        // v1.2.1: Get Z-ladder metrics
+        const zLadderMetrics = this.zLadder.metrics();
+        
         return {
             traceCount: this.traces.size,
             holographicCount: this.holographicBank.count,
             averageStrength: this.traces.size > 0 ? totalStrength / this.traces.size : 0,
             averageImportance: this.traces.size > 0 ? totalImportance / this.traces.size : 0,
             subjectiveTime: this.subjectiveTime,
-            typeDistribution: typeCount
+            typeDistribution: typeCount,
+            // v1.2.1: PRGraph memory stats
+            prGraph: {
+                total: prGraphStats.total,
+                locked: prGraphStats.locked,
+                avgEntropy: prGraphStats.avgEntropy
+            },
+            // v1.2.1: Z-ladder hierarchical memory stats
+            zLadder: {
+                coreEntropy: zLadderMetrics.core.entropy,
+                coreCoherence: zLadderMetrics.core.coherence,
+                totalZEntropy: zLadderMetrics.totalZEntropy,
+                channels: Object.entries(zLadderMetrics.channels).reduce((acc, [name, m]) => {
+                    acc[name] = { entropy: m.entropy, coherence: m.coherence, flux: m.totalFlux };
+                    return acc;
+                }, {})
+            }
         };
     }
     
@@ -860,6 +1161,9 @@ class SentientMemory {
         this.entanglementIndex.clear();
         this.smfIndex = [];
         this.subjectiveTime = 0;
+        
+        // v1.2.1: Reset Z-ladder
+        this.zLadder.reset();
     }
 }
 

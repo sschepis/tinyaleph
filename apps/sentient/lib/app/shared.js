@@ -1,6 +1,6 @@
 /**
  * Shared Components for Sentient Observer
- * 
+ *
  * Contains system prompt generation, observer initialization,
  * and utility functions used by both CLI and Server modes.
  */
@@ -10,8 +10,9 @@ const path = require('path');
 
 const { SentientObserver } = require('../sentient-core');
 const { AlephChat } = require('../chat');
-const { ToolExecutor, TOOL_DEFINITIONS } = require('../tools');
+const { ToolExecutor, TOOL_DEFINITIONS, OPENAI_TOOLS } = require('../tools');
 const { SensorySystem } = require('../senses');
+const { Agent, createAgent } = require('../agent');
 
 /**
  * Generate the system prompt for the Sentient Observer
@@ -129,7 +130,16 @@ async function initializeObserver(options, callbacks = {}) {
     senses.setObserver(observer);
     senses.setLLMInfo(options.url, null, connected);
     
-    return { success: true, observer, chat, toolExecutor, senses };
+    // Initialize Agent for agentic behavior
+    const agent = createAgent({
+        llmClient: chat.llm,
+        toolExecutor: toolExecutor,
+        toolDefinitions: OPENAI_TOOLS,
+        autoDecompose: options.autoDecompose !== false,
+        minComplexityForDecomposition: options.minComplexity ?? 0.5
+    });
+    
+    return { success: true, observer, chat, toolExecutor, senses, agent };
 }
 
 /**

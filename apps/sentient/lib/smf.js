@@ -11,10 +11,15 @@
  * - Zero-divisor detection for "tunneling" transitions
  * - SMF entropy calculation
  * - SLERP interpolation for smooth transitions
+ * v1.2.1 Enhancements:
+ * - SparsePrimeState integration for prime-based SMF construction
+ * - hamiltonCompose for non-commutative quaternionic composition
+ * - Quaternion extraction from SMF orientation
  */
 
 const { Hypercomplex } = require('../../../core/hypercomplex');
 const { multiplyIndices } = require('../../../core/fano');
+const { SparsePrimeState, hamiltonCompose } = require('../../../core/rformer');
 
 /**
  * Semantic axis interpretations (from paper Table 1)
@@ -121,6 +126,126 @@ class SedenionMemoryField {
     }
     
     /**
+     * v1.2.1: Create SMF from SparsePrimeState
+     * Derives quaternion orientation from complex amplitudes of active primes
+     *
+     * The quaternion is constructed from:
+     * - w: average magnitude of amplitudes (coherence)
+     * - x: cosine of average phase (identity)
+     * - y: sine of average phase (duality)
+     * - z: phase variance (structure)
+     *
+     * @param {SparsePrimeState} sparseState - Sparse prime state with complex amplitudes
+     * @param {Object} options - Mapping options
+     */
+    static fromSparsePrimeState(sparseState, options = {}) {
+        const smf = new SedenionMemoryField();
+        smf.s.fill(0);
+        
+        const primes = sparseState.getActivePrimes();
+        
+        if (!primes || primes.length === 0) {
+            smf.s[0] = 1.0; // Default to coherence
+            return smf;
+        }
+        
+        // Collect amplitude and phase information
+        const amplitudes = [];
+        const phases = [];
+        let totalMag = 0;
+        
+        for (const prime of primes) {
+            const amp = sparseState.get(prime);
+            if (amp) {
+                const mag = Math.sqrt(amp.re * amp.re + amp.im * amp.im);
+                const phase = Math.atan2(amp.im, amp.re);
+                amplitudes.push(mag);
+                phases.push(phase);
+                totalMag += mag;
+            }
+        }
+        
+        if (amplitudes.length === 0) {
+            smf.s[0] = 1.0;
+            return smf;
+        }
+        
+        // Compute phase statistics
+        let phaseX = 0, phaseY = 0;
+        for (let i = 0; i < phases.length; i++) {
+            const weight = amplitudes[i] / (totalMag || 1);
+            phaseX += Math.cos(phases[i]) * weight;
+            phaseY += Math.sin(phases[i]) * weight;
+        }
+        const avgPhase = Math.atan2(phaseY, phaseX);
+        const phaseCoherence = Math.sqrt(phaseX * phaseX + phaseY * phaseY);
+        
+        // Compute phase variance
+        let phaseVariance = 0;
+        for (let i = 0; i < phases.length; i++) {
+            let diff = phases[i] - avgPhase;
+            // Wrap to [-π, π]
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            phaseVariance += diff * diff * amplitudes[i] / (totalMag || 1);
+        }
+        
+        // Construct quaternion from phase statistics
+        // w: phase coherence (how aligned are the phases)
+        // x: cos(avgPhase) - direction in complex plane
+        // y: sin(avgPhase) - direction in complex plane
+        // z: normalized phase variance - disorder
+        const aggQ = {
+            w: phaseCoherence,
+            x: Math.cos(avgPhase) * (1 - phaseVariance / Math.PI),
+            y: Math.sin(avgPhase) * (1 - phaseVariance / Math.PI),
+            z: Math.sqrt(phaseVariance) / Math.PI
+        };
+        
+        // Normalize quaternion
+        const qNorm = Math.sqrt(aggQ.w * aggQ.w + aggQ.x * aggQ.x + aggQ.y * aggQ.y + aggQ.z * aggQ.z);
+        if (qNorm > 1e-10) {
+            aggQ.w /= qNorm;
+            aggQ.x /= qNorm;
+            aggQ.y /= qNorm;
+            aggQ.z /= qNorm;
+        } else {
+            aggQ.w = 1;
+            aggQ.x = aggQ.y = aggQ.z = 0;
+        }
+        
+        // Map quaternion components to first 4 SMF axes
+        smf.s[0] = aggQ.w; // coherence
+        smf.s[1] = aggQ.x; // identity
+        smf.s[2] = aggQ.y; // duality
+        smf.s[3] = aggQ.z; // structure
+        
+        // Derive higher axes
+        // Axis 4 (change): rotation angle
+        const rotationAngle = 2 * Math.acos(Math.max(-1, Math.min(1, aggQ.w)));
+        smf.s[4] = rotationAngle / Math.PI;
+        
+        // Axis 5 (life): total amplitude
+        const avgAmp = totalMag / primes.length;
+        smf.s[5] = Math.min(1, avgAmp);
+        
+        // Axis 6 (harmony): phase coherence
+        smf.s[6] = phaseCoherence;
+        
+        // Axis 7 (wisdom): number of active primes
+        smf.s[7] = Math.min(1, primes.length / 16);
+        
+        // Axis 8 (infinity): low entropy
+        const entropy = sparseState.entropy ? sparseState.entropy() : 0;
+        smf.s[8] = Math.exp(-entropy);
+        
+        // Axis 15 (consciousness): combination
+        smf.s[15] = (smf.s[0] + smf.s[6] + smf.s[7]) / 3;
+        
+        return smf.normalize();
+    }
+    
+    /**
      * Convert to Hypercomplex
      */
     toHypercomplex() {
@@ -205,7 +330,7 @@ class SedenionMemoryField {
      * Non-associative sedenion multiplication (equation 9)
      * Uses Cayley-Dickson construction via Fano plane extension
      * (sa * sb) * sc ≠ sa * (sb * sc)
-     * 
+     *
      * @param {SedenionMemoryField} other - SMF to multiply with
      * @returns {SedenionMemoryField} - Product SMF
      */
@@ -222,6 +347,180 @@ class SedenionMemoryField {
         }
         
         return result;
+    }
+    
+    /**
+     * v1.2.1: Quaternionic composition using library hamiltonCompose
+     * Order-sensitive composition: hamiltonCompose(a, b) ≠ hamiltonCompose(b, a)
+     *
+     * Extracts quaternion subspace (first 4 axes), composes using Hamilton product,
+     * then propagates changes to full 16D sedenion space.
+     *
+     * @param {SedenionMemoryField} other - SMF to compose with
+     * @param {Object} options - Composition options
+     * @returns {SedenionMemoryField} - Composed SMF
+     */
+    quaternionCompose(other, options = {}) {
+        const propagationFactor = options.propagation ?? 0.5;
+        
+        // Extract quaternion subspaces from both SMFs
+        const qThis = this.extractQuaternion();
+        const qOther = other.extractQuaternion();
+        
+        // Compute Hamilton product directly: q = qThis * qOther
+        // (w1, x1, y1, z1) * (w2, x2, y2, z2) =
+        // (w1*w2 - x1*x2 - y1*y2 - z1*z2,
+        //  w1*x2 + x1*w2 + y1*z2 - z1*y2,
+        //  w1*y2 - x1*z2 + y1*w2 + z1*x2,
+        //  w1*z2 + x1*y2 - y1*x2 + z1*w2)
+        const composedQ = {
+            w: qThis.w * qOther.w - qThis.x * qOther.x - qThis.y * qOther.y - qThis.z * qOther.z,
+            x: qThis.w * qOther.x + qThis.x * qOther.w + qThis.y * qOther.z - qThis.z * qOther.y,
+            y: qThis.w * qOther.y - qThis.x * qOther.z + qThis.y * qOther.w + qThis.z * qOther.x,
+            z: qThis.w * qOther.z + qThis.x * qOther.y - qThis.y * qOther.x + qThis.z * qOther.w
+        };
+        
+        // Normalize composed quaternion
+        const qNorm = Math.sqrt(composedQ.w ** 2 + composedQ.x ** 2 + composedQ.y ** 2 + composedQ.z ** 2);
+        if (qNorm > 1e-10) {
+            composedQ.w /= qNorm;
+            composedQ.x /= qNorm;
+            composedQ.y /= qNorm;
+            composedQ.z /= qNorm;
+        }
+        
+        // Create result SMF
+        const result = new SedenionMemoryField();
+        
+        // Set quaternion components (axes 0-3)
+        result.s[0] = composedQ.w;
+        result.s[1] = composedQ.x;
+        result.s[2] = composedQ.y;
+        result.s[3] = composedQ.z;
+        
+        // Propagate to higher axes using weighted average of originals
+        for (let k = 4; k < 16; k++) {
+            // Mix original higher axes with quaternion-derived influence
+            const original = 0.5 * (this.s[k] + other.s[k]);
+            const qInfluence = (composedQ.w + 1) * 0.25; // Map w from [-1,1] to [0,0.5]
+            result.s[k] = original * (1 - propagationFactor) + original * qInfluence * propagationFactor;
+        }
+        
+        return result.normalize();
+    }
+    
+    /**
+     * v1.2.1: Extract quaternion subspace from SMF
+     * Returns the first 4 axes as a quaternion object
+     *
+     * @returns {Object} Quaternion with {w, x, y, z} components
+     */
+    extractQuaternion() {
+        // Normalize the quaternion subspace
+        const w = this.s[0];
+        const x = this.s[1];
+        const y = this.s[2];
+        const z = this.s[3];
+        
+        const norm = Math.sqrt(w * w + x * x + y * y + z * z);
+        
+        if (norm < 1e-10) {
+            return { w: 1, x: 0, y: 0, z: 0 }; // Default to identity quaternion
+        }
+        
+        return {
+            w: w / norm,
+            x: x / norm,
+            y: y / norm,
+            z: z / norm
+        };
+    }
+    
+    /**
+     * v1.2.1: Set quaternion subspace
+     * Updates the first 4 axes from a quaternion object
+     *
+     * @param {Object} q - Quaternion with {w, x, y, z} components
+     * @param {boolean} normalize - Whether to normalize after setting
+     */
+    setQuaternion(q, normalizeAfter = true) {
+        this.s[0] = q.w;
+        this.s[1] = q.x;
+        this.s[2] = q.y;
+        this.s[3] = q.z;
+        
+        if (normalizeAfter) {
+            this.normalize();
+        }
+        return this;
+    }
+    
+    /**
+     * v1.2.1: Order-sensitive sequential composition
+     * Composes a sequence of SMFs using quaternion composition
+     *
+     * @param {SedenionMemoryField[]} smfs - Array of SMFs to compose in order
+     * @param {Object} options - Composition options
+     * @returns {SedenionMemoryField} - Sequentially composed SMF
+     */
+    static sequentialCompose(smfs, options = {}) {
+        if (!smfs || smfs.length === 0) {
+            return new SedenionMemoryField();
+        }
+        
+        if (smfs.length === 1) {
+            return smfs[0].clone();
+        }
+        
+        let result = smfs[0].clone();
+        for (let i = 1; i < smfs.length; i++) {
+            result = result.quaternionCompose(smfs[i], options);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * v1.2.1: Compute non-commutativity measure with another SMF
+     * Returns the difference between AB and BA quaternion compositions
+     *
+     * @param {SedenionMemoryField} other - SMF to compare
+     * @returns {Object} Non-commutativity metrics
+     */
+    nonCommutativity(other) {
+        const ab = this.quaternionCompose(other);
+        const ba = other.quaternionCompose(this);
+        
+        // Compute difference in quaternion subspace
+        const qAB = ab.extractQuaternion();
+        const qBA = ba.extractQuaternion();
+        
+        const diffW = qAB.w - qBA.w;
+        const diffX = qAB.x - qBA.x;
+        const diffY = qAB.y - qBA.y;
+        const diffZ = qAB.z - qBA.z;
+        
+        const magnitude = Math.sqrt(diffW * diffW + diffX * diffX + diffY * diffY + diffZ * diffZ);
+        
+        // Compute full SMF difference
+        let fullDiff = 0;
+        for (let k = 0; k < 16; k++) {
+            const d = ab.s[k] - ba.s[k];
+            fullDiff += d * d;
+        }
+        fullDiff = Math.sqrt(fullDiff);
+        
+        return {
+            quaternionDifference: magnitude,
+            fullDifference: fullDiff,
+            isCommutative: magnitude < 0.01,
+            // Axis of non-commutativity (in quaternion space)
+            axis: magnitude > 0.01 ? {
+                x: diffX / magnitude,
+                y: diffY / magnitude,
+                z: diffZ / magnitude
+            } : null
+        };
     }
     
     /**
@@ -456,12 +755,16 @@ class SedenionMemoryField {
      * @param {number} n - Number of axes to return
      */
     dominantAxes(n = 3) {
-        const indexed = this.s.map((v, i) => ({ 
-            index: i, 
-            name: SMF_AXES[i].name,
-            value: v,
-            absValue: Math.abs(v)
-        }));
+        // Convert Float64Array to regular array with axis info
+        const indexed = [];
+        for (let i = 0; i < 16; i++) {
+            indexed.push({
+                index: i,
+                name: SMF_AXES[i].name,
+                value: this.s[i],
+                absValue: Math.abs(this.s[i])
+            });
+        }
         
         indexed.sort((a, b) => b.absValue - a.absValue);
         return indexed.slice(0, n);
@@ -534,7 +837,7 @@ class SedenionMemoryField {
      */
     toString() {
         const dominant = this.dominantAxes(3);
-        const parts = dominant.map(a => `${a.name}:${a.value.toFixed(3)}`);
+        const parts = dominant.map(a => `${a.name}:${(a.value ?? 0).toFixed(3)}`);
         return `SMF(${parts.join(', ')})`;
     }
 }

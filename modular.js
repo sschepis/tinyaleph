@@ -97,7 +97,18 @@ const {
   Backend,
   SemanticBackend,
   CryptographicBackend,
-  ScientificBackend
+  ScientificBackend,
+  BioinformaticsBackend,
+  TranscriptionOperator,
+  TranslationOperator,
+  FoldingTransform,
+  BindingAffinityCalculator,
+  MolecularDocker,
+  DNAStrand,
+  DNACircuit,
+  ANDGate,
+  ORGate,
+  NOTGate
 } = backends;
 
 // Unified engine
@@ -122,6 +133,12 @@ function createEngine(backendType, config = {}) {
     case 'science':
     case 'quantum':
       backend = new ScientificBackend(config);
+      break;
+    case 'bioinformatics':
+    case 'bio':
+    case 'dna':
+    case 'protein':
+      backend = new BioinformaticsBackend(config);
       break;
     default:
       throw new Error(`Unknown backend type: ${backendType}`);
@@ -156,6 +173,21 @@ module.exports = {
   SemanticBackend,
   CryptographicBackend,
   ScientificBackend,
+  BioinformaticsBackend,
+  
+  // Bioinformatics operators
+  TranscriptionOperator,
+  TranslationOperator,
+  FoldingTransform,
+  BindingAffinityCalculator,
+  MolecularDocker,
+  
+  // DNA Computing
+  DNAStrand,
+  DNACircuit,
+  ANDGate,
+  ORGate,
+  NOTGate,
   
   // Core math
   Hypercomplex,

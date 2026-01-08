@@ -172,8 +172,26 @@ const {
     PRRCChannel,
     NetworkSynchronizer,
     DSNNode,
-    generateNodeId
+    generateNodeId,
+    SEMANTIC_DOMAINS,
+    FIRST_100_PRIMES
 } = require('./network');
+
+// Intelligence Scaling Modules
+const {
+    FusionDiscoveryEngine,
+    ReinforcedEntanglementLayer,
+    calculateAbstractionLevel,
+    calculateReasoningDepth
+} = require('./abstraction');
+
+const {
+    WisdomAggregator,
+    ConceptFormation,
+    CompositeIntelligenceScore,
+    calculateAmplificationFactor,
+    calculateCoherenceEfficiency
+} = require('./collective');
 
 // Legacy exports (for backwards compatibility)
 const { AlephChat } = require('./chat');
@@ -197,6 +215,20 @@ const {
     initResolang,
     createPipeline
 } = require('./resolang');
+
+// Agent Module (Agentic Behavior)
+const {
+    TaskStatus,
+    StepStatus,
+    ComplexityIndicators,
+    TaskStep,
+    Task,
+    TaskPlanner,
+    ComplexityAnalyzer,
+    StepExecutor,
+    Agent,
+    createAgent
+} = require('./agent');
 
 module.exports = {
     // Sentient Observer Components
@@ -316,6 +348,21 @@ module.exports = {
     NetworkSynchronizer,
     DSNNode,
     generateNodeId,
+    SEMANTIC_DOMAINS,
+    FIRST_100_PRIMES,
+    
+    // Intelligence Scaling - Abstraction
+    FusionDiscoveryEngine,
+    ReinforcedEntanglementLayer,
+    calculateAbstractionLevel,
+    calculateReasoningDepth,
+    
+    // Intelligence Scaling - Collective
+    WisdomAggregator,
+    ConceptFormation,
+    CompositeIntelligenceScore,
+    calculateAmplificationFactor,
+    calculateCoherenceEfficiency,
     
     // Legacy Components (backwards compatibility)
     AlephChat,
@@ -342,5 +389,17 @@ module.exports = {
     ResolangPipeline,
     ResolangSMF,
     initResolang,
-    createPipeline
+    createPipeline,
+    
+    // Agent Module (Agentic Behavior)
+    TaskStatus,
+    StepStatus,
+    ComplexityIndicators,
+    TaskStep,
+    Task,
+    TaskPlanner,
+    ComplexityAnalyzer,
+    StepExecutor,
+    Agent,
+    createAgent
 };

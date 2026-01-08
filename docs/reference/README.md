@@ -35,6 +35,20 @@ Domain-specific computation engines:
 - **SemanticBackend** - Natural language and concept processing
 - **CryptographicBackend** - Hashing and key derivation
 - **ScientificBackend** - Quantum-inspired computation
+- **BioinformaticsBackend** - DNA/RNA/Protein computation
+
+### [Bioinformatics Module](./06-bioinformatics.md)
+
+DNA computing and molecular biology:
+
+- **BioinformaticsBackend** - DNA/RNA/Protein encoding and operations
+- **Transcription** - DNA to RNA conversion (Central Dogma)
+- **Translation** - RNA to Protein via genetic code
+- **FoldingTransform** - Protein folding via Kuramoto oscillators
+- **DNACircuit** - DNA logic circuit construction
+- **ANDGate / ORGate / NOTGate / NANDGate** - DNA logic gates
+- **StrandDisplacementReaction** - Toehold-mediated displacement
+- **BindingAffinityCalculator** - Molecular binding scoring
 
 ### [Engine Module](./04-engine.md)
 
@@ -44,7 +58,16 @@ High-level orchestration:
 - **createEngine** - Factory function for engine creation
 - **registerBackend** - Backend registration system
 
-### [Formal Semantics Module](./05-formal-semantics.md)
+### [Symbolic AI Module](./05-symbolic-ai.md)
+
+Symbol inference and resonance attention:
+
+- **SymbolDatabase** - 184+ emoji symbols with prime assignments and cultural tags
+- **SemanticInference** - Pattern matching and resonance-enhanced text→symbol mapping
+- **CompoundBuilder** - Multi-symbol concept composition
+- **ResonanceCalculator** - Golden ratio-based harmony measurement
+
+### [Formal Semantics Module](./06-formal-semantics.md)
 
 Formal type system and reduction semantics:
 
@@ -55,7 +78,7 @@ Formal type system and reduction semantics:
 - **LambdaEvaluator** - β-reduction and normalization
 - **Semantics** - Model-theoretic interpretation
 
-### [Enochian Module](./06-enochian.md)
+### [Enochian Module](./07-enochian.md)
 
 The angelic language system:
 
@@ -269,6 +292,10 @@ console.assert(coherence >= 0 && coherence <= 1);
 | types | `core/types.js` | Formal type system |
 | reduction | `core/reduction.js` | Reduction semantics |
 | lambda | `core/lambda.js` | λ-calculus translation |
+| symbols | `core/symbols.js` | Symbol database |
+| inference | `core/inference.js` | Semantic inference |
+| compound | `core/compound.js` | Compound builder |
+| resonance | `core/resonance.js` | Resonance calculator |
 | oscillator | `physics/oscillator.js` | Oscillator creation |
 | kuramoto | `physics/kuramoto.js` | Synchronization |
 | entropy | `physics/entropy.js` | Information theory |
@@ -277,6 +304,9 @@ console.assert(coherence >= 0 && coherence <= 1);
 | semantic | `backends/semantic/index.js` | Semantic backend |
 | cryptographic | `backends/cryptographic/index.js` | Crypto backend |
 | scientific | `backends/scientific/index.js` | Science backend |
+| bioinformatics | `backends/bioinformatics/index.js` | Bioinformatics backend |
+| dna-computing | `backends/bioinformatics/dna-computing.js` | DNA logic gates/circuits |
+| folding | `backends/bioinformatics/folding.js` | Protein folding dynamics |
 | engine | `engine/aleph.js` | Main engine |
 | enochian | `apps/sentient/lib/enochian-vocabulary.js` | Enochian language |
 

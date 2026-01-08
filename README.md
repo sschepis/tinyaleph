@@ -16,13 +16,15 @@ A novel computational paradigm that encodes meaning as prime number signatures, 
 - **Prime Entanglement**: Graph-based tracking of prime relationships and co-occurrences
 - **Event Streaming**: Real-time monitoring with EventEmitter pattern and async iteration
 - **Entropy Minimization**: Reasoning as reduction of semantic uncertainty
-- **Multiple Backends**: Semantic (NLP), Cryptographic (hashing), Scientific (quantum-inspired)
+- **Multiple Backends**: Semantic (NLP), Cryptographic (hashing), Scientific (quantum-inspired), Bioinformatics (DNA/protein)
 - **Formal Type System**: Typed term calculus with N(p)/A(p)/S types and ordering constraints
 - **Reduction Semantics**: Strong normalization with prime-preserving operators
 - **Lambda Translation**: Model-theoretic semantics via λ-calculus embedding
 - **Enochian Vocabulary**: 21-letter angelic alphabet with prime basis and sedenion operations
 - **ResoFormer Architecture**: Complete prime-indexed transformer with multi-head attention
 - **Multi-Z Memory**: Hierarchical memory with fast/slow/permanent channels
+- **Symbolic AI**: 184+ emoji symbols with cultural tags, resonance-enhanced inference
+- **Golden Ratio Resonance**: Harmony measurement using φ ≈ 1.618 ratio detection
 
 ## Installation
 
@@ -154,6 +156,69 @@ const superposition = backend.superpose(state, 0.5, basis, 0.5);
 
 // Measurement
 const result = backend.measure(superposition, [basis]);
+```
+
+### Bioinformatics Backend
+
+DNA computing, protein folding, and molecular biology:
+
+```javascript
+const { BioinformaticsBackend, DNACircuit, ANDGate, ORGate } = require('@aleph-ai/tinyaleph');
+
+const backend = new BioinformaticsBackend();
+
+// Encode DNA sequence
+const dnaPrimes = backend.encode('ATGCGATCG');
+
+// Transcribe DNA to RNA
+const transcribed = backend.transcribe(dnaPrimes, { force: true });
+console.log('mRNA primes:', transcribed.rna);
+
+// Translate RNA to Protein
+const translated = backend.translate(transcribed.rna);
+console.log('Protein:', backend.decode(translated.protein));
+
+// Full gene expression (DNA → RNA → Protein)
+const expressed = backend.express(dnaPrimes);
+console.log('Protein sequence:', expressed.sequence);
+
+// Protein folding via Kuramoto oscillators
+const proteinPrimes = backend.encode('MWLKFVIER');
+const foldResult = backend.foldProtein(proteinPrimes);
+console.log('Folding order parameter:', foldResult.orderParameter);
+
+// Molecular binding affinity
+const affinity = backend.bindingAffinity(dnaPrimes, proteinPrimes);
+console.log('Binding affinity:', affinity.affinity);
+```
+
+### DNA Computing
+
+Build logic gates and circuits using DNA strands:
+
+```javascript
+const { DNACircuit, ANDGate, ORGate, NOTGate } = require('@aleph-ai/tinyaleph');
+
+// Create logic gates
+const andGate = new ANDGate({ name: 'and1' });
+const orGate = new ORGate({ name: 'or1' });
+const notGate = new NOTGate({ name: 'not1' });
+
+// Evaluate gates (concentration-based)
+console.log(andGate.evaluate(1, 1));  // { output: true, ... }
+console.log(orGate.evaluate(0, 1));   // { output: true, ... }
+console.log(notGate.evaluate(0));     // { output: true, ... }
+
+// Build a circuit
+const circuit = new DNACircuit('logic-circuit');
+circuit.addGate('and1', new ANDGate({ name: 'and1' }));
+circuit.addGate('not1', new NOTGate({ name: 'not1' }));
+circuit.addGate('or1', new ORGate({ name: 'or1' }));
+circuit.connect('and1', 'or1', 1);
+circuit.connect('not1', 'or1', 2);
+
+// Evaluate circuit
+const result = circuit.evaluate();
 ```
 
 ## Physics Engine
@@ -410,6 +475,89 @@ const model = new ResoFormer({
 const outputs = model.forward([state1, state2]);
 ```
 
+## Symbolic AI
+
+### Symbol Database
+
+184+ emoji symbols with prime assignments and cultural tags:
+
+```javascript
+const { getSymbol, symbolDatabase } = require('@aleph-ai/tinyaleph');
+
+// Get a symbol
+const hero = getSymbol('hero');
+console.log(hero);
+// { id: 'hero', unicode: '🦸', prime: 1013, meaning: 'Hero archetype', culturalTags: ['universal'] }
+
+// Find Greek mythology symbols
+const greekSymbols = symbolDatabase.getSymbolsByTag('greek');
+
+// Encode/decode concepts to prime signatures
+const signature = symbolDatabase.encode(['hero', 'journey', 'mountain']);
+const symbols = symbolDatabase.decode(signature);
+```
+
+### Semantic Inference
+
+Pattern matching with resonance-enhanced disambiguation:
+
+```javascript
+const { inferSymbol, inferWithResonance, inferMostResonant } = require('@aleph-ai/tinyaleph');
+
+// Basic inference
+const result = inferSymbol('brave knight');
+// { symbol: ⚔️, method: 'regex', confidence: 0.85 }
+
+// Resonance-enhanced inference - symbols ranked by harmony
+const symbols = inferWithResonance('The hero fought the shadow in the temple');
+// Symbols sorted by attention weight based on resonance scores
+
+// Context-aware selection
+const context = [getSymbol('warrior'), getSymbol('temple')];
+const best = inferMostResonant('weapon', context);
+// → 🗡️ sword (high resonance with warrior/temple context)
+```
+
+### Compound Symbols
+
+Build multi-symbol concepts through prime multiplication:
+
+```javascript
+const { createCompound, getCompound, compoundBuilder } = require('@aleph-ai/tinyaleph');
+
+// Pre-built compound
+const greekWarrior = getCompound('greek_warrior');
+// { unicode: '⚔️⛩️🦉', meaning: 'Greek Warrior: Temple guardian blessed by Athena' }
+
+// Create custom compound
+const fireMage = createCompound('fire_mage',
+  ['magician', 'fire', 'staff'],
+  'Fire Mage - Wielder of flame magic'
+);
+
+// Calculate internal harmony
+const harmony = compoundBuilder.calculateCompoundResonance(fireMage);
+```
+
+### Golden Ratio Resonance
+
+Primes whose ratio approaches φ ≈ 1.618 have natural harmony:
+
+```javascript
+const { calculateResonance, findGoldenPairs, resonanceSignature } = require('@aleph-ai/tinyaleph');
+
+// Check resonance between primes
+calculateResonance(3, 5);   // 0.9 (Fibonacci pair!)
+calculateResonance(7, 11);  // 0.936 (close to φ)
+
+// Find golden pairs
+const pairs = findGoldenPairs([2, 3, 5, 7, 11, 13]);
+
+// Get signature for symbol set
+const sig = resonanceSignature([2, 3, 5, 7]);
+console.log(`Mean resonance: ${sig.mean}, Golden pairs: ${sig.goldenCount}`);
+```
+
 ## Formal Semantics
 
 ### Typed Term Calculus
@@ -541,6 +689,9 @@ console.log(CORE_VOCABULARY['ZORGE']);  // "be friendly unto"
 | `SemanticBackend` | Natural language processing |
 | `CryptographicBackend` | Hashing and key derivation |
 | `ScientificBackend` | Quantum-inspired computation |
+| `BioinformaticsBackend` | DNA/RNA/Protein computation |
+| `DNACircuit` | DNA logic circuit builder |
+| `ANDGate` / `ORGate` / `NOTGate` | DNA logic gates |
 | `Hypercomplex` | Sedenion algebra with exp/log/slerp |
 | `Oscillator` / `OscillatorBank` | Phase-amplitude oscillators |
 | `KuramotoModel` | Coupled oscillator synchronization |
@@ -559,6 +710,16 @@ console.log(CORE_VOCABULARY['ZORGE']);  // "be friendly unto"
 | `PrimeonZLadderMulti` | Multi-channel Z memory |
 | `ResoFormer` | Prime-indexed transformer |
 | `SparsePrimeState` | Sparse prime activations |
+| `getSymbol(id)` | Get symbol by ID |
+| `symbolDatabase` | Symbol database singleton |
+| `inferSymbol(text)` | Infer symbol from text |
+| `inferWithResonance(text)` | Resonance-ranked inference |
+| `inferMostResonant(text, ctx)` | Context-aware selection |
+| `createCompound(...)` | Build compound symbol |
+| `compoundBuilder` | Compound builder instance |
+| `calculateResonance(p1, p2)` | Prime pair resonance |
+| `findGoldenPairs(primes)` | Find φ-ratio pairs |
+| `resonanceSignature(primes)` | Resonance statistics |
 | `hash(input)` | Quick semantic hash |
 | `deriveKey(pass, salt)` | Quick key derivation |
 
@@ -633,7 +794,7 @@ Full documentation is available in the `docs/` directory:
   
 - **[Guide](./docs/guide/README.md)**: Practical tutorials
   - Quick start, semantic computing, cryptographic applications
-  - Scientific computing, LLM integration, advanced topics
+  - Scientific computing, LLM integration, symbolic AI, advanced topics
   
 - **[Reference](./docs/reference/README.md)**: Complete API documentation
   - Core module, physics module, backends, engine
@@ -666,6 +827,19 @@ node examples/formal-semantics/01-typed-terms.js
 node examples/formal-semantics/02-reduction.js
 node examples/formal-semantics/03-lambda-translation.js
 node examples/formal-semantics/04-enochian-language.js
+
+# Bioinformatics examples
+node examples/bioinformatics/01-dna-encoding.js
+node examples/bioinformatics/02-central-dogma.js
+node examples/bioinformatics/03-protein-folding.js
+node examples/bioinformatics/04-dna-computing.js
+node examples/bioinformatics/05-molecular-binding.js
+
+# Symbolic AI examples
+node examples/05-symbolic-resonance.js
+node examples/06-symbol-database.js
+node examples/07-semantic-inference.js
+node examples/08-compound-symbols.js
 ```
 
 ## Architecture
@@ -698,6 +872,17 @@ node examples/formal-semantics/04-enochian-language.js
 │ • FUSE(p,q,r)   │ • ⊕ operators   │ • β-reduction               │
 │ • ◦ composition │ • Normal forms  │ • Model interpretation      │
 │ • ⇒ implication │ • Confluence    │ • Semantic domains          │
+└─────────────────┴─────────────────┴─────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      Symbolic AI Layer                           │
+├─────────────────┬─────────────────┬─────────────────────────────┤
+│  Symbol DB      │  Inference      │   Resonance                 │
+│                 │                 │                             │
+│ • 184+ emojis   │ • Pattern match │ • Golden ratio φ            │
+│ • Cultural tags │ • Semantic sim  │ • Prime pair harmony        │
+│ • Prime index   │ • ResoFormer    │ • Cluster detection         │
+│ • Categories    │ • Context-aware │ • Compound scoring          │
 └─────────────────┴─────────────────┴─────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐

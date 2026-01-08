@@ -56,16 +56,59 @@ const {
   symbolicCompute
 } = require('./hilbert');
 
-// Prime Resonance Network components
+// Golden Ratio Resonance (from symprime symbolic AI)
 const {
-  PHI, PHI_CONJ, DELTA_S,
-  QuaternionPrime,
-  PrimeResonanceIdentity,
-  PhaseLockedRing,
-  HolographicField,
-  EntangledNode,
-  ResonantFragment
+  ResonanceCalculator,
+  resonanceSignature,
+  findFibonacciSequences,
+  PHI,
+  PHI_THRESHOLD,
+  PHI_BONUS,
+  calculateResonance,
+  findGoldenPairs,
+  findMostResonant
 } = require('./resonance');
+
+// Symbol Database (200+ emoji symbols from symprime)
+const {
+  SymbolDatabase,
+  SymbolCategory,
+  PrimeGenerator,
+  symbolDatabase,
+  getSymbol,
+  getSymbolByPrime,
+  search: searchSymbols,
+  encode: encodeSymbols,
+  decode: decodeSymbols
+} = require('./symbols');
+
+// Semantic Inference Engine (from symprime)
+const {
+  SemanticInference,
+  EntityExtractor,
+  InferenceMethod,
+  semanticInference,
+  entityExtractor,
+  inferSymbol,
+  inferSymbols,
+  extractEntities,
+  extractAndInfer,
+  inferWithResonance,
+  inferMostResonant
+} = require('./inference');
+
+// Compound Builder (multi-symbol concepts from symprime)
+const {
+  CompoundBuilder,
+  CompoundSymbol,
+  SymbolSequence,
+  compoundBuilder,
+  createCompound,
+  getCompound,
+  createSequence,
+  getSequence,
+  findCompoundsContaining
+} = require('./compound');
 
 // ResoFormer ML primitives
 const {
@@ -155,16 +198,51 @@ module.exports = {
   encodeMemory,
   symbolicCompute,
   
-  // Prime Resonance Network
+  // Golden Ratio Resonance (symprime symbolic AI)
   PHI,
-  PHI_CONJ,
-  DELTA_S,
-  QuaternionPrime,
-  PrimeResonanceIdentity,
-  PhaseLockedRing,
-  HolographicField,
-  EntangledNode,
-  ResonantFragment,
+  PHI_THRESHOLD,
+  PHI_BONUS,
+  ResonanceCalculator,
+  resonanceSignature,
+  findFibonacciSequences,
+  calculateResonance,
+  findGoldenPairs,
+  findMostResonant,
+  
+  // Symbol Database (symprime symbolic AI)
+  SymbolDatabase,
+  SymbolCategory,
+  PrimeGenerator,
+  symbolDatabase,
+  getSymbol,
+  getSymbolByPrime,
+  searchSymbols,
+  encodeSymbols,
+  decodeSymbols,
+  
+  // Semantic Inference (symprime symbolic AI)
+  SemanticInference,
+  EntityExtractor,
+  InferenceMethod,
+  semanticInference,
+  entityExtractor,
+  inferSymbol,
+  inferSymbols,
+  extractEntities,
+  extractAndInfer,
+  inferWithResonance,
+  inferMostResonant,
+  
+  // Compound Builder (symprime symbolic AI)
+  CompoundBuilder,
+  CompoundSymbol,
+  SymbolSequence,
+  compoundBuilder,
+  createCompound,
+  getCompound,
+  createSequence,
+  getSequence,
+  findCompoundsContaining,
   
   // ResoFormer ML Primitives
   Quaternion,

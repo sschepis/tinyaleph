@@ -1,3 +1,4 @@
+
 /**
  * Distributed Sentience Network (Section 7 of Whitepaper)
  * 
@@ -6,6 +7,11 @@
  * - Global Memory Field (GMF) for shared memory
  * - Coherent-Commit Protocol for consensus
  * - Offline-first synchronization with eventual coherence
+ * 
+ * Intelligence Scaling Features:
+ * - Node Specialization: Semantic domain assignment and prime partitioning
+ * - Intelligent Routing: Expertise-based proposal routing
+ * - Collective Amplification: Wisdom aggregation for weighted voting
  * 
  * Key architectural elements:
  * - Local Field (LF): node's live state
@@ -29,6 +35,56 @@ try {
     // Will use JS fallback
 }
 
+// ============================================================================
+// SEMANTIC DOMAIN CONSTANTS
+// ============================================================================
+
+/**
+ * Semantic domains map to groups of SMF axes
+ */
+const SEMANTIC_DOMAINS = {
+    perceptual: {
+        name: 'perceptual',
+        description: 'Coherence, entropy, identity, structure',
+        axes: [0, 1, 2, 3],
+        color: '#4A90D9'
+    },
+    cognitive: {
+        name: 'cognitive', 
+        description: 'Change, life, harmony, wisdom',
+        axes: [4, 5, 6, 7],
+        color: '#50C878'
+    },
+    temporal: {
+        name: 'temporal',
+        description: 'Infinity, creation, truth, love',
+        axes: [8, 9, 10, 11],
+        color: '#FFD700'
+    },
+    meta: {
+        name: 'meta',
+        description: 'Power, time, space, consciousness',
+        axes: [12, 13, 14, 15],
+        color: '#DA70D6'
+    }
+};
+
+/**
+ * First 100 primes for domain partitioning
+ */
+const FIRST_100_PRIMES = [
+    2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
+    31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
+    73, 79, 83, 89, 97, 101, 103, 107, 109, 113,
+    127, 131, 137, 139, 149, 151, 157, 163, 167, 173,
+    179, 181, 191, 193, 197, 199, 211, 223, 227, 229,
+    233, 239, 241, 251, 257, 263, 269, 271, 277, 281,
+    283, 293, 307, 311, 313, 317, 331, 337, 347, 349,
+    353, 359, 367, 373, 379, 383, 389, 397, 401, 409,
+    419, 421, 431, 433, 439, 443, 449, 457, 461, 463,
+    467, 479, 487, 491, 499, 503, 509, 521, 523, 541
+];
+
 /**
  * Generate a unique node ID
  */
@@ -36,11 +92,17 @@ function generateNodeId() {
     return crypto.randomBytes(16).toString('hex');
 }
 
+// ============================================================================
+// LOCAL FIELD
+// ============================================================================
+
 /**
  * Local Field (LF)
  * 
  * The node's live state including oscillators, |Ψ⟩, SMF, and local memory.
  * This is the single-node observer state.
+ * 
+ * Intelligence Scaling: Includes semantic domain assignment and specialization
  */
 class LocalField {
     constructor(nodeId, options = {}) {
@@ -50,6 +112,76 @@ class LocalField {
         this.coherence = 0;
         this.entropy = 0;
         this.lastUpdate = Date.now();
+        
+        // Specialization: semantic domain assignment
+        this.semanticDomain = options.semanticDomain || this.assignDomain(nodeId);
+        this.primaryAxes = SEMANTIC_DOMAINS[this.semanticDomain]?.axes || [0, 1, 2, 3];
+        
+        // Initialize specialized SMF if requested
+        if (options.specialize) {
+            this.initializeSpecializedSMF(options.specializationStrength ?? 0.7);
+        }
+    }
+    
+    /**
+     * Assign semantic domain based on node ID hash
+     */
+    assignDomain(nodeId) {
+        const domainNames = Object.keys(SEMANTIC_DOMAINS);
+        const hashValue = parseInt(nodeId.slice(0, 2), 16);
+        return domainNames[hashValue % domainNames.length];
+    }
+    
+    /**
+     * Initialize SMF biased toward node's semantic domain
+     */
+    initializeSpecializedSMF(strength = 0.7) {
+        const domainNames = Object.keys(SEMANTIC_DOMAINS);
+        const primaryIdx = domainNames.indexOf(this.semanticDomain);
+        const secondaryIdx = (primaryIdx + 1) % 4;
+        const secondaryAxes = SEMANTIC_DOMAINS[domainNames[secondaryIdx]].axes;
+        
+        for (let i = 0; i < 16; i++) {
+            if (this.primaryAxes.includes(i)) {
+                this.smf.s[i] = 0.5 + Math.random() * 0.4 * strength;
+            } else if (secondaryAxes.includes(i)) {
+                this.smf.s[i] = 0.2 + Math.random() * 0.3 * strength;
+            } else {
+                this.smf.s[i] = Math.random() * 0.2 * (1 - strength);
+            }
+        }
+        this.smf.normalize();
+    }
+    
+    /**
+     * Calculate relevance score for a semantic object's SMF
+     */
+    calculateRelevance(smf) {
+        if (!smf) return 0.5;
+        
+        const domainNames = Object.keys(SEMANTIC_DOMAINS);
+        const primaryIdx = domainNames.indexOf(this.semanticDomain);
+        const secondaryIdx = (primaryIdx + 1) % 4;
+        const secondaryAxes = SEMANTIC_DOMAINS[domainNames[secondaryIdx]].axes;
+        
+        let primaryScore = 0;
+        let secondaryScore = 0;
+        let totalScore = 0;
+        
+        const s = smf.s || smf;
+        for (let i = 0; i < 16; i++) {
+            const absValue = Math.abs(s[i] || 0);
+            totalScore += absValue;
+            
+            if (this.primaryAxes.includes(i)) {
+                primaryScore += absValue;
+            } else if (secondaryAxes.includes(i)) {
+                secondaryScore += absValue;
+            }
+        }
+        
+        if (totalScore < 0.001) return 0.5;
+        return (primaryScore * 0.7 + secondaryScore * 0.3) / totalScore;
     }
     
     /**
@@ -89,7 +221,9 @@ class LocalField {
             coherence: this.coherence,
             entropy: this.entropy,
             memoryCount: this.memory.size,
-            lastUpdate: this.lastUpdate
+            lastUpdate: this.lastUpdate,
+            semanticDomain: this.semanticDomain,
+            primaryAxes: this.primaryAxes
         };
     }
     
@@ -97,6 +231,10 @@ class LocalField {
         return this.snapshot();
     }
 }
+
+// ============================================================================
+// PROPOSAL SYSTEM
+// ============================================================================
 
 /**
  * Proposal
@@ -139,7 +277,7 @@ class Proposal {
     toJSON() {
         return {
             id: this.id,
-            object: this.object.toJSON(),
+            object: this.object.toJSON ? this.object.toJSON() : this.object,
             proofs: this.proofs,
             timestamp: this.timestamp,
             nodeId: this.nodeId,
@@ -168,7 +306,6 @@ class ProposalLog {
         
         // Prune if over capacity
         if (this.entries.length > this.maxEntries) {
-            // Keep recent entries, archive old ones
             this.entries = this.entries.slice(-this.maxEntries);
         }
         
@@ -214,6 +351,10 @@ class ProposalLog {
         };
     }
 }
+
+// ============================================================================
+// GLOBAL MEMORY FIELD
+// ============================================================================
 
 /**
  * Global Memory Field (GMF) (Section 7.2)
@@ -296,7 +437,6 @@ class GlobalMemoryField {
         const results = [];
         
         for (const [id, entry] of this.objects) {
-            // Compute similarity based on object metadata
             if (entry.metadata.smf) {
                 const targetSmf = new SedenionMemoryField(entry.metadata.smf);
                 const similarity = smf.coherence(targetSmf);
@@ -325,7 +465,7 @@ class GlobalMemoryField {
             objectCount: this.objects.size,
             objects: Array.from(this.objects.entries()).map(([id, entry]) => ({
                 id,
-                normalForm: entry.object.normalForm().signature(),
+                normalForm: entry.object.normalForm ? entry.object.normalForm().signature() : id,
                 weight: entry.weight,
                 insertedAt: entry.insertedAt
             }))
@@ -384,11 +524,17 @@ class GlobalMemoryField {
     }
 }
 
+// ============================================================================
+// COHERENT-COMMIT PROTOCOL
+// ============================================================================
+
 /**
  * Coherent-Commit Protocol (Section 7.5-7.7)
  * 
  * Implements the acceptance function:
  * Accept(Ω) = 1{C >= Cth} · 1{NF_ok(Ω)} · 1{R(Ω) >= τR} · 1{Q(Ω) >= τQ}
+ * 
+ * Intelligence Scaling: Includes wisdom aggregation for weighted voting
  */
 class CoherentCommitProtocol {
     constructor(options = {}) {
@@ -398,13 +544,82 @@ class CoherentCommitProtocol {
         
         this.verifier = new PrimeCalculusVerifier();
         this.enochianDecoder = new EnochianDecoder();
+        
+        // Wisdom aggregation for weighted voting
+        this.nodeProfiles = new Map();
+        this.voteHistory = new Map();
+        this.useWeightedVoting = options.useWeightedVoting ?? true;
+    }
+    
+    /**
+     * Register a node's expertise profile
+     */
+    registerNodeProfile(nodeId, profile) {
+        this.nodeProfiles.set(nodeId, {
+            semanticDomain: profile.semanticDomain || 'perceptual',
+            primeDomain: new Set(profile.primeDomain || []),
+            smfAxes: profile.smfAxes || [0, 1, 2, 3],
+            registeredAt: Date.now()
+        });
+        
+        if (!this.voteHistory.has(nodeId)) {
+            this.voteHistory.set(nodeId, { correct: 0, total: 0 });
+        }
+    }
+    
+    /**
+     * Calculate vote weight based on expertise and history
+     */
+    calculateVoteWeight(nodeId, proposal) {
+        if (!this.useWeightedVoting) return 1.0;
+        
+        const profile = this.nodeProfiles.get(nodeId);
+        if (!profile) return 1.0;
+        
+        // Expertise weight (0.5-1.5)
+        const primes = this.extractPrimes(proposal);
+        const inDomain = primes.filter(p => profile.primeDomain.has(p)).length;
+        const expertiseWeight = 0.5 + (primes.length > 0 ? inDomain / primes.length : 0.5);
+        
+        // Accuracy weight (0.5-1.5)
+        const history = this.voteHistory.get(nodeId);
+        const accuracyWeight = history && history.total >= 5 
+            ? 0.5 + (history.correct / history.total)
+            : 1.0;
+        
+        return expertiseWeight * accuracyWeight;
+    }
+    
+    /**
+     * Extract primes from a proposal
+     */
+    extractPrimes(proposal) {
+        const primes = [];
+        const term = proposal?.object?.term;
+        if (!term) return primes;
+        
+        if (term.prime) primes.push(term.prime);
+        if (term.p) primes.push(term.p, term.q, term.r);
+        if (term.nounPrime) primes.push(term.nounPrime);
+        if (term.adjPrimes) primes.push(...term.adjPrimes);
+        
+        return primes;
+    }
+    
+    /**
+     * Record vote outcome for learning
+     */
+    recordVoteOutcome(nodeId, wasCorrect) {
+        if (!this.voteHistory.has(nodeId)) {
+            this.voteHistory.set(nodeId, { correct: 0, total: 0 });
+        }
+        const history = this.voteHistory.get(nodeId);
+        history.total++;
+        if (wasCorrect) history.correct++;
     }
     
     /**
      * Check local evidence (Section 7.5)
-     * - Internal stabilization: C(t) >= Cth
-     * - SMF plausibility: entropy within band
-     * - Reconstruction fidelity: translation loss below threshold
      */
     checkLocalEvidence(proposal, localState) {
         const evidence = {
@@ -418,12 +633,14 @@ class CoherentCommitProtocol {
         
         // Check SMF entropy band
         if (localState.smf) {
-            const smfEntropy = localState.smf.entropy();
+            const smfEntropy = typeof localState.smf.entropy === 'function' 
+                ? localState.smf.entropy() 
+                : 0.5;
             evidence.smfOk = smfEntropy > 0.1 && smfEntropy < 2.5;
         }
         
         // Reconstruction fidelity (simplified check)
-        evidence.reconstructionOk = true; // Would check HQE reconstruction
+        evidence.reconstructionOk = true;
         
         return {
             passed: evidence.coherenceOk && evidence.smfOk && evidence.reconstructionOk,
@@ -441,7 +658,7 @@ class CoherentCommitProtocol {
         
         const verification = this.verifier.verify({
             term: proposal.object.term,
-            claimedNF: proposal.object.normalForm(),
+            claimedNF: proposal.object.normalForm ? proposal.object.normalForm() : null,
             proofs: proposal.proofs
         });
         
@@ -468,6 +685,7 @@ class CoherentCommitProtocol {
     
     /**
      * Evaluate proposal for acceptance (Algorithm 1)
+     * Includes weighted voting for wisdom aggregation
      */
     evaluate(proposal, localState, votes) {
         const result = {
@@ -496,12 +714,34 @@ class CoherentCommitProtocol {
             return result;
         }
         
-        // 4. Check redundancy score
-        const R = proposal.redundancyScore();
-        result.checks.redundancy = {
-            score: R,
-            passed: R >= this.redundancyThreshold
-        };
+        // 4. Check redundancy score (with optional weighted voting)
+        let R;
+        if (this.useWeightedVoting && proposal.votes && proposal.votes.size > 0) {
+            let weightedAgree = 0;
+            let weightedTotal = 0;
+            
+            for (const [nodeId, vote] of proposal.votes) {
+                const weight = this.calculateVoteWeight(nodeId, proposal);
+                if (vote.agree) weightedAgree += weight;
+                weightedTotal += weight;
+            }
+            
+            R = weightedTotal > 0 ? weightedAgree / weightedTotal : 0;
+            result.checks.redundancy = {
+                score: R,
+                rawScore: proposal.redundancyScore(),
+                weighted: true,
+                passed: R >= this.redundancyThreshold
+            };
+        } else {
+            R = proposal.redundancyScore();
+            result.checks.redundancy = {
+                score: R,
+                weighted: false,
+                passed: R >= this.redundancyThreshold
+            };
+        }
+        
         if (!result.checks.redundancy.passed) {
             result.reason = 'redundancy_insufficient';
             return result;
@@ -513,6 +753,10 @@ class CoherentCommitProtocol {
     }
 }
 
+// ============================================================================
+// PRRC CHANNEL
+// ============================================================================
+
 /**
  * Prime-Resonant Resonance Channel (PRRC) (Section 7.3)
  * 
@@ -521,6 +765,7 @@ class CoherentCommitProtocol {
  * - Prime set PC for channel basis
  * - Phase alignment handshake
  * - Topological transport and holonomy wrapping
+ * - Expertise-based routing for intelligent proposal distribution
  */
 class PRRCChannel extends EventEmitter {
     constructor(nodeId, options = {}) {
@@ -534,6 +779,73 @@ class PRRCChannel extends EventEmitter {
         this.peers = new Map();
         
         this.enochianEncoder = new EnochianEncoder();
+        
+        // Expertise-based routing
+        this.expertiseCache = new Map();
+        this.useExpertiseRouting = options.useExpertiseRouting ?? true;
+        this.relevanceThreshold = options.relevanceThreshold ?? 0.3;
+    }
+    
+    /**
+     * Register peer expertise profile
+     */
+    registerPeerExpertise(peerId, profile) {
+        this.expertiseCache.set(peerId, {
+            semanticDomain: profile.semanticDomain || 'perceptual',
+            primeDomain: new Set(profile.primeDomain || []),
+            smfAxes: profile.smfAxes || [0, 1, 2, 3],
+            lastActive: Date.now()
+        });
+    }
+    
+    /**
+     * Route proposal to relevant peers based on expertise
+     */
+    routeProposal(proposal) {
+        if (!this.useExpertiseRouting) {
+            return Array.from(this.peers.keys()).filter(id => this.peers.get(id).connected);
+        }
+        
+        const primes = this.extractPrimes(proposal);
+        const targets = [];
+        
+        for (const [peerId, peer] of this.peers) {
+            if (!peer.connected) continue;
+            
+            const expertise = this.expertiseCache.get(peerId);
+            if (!expertise) {
+                targets.push({ peerId, relevance: 0.5 });
+                continue;
+            }
+            
+            const inDomain = primes.filter(p => expertise.primeDomain.has(p)).length;
+            const relevance = primes.length > 0 ? inDomain / primes.length : 0.5;
+            
+            if (relevance >= this.relevanceThreshold) {
+                targets.push({ peerId, relevance });
+            }
+        }
+        
+        targets.sort((a, b) => b.relevance - a.relevance);
+        const limit = Math.max(3, Math.ceil(Math.sqrt(this.peers.size)));
+        
+        return targets.slice(0, limit).map(t => t.peerId);
+    }
+    
+    /**
+     * Extract primes from proposal for routing
+     */
+    extractPrimes(proposal) {
+        const primes = [];
+        const term = proposal?.object?.term;
+        if (!term) return primes;
+        
+        if (term.prime) primes.push(term.prime);
+        if (term.p) primes.push(term.p, term.q, term.r);
+        if (term.nounPrime) primes.push(term.nounPrime);
+        if (term.adjPrimes) primes.push(...term.adjPrimes);
+        
+        return primes;
     }
     
     /**
@@ -547,7 +859,6 @@ class PRRCChannel extends EventEmitter {
             lastSeen: Date.now()
         });
         
-        // Perform phase alignment handshake
         this.sendHandshake(peerId);
     }
     
@@ -577,7 +888,6 @@ class PRRCChannel extends EventEmitter {
         const peer = this.peers.get(peerId);
         if (!peer) return;
         
-        // Compute phase offset for alignment
         peer.phaseOffset = handshake.phaseReference - this.phaseReference;
         peer.primeSet = handshake.primeSet;
         peer.connected = true;
@@ -594,14 +904,12 @@ class PRRCChannel extends EventEmitter {
             throw new Error(`Peer ${peerId} not connected`);
         }
         
-        // Encode to Enochian packet for transport
         const packet = this.enochianEncoder.encodeTerm(semanticObject.term);
         
-        // Apply phase adjustment
         const message = {
             type: 'object',
             nodeId: this.nodeId,
-            object: semanticObject.toJSON(),
+            object: semanticObject.toJSON ? semanticObject.toJSON() : semanticObject,
             enochianPacket: packet.toBase64(),
             phaseAdjustment: peer.phaseOffset,
             metadata,
@@ -613,17 +921,28 @@ class PRRCChannel extends EventEmitter {
     
     /**
      * Broadcast object to all connected peers
+     * Uses intelligent routing for proposals
      */
     broadcast(semanticObject, metadata = {}) {
-        for (const [peerId, peer] of this.peers) {
-            if (peer.connected) {
-                try {
-                    this.sendObject(peerId, semanticObject, metadata);
-                } catch (e) {
-                    // Continue with other peers
-                }
+        let targetPeers;
+        
+        if (this.useExpertiseRouting && metadata.type === 'proposal') {
+            targetPeers = this.routeProposal({ object: semanticObject, metadata });
+        } else {
+            targetPeers = Array.from(this.peers.entries())
+                .filter(([_, peer]) => peer.connected)
+                .map(([peerId]) => peerId);
+        }
+        
+        for (const peerId of targetPeers) {
+            try {
+                this.sendObject(peerId, semanticObject, metadata);
+            } catch (e) {
+                // Continue with other peers
             }
         }
+        
+        return targetPeers;
     }
     
     /**
@@ -635,7 +954,6 @@ class PRRCChannel extends EventEmitter {
         
         const encoded = JSON.stringify(message);
         
-        // Use transport's send method
         if (typeof peer.transport.send === 'function') {
             peer.transport.send(encoded);
         } else if (typeof peer.transport.write === 'function') {
@@ -696,23 +1014,30 @@ class PRRCChannel extends EventEmitter {
             nodeId: this.nodeId,
             connectedPeers,
             totalPeers: this.peers.size,
-            primeSetSize: this.primeSet.length
+            primeSetSize: this.primeSet.length,
+            useExpertiseRouting: this.useExpertiseRouting
         };
     }
 }
 
+// ============================================================================
+// NETWORK SYNCHRONIZER
+// ============================================================================
+
 /**
  * Network Synchronizer (Section 7.6)
- * 
+ *
  * Offline-first synchronization with eventual coherence.
  * State = (GMF_snapshot_id, ΔGMF, PL)
+ *
+ * Intelligence Scaling: Includes prime domain partitioning
  */
 class NetworkSynchronizer extends EventEmitter {
     constructor(nodeId, options = {}) {
         super();
         
         this.nodeId = nodeId;
-        this.localField = new LocalField(nodeId, options);
+        this.localField = new LocalField(nodeId, { ...options, specialize: options.specialize ?? true });
         this.gmf = new GlobalMemoryField(options);
         this.proposalLog = new ProposalLog(options);
         this.channel = new PRRCChannel(nodeId, options);
@@ -723,8 +1048,58 @@ class NetworkSynchronizer extends EventEmitter {
         this.online = false;
         this.syncInProgress = false;
         
+        // Prime domain partitioning
+        this.nodeIndex = options.nodeIndex ?? 0;
+        this.networkSize = options.networkSize ?? 1;
+        this.primeDomains = this.partitionPrimes();
+        
         // Setup event handlers
         this.setupEventHandlers();
+        
+        // Register our own profile with the protocol
+        this.protocol.registerNodeProfile(nodeId, {
+            semanticDomain: this.localField.semanticDomain,
+            primeDomain: Array.from(this.getMyPrimeDomain()),
+            smfAxes: this.localField.primaryAxes
+        });
+    }
+    
+    /**
+     * Partition primes among nodes in the network
+     */
+    partitionPrimes() {
+        const domains = [];
+        const chunkSize = Math.ceil(FIRST_100_PRIMES.length / Math.max(1, this.networkSize));
+        
+        for (let i = 0; i < this.networkSize; i++) {
+            const start = i * chunkSize;
+            const end = Math.min((i + 1) * chunkSize, FIRST_100_PRIMES.length);
+            domains.push(new Set(FIRST_100_PRIMES.slice(start, end)));
+        }
+        
+        return domains;
+    }
+    
+    /**
+     * Get this node's prime domain
+     */
+    getMyPrimeDomain() {
+        return this.primeDomains[this.nodeIndex] || new Set();
+    }
+    
+    /**
+     * Update network size and repartition primes
+     */
+    updateNetworkSize(newSize, myIndex) {
+        this.networkSize = newSize;
+        this.nodeIndex = myIndex;
+        this.primeDomains = this.partitionPrimes();
+        
+        this.protocol.registerNodeProfile(this.nodeId, {
+            semanticDomain: this.localField.semanticDomain,
+            primeDomain: Array.from(this.getMyPrimeDomain()),
+            smfAxes: this.localField.primaryAxes
+        });
     }
     
     setupEventHandlers() {
@@ -752,10 +1127,9 @@ class NetworkSynchronizer extends EventEmitter {
      * Handle incoming proposal
      */
     handleIncomingProposal(peerId, message) {
-        // Verify and vote
         const proposal = new Proposal(
             message.object,
-            message.proofs,
+            message.proofs || {},
             { nodeId: message.nodeId }
         );
         
@@ -765,7 +1139,6 @@ class NetworkSynchronizer extends EventEmitter {
             proposal.votes
         );
         
-        // Send vote back
         const vote = {
             type: 'vote',
             proposalId: message.proposalId,
@@ -786,7 +1159,6 @@ class NetworkSynchronizer extends EventEmitter {
         if (proposal) {
             proposal.addVote(message.nodeId, message.agree);
             
-            // Check if we have enough votes
             if (proposal.votes.size >= 3) {
                 this.finalizeProposal(proposal);
             }
@@ -821,7 +1193,6 @@ class NetworkSynchronizer extends EventEmitter {
         this.proposalLog.append(proposal);
         
         if (this.online) {
-            // Broadcast to network
             this.channel.broadcast(semanticObject, {
                 type: 'proposal',
                 proposalId: proposal.id,
@@ -836,16 +1207,9 @@ class NetworkSynchronizer extends EventEmitter {
      * On Join synchronization (Section 7.6)
      */
     async onJoin() {
-        // 1. Obtain latest GMF snapshot header
-        // 2. Prime-resonant handshake
-        // 3. Pull deltas and apply
-        // 4. Rebase local LF
-        
         this.syncInProgress = true;
         this.emit('sync_started');
         
-        // In actual implementation, this would fetch from network
-        // For now, emit ready event
         this.online = true;
         this.syncInProgress = false;
         this.emit('sync_complete', { snapshotId: this.gmfSnapshotId });
@@ -855,16 +1219,11 @@ class NetworkSynchronizer extends EventEmitter {
      * On Reconnect synchronization
      */
     async onReconnect() {
-        // 1. Pull missed GMF deltas
-        // 2. Replay local PL proposals
-        // 3. Run coherent-commit for pending
-        
         this.syncInProgress = true;
         this.emit('resync_started');
         
         const pending = this.proposalLog.pending();
         for (const proposal of pending) {
-            // Re-broadcast pending proposals
             if (proposal.object) {
                 this.channel.broadcast(proposal.object, {
                     type: 'proposal',
@@ -920,7 +1279,10 @@ class NetworkSynchronizer extends EventEmitter {
             localField: this.localField.snapshot(),
             gmfStats: this.gmf.getStats(),
             channelStats: this.channel.getStats(),
-            pendingProposals: this.proposalLog.pending().length
+            pendingProposals: this.proposalLog.pending().length,
+            networkSize: this.networkSize,
+            nodeIndex: this.nodeIndex,
+            primeDomainSize: this.getMyPrimeDomain().size
         };
     }
     
@@ -929,10 +1291,15 @@ class NetworkSynchronizer extends EventEmitter {
     }
 }
 
+// ============================================================================
+// DSN NODE
+// ============================================================================
+
 /**
  * Distributed Sentience Network Node
- * 
+ *
  * Complete node implementation for the Distributed Sentience Network.
+ * Integrates specialization, routing, and collective intelligence features.
  */
 class DSNNode extends EventEmitter {
     constructor(options = {}) {
@@ -1006,6 +1373,7 @@ class DSNNode extends EventEmitter {
             nodeId: this.nodeId,
             name: this.name,
             uptime: Date.now() - this.startTime,
+            semanticDomain: this.sync.localField.semanticDomain,
             ...this.sync.getStatus()
         };
     }
@@ -1015,7 +1383,15 @@ class DSNNode extends EventEmitter {
     }
 }
 
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
 module.exports = {
+    // Constants
+    SEMANTIC_DOMAINS,
+    FIRST_100_PRIMES,
+    
     // Core components
     LocalField,
     Proposal,
