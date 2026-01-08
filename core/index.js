@@ -53,7 +53,14 @@ const {
   ResonanceOperators,
   EntropyDrivenEvolution,
   encodeMemory,
-  symbolicCompute
+  symbolicCompute,
+  QuaternionPrime,
+  PrimeResonanceIdentity,
+  PhaseLockedRing,
+  HolographicField,
+  EntangledNode,
+  ResonantFragment,
+  DELTA_S
 } = require('./hilbert');
 
 // Golden Ratio Resonance (from symprime symbolic AI)
@@ -197,6 +204,15 @@ module.exports = {
   EntropyDrivenEvolution,
   encodeMemory,
   symbolicCompute,
+  QuaternionPrime,
+  PrimeResonanceIdentity,
+  PhaseLockedRing,
+  HolographicField,
+  EntangledNode,
+  ResonantFragment,
+  
+  // Constants
+  DELTA_S,
   
   // Golden Ratio Resonance (symprime symbolic AI)
   PHI,

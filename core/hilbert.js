@@ -554,11 +554,464 @@ function symbolicCompute(inputStates, maxIterations = 100, coherenceThreshold = 
   };
 }
 
+// Constants
+const PHI = (1 + Math.sqrt(5)) / 2;  // Golden ratio ≈ 1.618
+const DELTA_S = Math.sqrt(2);         // Irrational shift
+
+/**
+ * QuaternionPrime - Quaternion with prime-specific operations
+ * q = a + bi + cj + dk
+ */
+class QuaternionPrime {
+  constructor(a = 0, b = 0, c = 0, d = 0) {
+    this.a = a;
+    this.b = b;
+    this.c = c;
+    this.d = d;
+  }
+  
+  static fromPrime(p) {
+    // Encode prime in real component
+    return new QuaternionPrime(p, 0, 0, 0);
+  }
+  
+  static fromAngle(theta) {
+    // Create unit quaternion from rotation angle around k-axis
+    const halfTheta = theta / 2;
+    return new QuaternionPrime(
+      Math.cos(halfTheta),
+      0,
+      0,
+      Math.sin(halfTheta)
+    );
+  }
+  
+  add(other) {
+    return new QuaternionPrime(
+      this.a + other.a,
+      this.b + other.b,
+      this.c + other.c,
+      this.d + other.d
+    );
+  }
+  
+  mul(other) {
+    // Hamilton product
+    return new QuaternionPrime(
+      this.a * other.a - this.b * other.b - this.c * other.c - this.d * other.d,
+      this.a * other.b + this.b * other.a + this.c * other.d - this.d * other.c,
+      this.a * other.c - this.b * other.d + this.c * other.a + this.d * other.b,
+      this.a * other.d + this.b * other.c - this.c * other.b + this.d * other.a
+    );
+  }
+  
+  scale(k) {
+    return new QuaternionPrime(this.a * k, this.b * k, this.c * k, this.d * k);
+  }
+  
+  conj() {
+    return new QuaternionPrime(this.a, -this.b, -this.c, -this.d);
+  }
+  
+  norm() {
+    return Math.sqrt(this.a ** 2 + this.b ** 2 + this.c ** 2 + this.d ** 2);
+  }
+  
+  normalize() {
+    const n = this.norm();
+    return n > 1e-10 ? this.scale(1 / n) : new QuaternionPrime(1, 0, 0, 0);
+  }
+}
+
+/**
+ * PrimeResonanceIdentity (PRI)
+ * Unique identity based on prime signatures
+ */
+class PrimeResonanceIdentity {
+  constructor(signature, hash) {
+    this.signature = signature;
+    this.hash = hash;
+  }
+  
+  static random() {
+    // Generate random prime signature
+    const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+    const signature = [];
+    for (let i = 0; i < 3; i++) {
+      signature.push(primes[Math.floor(Math.random() * primes.length)]);
+    }
+    const hash = signature.reduce((acc, p) => acc * p, 1) % 1000000007;
+    return new PrimeResonanceIdentity(signature, hash);
+  }
+  
+  static fromSeed(seed) {
+    // Deterministic generation from seed
+    const rng = (s) => {
+      s = Math.sin(s * 9999.1) * 10000;
+      return s - Math.floor(s);
+    };
+    const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+    const signature = [];
+    let s = seed;
+    for (let i = 0; i < 3; i++) {
+      s = rng(s + i);
+      signature.push(primes[Math.floor(s * primes.length)]);
+    }
+    const hash = signature.reduce((acc, p) => acc * p, 1) % 1000000007;
+    return new PrimeResonanceIdentity(signature, hash);
+  }
+  
+  entanglementStrength(other) {
+    // Compute entanglement strength based on shared primes
+    const shared = this.signature.filter(p => other.signature.includes(p)).length;
+    const strength = (2 * shared / (this.signature.length + other.signature.length)) - 0.5;
+    return Math.max(-1, Math.min(1, strength * 2));
+  }
+  
+  coherence(other) {
+    return Math.abs(this.entanglementStrength(other));
+  }
+}
+
+/**
+ * PhaseLockedRing - Ring of phase-locked oscillators at prime frequencies
+ */
+class PhaseLockedRing {
+  constructor(primes) {
+    this.primes = primes;
+    this.n = primes.length;
+    this.phases = new Float64Array(this.n);
+    this.amplitudes = new Float64Array(this.n);
+    
+    // Initialize with random phases
+    for (let i = 0; i < this.n; i++) {
+      this.phases[i] = Math.random() * 2 * Math.PI;
+      this.amplitudes[i] = 1.0;
+    }
+    
+    this.coupling = 0.1;
+    this.time = 0;
+  }
+  
+  tick(dt) {
+    const newPhases = new Float64Array(this.n);
+    
+    for (let i = 0; i < this.n; i++) {
+      // Natural frequency from prime
+      const omega = Math.log(this.primes[i]);
+      
+      // Kuramoto coupling
+      let coupling = 0;
+      for (let j = 0; j < this.n; j++) {
+        if (i !== j) {
+          coupling += Math.sin(this.phases[j] - this.phases[i]);
+        }
+      }
+      coupling *= this.coupling / this.n;
+      
+      newPhases[i] = this.phases[i] + (omega + coupling) * dt;
+      newPhases[i] %= 2 * Math.PI;
+    }
+    
+    this.phases = newPhases;
+    this.time += dt;
+    return this;
+  }
+  
+  orderParameter() {
+    // Kuramoto order parameter r = |1/N Σ e^(iθ_j)|
+    let realSum = 0, imagSum = 0;
+    for (let i = 0; i < this.n; i++) {
+      realSum += Math.cos(this.phases[i]);
+      imagSum += Math.sin(this.phases[i]);
+    }
+    return Math.sqrt(realSum ** 2 + imagSum ** 2) / this.n;
+  }
+  
+  meanPhase() {
+    let realSum = 0, imagSum = 0;
+    for (let i = 0; i < this.n; i++) {
+      realSum += Math.cos(this.phases[i]);
+      imagSum += Math.sin(this.phases[i]);
+    }
+    return Math.atan2(imagSum, realSum);
+  }
+  
+  toPrimeState() {
+    const state = new PrimeState(this.primes);
+    for (let i = 0; i < this.n; i++) {
+      state.set(this.primes[i], Complex.fromPolar(
+        this.amplitudes[i] / Math.sqrt(this.n),
+        this.phases[i]
+      ));
+    }
+    return state;
+  }
+}
+
+/**
+ * HolographicField - 2D holographic memory field
+ * Encodes PrimeStates as interference patterns
+ */
+class HolographicField {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+    this.field = new Float64Array(width * height);
+    this.phaseField = new Float64Array(width * height);
+  }
+  
+  encodeState(state, x, y) {
+    // Encode state as interference pattern around (x, y)
+    const primes = state.primes;
+    
+    for (let i = 0; i < this.width; i++) {
+      for (let j = 0; j < this.height; j++) {
+        const idx = j * this.width + i;
+        const dx = i - x;
+        const dy = j - y;
+        const r = Math.sqrt(dx * dx + dy * dy) + 1;
+        
+        let intensity = 0;
+        let phase = 0;
+        
+        for (const p of primes) {
+          const amp = state.get(p);
+          if (amp.norm() > 1e-10) {
+            // Create ring pattern at prime frequency
+            const k = 2 * Math.PI / (p * 0.5);
+            intensity += amp.norm() * Math.cos(k * r + amp.phase());
+            phase += amp.phase();
+          }
+        }
+        
+        this.field[idx] += intensity / primes.length;
+        this.phaseField[idx] = phase / primes.length;
+      }
+    }
+    
+    return this;
+  }
+  
+  maxIntensity() {
+    let max = 0;
+    for (let i = 0; i < this.field.length; i++) {
+      if (Math.abs(this.field[i]) > max) {
+        max = Math.abs(this.field[i]);
+      }
+    }
+    return max;
+  }
+  
+  findPeaks(threshold = 0.1) {
+    const peaks = [];
+    const maxI = this.maxIntensity();
+    
+    for (let i = 1; i < this.width - 1; i++) {
+      for (let j = 1; j < this.height - 1; j++) {
+        const idx = j * this.width + i;
+        const val = this.field[idx];
+        
+        if (Math.abs(val) / maxI < threshold) continue;
+        
+        // Check if local maximum
+        let isMax = true;
+        for (let di = -1; di <= 1; di++) {
+          for (let dj = -1; dj <= 1; dj++) {
+            if (di === 0 && dj === 0) continue;
+            const nidx = (j + dj) * this.width + (i + di);
+            if (Math.abs(this.field[nidx]) > Math.abs(val)) {
+              isMax = false;
+              break;
+            }
+          }
+          if (!isMax) break;
+        }
+        
+        if (isMax) {
+          peaks.push({ x: i, y: j, intensity: val, phase: this.phaseField[idx] });
+        }
+      }
+    }
+    
+    return peaks.sort((a, b) => Math.abs(b.intensity) - Math.abs(a.intensity));
+  }
+  
+  decodeAt(x, y, radius = 5) {
+    // Decode state by analyzing local frequency content
+    const state = new PrimeState();
+    const samples = [];
+    
+    // Sample around the point
+    for (let i = Math.max(0, x - radius); i < Math.min(this.width, x + radius); i++) {
+      for (let j = Math.max(0, y - radius); j < Math.min(this.height, y + radius); j++) {
+        const idx = j * this.width + i;
+        const r = Math.sqrt((i - x) ** 2 + (j - y) ** 2);
+        if (r > 0 && r <= radius) {
+          samples.push({ r, val: this.field[idx], phase: this.phaseField[idx] });
+        }
+      }
+    }
+    
+    // Analyze for prime frequencies
+    for (const p of state.primes) {
+      const k = 2 * Math.PI / (p * 0.5);
+      let real = 0, imag = 0;
+      
+      for (const s of samples) {
+        real += s.val * Math.cos(k * s.r);
+        imag += s.val * Math.sin(k * s.r);
+      }
+      
+      const amp = Math.sqrt(real ** 2 + imag ** 2) / Math.max(1, samples.length);
+      const phase = Math.atan2(imag, real);
+      
+      if (amp > 0.01) {
+        state.set(p, Complex.fromPolar(amp, phase));
+      }
+    }
+    
+    return state.normalize();
+  }
+  
+  clear() {
+    this.field.fill(0);
+    this.phaseField.fill(0);
+    return this;
+  }
+}
+
+/**
+ * EntangledNode - Network node with entanglement capabilities
+ */
+class EntangledNode {
+  constructor(id) {
+    this.id = id;
+    this.pri = PrimeResonanceIdentity.random();
+    this.entanglementMap = new Map();
+    this.coherence = 1.0;
+    this.state = PrimeState.uniform();
+    this.holographicMemory = new HolographicField(32, 32);
+    this.time = 0;
+  }
+  
+  entangleWith(other) {
+    const strength = this.pri.entanglementStrength(other.pri);
+    this.entanglementMap.set(other.id, { node: other, strength });
+    other.entanglementMap.set(this.id, { node: this, strength });
+    return strength;
+  }
+  
+  tick(dt) {
+    // Update coherence based on entanglements
+    if (this.entanglementMap.size > 0) {
+      let totalStrength = 0;
+      for (const [, entry] of this.entanglementMap) {
+        totalStrength += Math.abs(entry.strength);
+      }
+      this.coherence = totalStrength / this.entanglementMap.size;
+    }
+    
+    // Decay coherence slightly
+    this.coherence *= (1 - 0.01 * dt);
+    this.coherence = Math.max(0.1, this.coherence);
+    
+    this.time += dt;
+    return this;
+  }
+  
+  storeMemory(state, x, y) {
+    this.holographicMemory.encodeState(state, x, y);
+    return this;
+  }
+  
+  recallMemory(x, y, radius = 5) {
+    return this.holographicMemory.decodeAt(x, y, radius);
+  }
+  
+  getEntanglementStrength(otherId) {
+    const entry = this.entanglementMap.get(otherId);
+    return entry ? entry.strength : 0;
+  }
+}
+
+/**
+ * ResonantFragment - Fragment of resonant information
+ */
+class ResonantFragment {
+  constructor(state) {
+    this.state = state;
+    this._entropy = null;
+  }
+  
+  static fromText(text) {
+    const state = encodeMemory(text);
+    return new ResonantFragment(state);
+  }
+  
+  static fromPrimes(primes) {
+    const state = new PrimeState();
+    const amp = 1 / Math.sqrt(primes.length);
+    for (const p of primes) {
+      if (state.amplitudes.has(p)) {
+        state.set(p, new Complex(amp, 0));
+      }
+    }
+    return new ResonantFragment(state.normalize());
+  }
+  
+  get entropy() {
+    if (this._entropy === null) {
+      this._entropy = this.state.entropy();
+    }
+    return this._entropy;
+  }
+  
+  dominant(n = 3) {
+    return this.state.dominant(n);
+  }
+  
+  tensorWith(other) {
+    // Simplified tensor product: add states
+    const combined = this.state.add(other.state).normalize();
+    return new ResonantFragment(combined);
+  }
+  
+  rotatePhase(theta) {
+    const rotation = Complex.fromPolar(1, theta);
+    const rotated = new PrimeState(this.state.primes);
+    for (const p of this.state.primes) {
+      rotated.set(p, this.state.get(p).mul(rotation));
+    }
+    return new ResonantFragment(rotated);
+  }
+  
+  coherenceWith(other) {
+    return Math.sqrt(this.state.coherence(other.state));
+  }
+  
+  clone() {
+    return new ResonantFragment(this.state.clone());
+  }
+}
+
 module.exports = {
   Complex,
   PrimeState,
   ResonanceOperators,
   EntropyDrivenEvolution,
   encodeMemory,
-  symbolicCompute
+  symbolicCompute,
+  
+  // New classes
+  QuaternionPrime,
+  PrimeResonanceIdentity,
+  PhaseLockedRing,
+  HolographicField,
+  EntangledNode,
+  ResonantFragment,
+  
+  // Constants
+  PHI,
+  DELTA_S
 };
