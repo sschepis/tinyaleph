@@ -1,6 +1,6 @@
 {
   "name": "@aleph-ai/tinyaleph",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, and entropy-minimizing reasoning",
   "main": "index.js",
   "types": "types/index.d.ts",
