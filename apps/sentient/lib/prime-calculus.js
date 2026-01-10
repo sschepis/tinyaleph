@@ -658,6 +658,391 @@ class PrimeCalculusBuilder {
         
         return candidates;
     }
+    
+    // ════════════════════════════════════════════════════════════════════
+    // CANONICAL FUSION SELECTION (from discrete.pdf Section 3.2)
+    // Deterministic tie-breaking for FUSE(p,q,r)
+    // ════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Find the canonical triad for a given set of primes
+     * From discrete.pdf: When multiple valid triads exist, select deterministically
+     *
+     * Canonical selection rules:
+     * 1. Minimize max(p, q, r) - prefer balanced triads
+     * 2. If tied, minimize p (lexicographic ordering)
+     * 3. If still tied, minimize q
+     *
+     * This ensures network-wide agreement on which FUSE to use.
+     *
+     * @param {Set<number>|Array<number>} primes - Available primes
+     * @returns {Object|null} Canonical triad or null if none exists
+     */
+    static canonicalTriad(primes) {
+        const primeArray = Array.from(primes).filter(p => isOddPrime(p)).sort((a, b) => a - b);
+        
+        if (primeArray.length < 3) return null;
+        
+        const validTriads = [];
+        
+        // Find all valid triads
+        for (let i = 0; i < primeArray.length; i++) {
+            for (let j = i + 1; j < primeArray.length; j++) {
+                for (let k = j + 1; k < primeArray.length; k++) {
+                    const p = primeArray[i];
+                    const q = primeArray[j];
+                    const r = primeArray[k];
+                    const sum = p + q + r;
+                    
+                    if (isPrime(sum)) {
+                        validTriads.push({
+                            p, q, r,
+                            sum,
+                            max: Math.max(p, q, r),
+                            spread: r - p, // Range of the triad
+                            balance: (p + r) / 2 - q // How centered is q
+                        });
+                    }
+                }
+            }
+        }
+        
+        if (validTriads.length === 0) return null;
+        
+        // Sort by canonical ordering:
+        // 1. Minimize max (balanced triads)
+        // 2. Minimize spread (compact triads)
+        // 3. Lexicographic (p, then q, then r)
+        validTriads.sort((a, b) => {
+            // First: minimize max
+            if (a.max !== b.max) return a.max - b.max;
+            // Second: minimize spread
+            if (a.spread !== b.spread) return a.spread - b.spread;
+            // Third: lexicographic
+            if (a.p !== b.p) return a.p - b.p;
+            if (a.q !== b.q) return a.q - b.q;
+            return a.r - b.r;
+        });
+        
+        const canonical = validTriads[0];
+        
+        return {
+            p: canonical.p,
+            q: canonical.q,
+            r: canonical.r,
+            sum: canonical.sum,
+            isCanonical: true,
+            alternativeCount: validTriads.length - 1
+        };
+    }
+    
+    /**
+     * Create a canonical fusion term from a set of primes
+     * Automatically selects the canonical triad
+     *
+     * @param {Set<number>|Array<number>} primes - Available primes
+     * @returns {FusionTerm|null} Canonical fusion term or null
+     */
+    static canonicalFusion(primes) {
+        const triad = PrimeCalculusBuilder.canonicalTriad(primes);
+        if (!triad) return null;
+        
+        try {
+            return new FusionTerm(triad.p, triad.q, triad.r);
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    /**
+     * Find all canonical triads that produce a specific target prime
+     *
+     * @param {number} targetPrime - The prime to produce via fusion
+     * @returns {Object|null} Canonical triad producing target, or null
+     */
+    static canonicalTriadForTarget(targetPrime) {
+        if (!isPrime(targetPrime)) return null;
+        
+        const candidates = PrimeCalculusBuilder.findFusionCandidates(targetPrime);
+        
+        if (candidates.length === 0) return null;
+        
+        // Convert to triad objects with metrics
+        const triads = candidates.map(([p, q, r]) => ({
+            p, q, r,
+            sum: targetPrime,
+            max: Math.max(p, q, r),
+            spread: r - p
+        }));
+        
+        // Sort by canonical ordering
+        triads.sort((a, b) => {
+            if (a.max !== b.max) return a.max - b.max;
+            if (a.spread !== b.spread) return a.spread - b.spread;
+            if (a.p !== b.p) return a.p - b.p;
+            if (a.q !== b.q) return a.q - b.q;
+            return a.r - b.r;
+        });
+        
+        const canonical = triads[0];
+        
+        return {
+            ...canonical,
+            isCanonical: true,
+            alternativeCount: triads.length - 1,
+            alternatives: triads.slice(1, 4) // Include up to 3 alternatives for reference
+        };
+    }
+    
+    /**
+     * Verify that a given triad is the canonical choice
+     *
+     * @param {number} p - First prime
+     * @param {number} q - Second prime
+     * @param {number} r - Third prime
+     * @param {Set<number>|Array<number>} availablePrimes - Available prime set
+     * @returns {Object} Verification result
+     */
+    static verifyCanonical(p, q, r, availablePrimes) {
+        const canonical = PrimeCalculusBuilder.canonicalTriad(availablePrimes);
+        
+        if (!canonical) {
+            return { isCanonical: false, reason: 'no_valid_triad' };
+        }
+        
+        const isMatch = canonical.p === p && canonical.q === q && canonical.r === r;
+        
+        return {
+            isCanonical: isMatch,
+            givenTriad: { p, q, r, sum: p + q + r },
+            canonicalTriad: { p: canonical.p, q: canonical.q, r: canonical.r, sum: canonical.sum },
+            reason: isMatch ? 'matches_canonical' : 'not_canonical_choice'
+        };
+    }
+    
+    // ════════════════════════════════════════════════════════════════════
+    // RESONANCE-BASED ROUTE SELECTION (from PIQC.pdf / mtspbc.pdf)
+    // Ranks fusion routes by 108° closure (resonance score)
+    // ════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Compute twist angle κ(p) = 360°/p for a prime
+     * This is the fundamental rotation quantum for prime p.
+     *
+     * @param {number} p - Prime number
+     * @returns {number} Twist angle in degrees
+     */
+    static twistAngle(p) {
+        return 360 / p;
+    }
+    
+    /**
+     * Compute total twist angle T(d) = κ(p) + κ(q) + κ(r) for a triad
+     * From PIQC.pdf: Total rotation induced by fusion
+     *
+     * @param {number} p - First prime
+     * @param {number} q - Second prime
+     * @param {number} r - Third prime
+     * @returns {number} Total twist in degrees
+     */
+    static triadTwist(p, q, r) {
+        return PrimeCalculusBuilder.twistAngle(p) +
+               PrimeCalculusBuilder.twistAngle(q) +
+               PrimeCalculusBuilder.twistAngle(r);
+    }
+    
+    /**
+     * Compute resonance score Δ(d) = min_k|T(d) - 108k|
+     * Lower score = better 108° closure = more resonant triad
+     *
+     * From mtspbc.pdf: The 108° is the internal angle of a regular pentagon
+     * and appears as a fundamental harmonic in prime resonance.
+     *
+     * @param {number} p - First prime
+     * @param {number} q - Second prime
+     * @param {number} r - Third prime
+     * @returns {Object} Resonance metrics
+     */
+    static resonanceScore(p, q, r) {
+        const T = PrimeCalculusBuilder.triadTwist(p, q, r);
+        
+        // Find closest 108° multiple
+        const k = Math.round(T / 108);
+        const delta = Math.abs(T - 108 * k);
+        
+        // Also compute closure to 360° (full rotation)
+        const k360 = Math.round(T / 360);
+        const delta360 = Math.abs(T - 360 * k360);
+        
+        return {
+            p, q, r,
+            totalTwist: T,
+            closestMultiple108: k,
+            delta108: delta,           // Distance from 108k°
+            closestMultiple360: k360,
+            delta360: delta360,        // Distance from 360k°
+            resonanceQuality: 1 / (1 + delta),  // Higher = more resonant
+            isPentagonal: delta < 1,   // Within 1° of 108k
+            isFullRotation: delta360 < 1  // Within 1° of 360k
+        };
+    }
+    
+    /**
+     * Find most resonant triad for a target prime
+     * Ranks all valid decompositions by 108° closure
+     *
+     * @param {number} targetPrime - Prime to decompose
+     * @returns {Object|null} Best resonant triad or null
+     */
+    static resonantTriadForTarget(targetPrime) {
+        const candidates = PrimeCalculusBuilder.findFusionCandidates(targetPrime);
+        
+        if (candidates.length === 0) return null;
+        
+        // Compute resonance for each candidate
+        const scored = candidates.map(([p, q, r]) => ({
+            ...PrimeCalculusBuilder.resonanceScore(p, q, r),
+            sum: p + q + r
+        }));
+        
+        // Sort by resonance quality (lower delta = better)
+        scored.sort((a, b) => a.delta108 - b.delta108);
+        
+        const best = scored[0];
+        
+        return {
+            ...best,
+            isCanonicalResonant: true,
+            alternativeCount: scored.length - 1,
+            alternatives: scored.slice(1, 4)
+        };
+    }
+    
+    /**
+     * Rank fusion candidates by resonance
+     * Returns all candidates sorted by 108° closure quality
+     *
+     * @param {Set<number>|Array<number>} primes - Available primes
+     * @returns {Array} All valid triads ranked by resonance
+     */
+    static rankByResonance(primes) {
+        const primeArray = Array.from(primes).filter(p => isOddPrime(p)).sort((a, b) => a - b);
+        
+        if (primeArray.length < 3) return [];
+        
+        const rankedTriads = [];
+        
+        // Find all valid triads
+        for (let i = 0; i < primeArray.length; i++) {
+            for (let j = i + 1; j < primeArray.length; j++) {
+                for (let k = j + 1; k < primeArray.length; k++) {
+                    const p = primeArray[i];
+                    const q = primeArray[j];
+                    const r = primeArray[k];
+                    const sum = p + q + r;
+                    
+                    if (isPrime(sum)) {
+                        const resonance = PrimeCalculusBuilder.resonanceScore(p, q, r);
+                        rankedTriads.push({
+                            ...resonance,
+                            sum,
+                            isValid: true
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Sort by resonance (lower delta108 = better)
+        rankedTriads.sort((a, b) => a.delta108 - b.delta108);
+        
+        return rankedTriads;
+    }
+    
+    /**
+     * Combined selection: canonical + resonance
+     * First filters by canonical rules, then ranks by resonance
+     *
+     * @param {Set<number>|Array<number>} primes - Available primes
+     * @returns {Object|null} Best triad by combined criteria
+     */
+    static canonicalResonantTriad(primes) {
+        const canonical = PrimeCalculusBuilder.canonicalTriad(primes);
+        if (!canonical) return null;
+        
+        // Get resonance score for canonical choice
+        const resonance = PrimeCalculusBuilder.resonanceScore(
+            canonical.p, canonical.q, canonical.r
+        );
+        
+        // Also get the best resonant choice for comparison
+        const ranked = PrimeCalculusBuilder.rankByResonance(primes);
+        const bestResonant = ranked[0] || null;
+        
+        return {
+            canonical: {
+                p: canonical.p,
+                q: canonical.q,
+                r: canonical.r,
+                sum: canonical.sum
+            },
+            canonicalResonance: resonance,
+            bestResonant: bestResonant ? {
+                p: bestResonant.p,
+                q: bestResonant.q,
+                r: bestResonant.r,
+                sum: bestResonant.sum,
+                delta108: bestResonant.delta108
+            } : null,
+            useSameTriad: bestResonant &&
+                canonical.p === bestResonant.p &&
+                canonical.q === bestResonant.q &&
+                canonical.r === bestResonant.r,
+            recommendation: (resonance.delta108 < 5) ? 'canonical_is_resonant' :
+                           (bestResonant && bestResonant.delta108 < 5) ? 'prefer_resonant' :
+                           'use_canonical'
+        };
+    }
+    
+    /**
+     * Find 108-closed triads (triads where T(d) ≈ 108°)
+     * These are special "pentagonal" fusions
+     *
+     * @param {number} tolerance - Maximum deviation from 108° (default 1°)
+     * @param {number} maxPrime - Maximum prime to search (default 100)
+     * @returns {Array} All 108-closed triads
+     */
+    static find108ClosedTriads(tolerance = 1, maxPrime = 100) {
+        const oddPrimes = SMALL_PRIMES.filter(p => p > 2 && p <= maxPrime);
+        const closedTriads = [];
+        
+        for (let i = 0; i < oddPrimes.length; i++) {
+            for (let j = i + 1; j < oddPrimes.length; j++) {
+                for (let k = j + 1; k < oddPrimes.length; k++) {
+                    const p = oddPrimes[i];
+                    const q = oddPrimes[j];
+                    const r = oddPrimes[k];
+                    const sum = p + q + r;
+                    
+                    if (isPrime(sum)) {
+                        const resonance = PrimeCalculusBuilder.resonanceScore(p, q, r);
+                        
+                        if (resonance.delta108 <= tolerance) {
+                            closedTriads.push({
+                                p, q, r,
+                                sum,
+                                totalTwist: resonance.totalTwist,
+                                delta108: resonance.delta108,
+                                closestMultiple: resonance.closestMultiple108
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        return closedTriads.sort((a, b) => a.delta108 - b.delta108);
+    }
 }
 
 /**

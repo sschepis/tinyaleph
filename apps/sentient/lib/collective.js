@@ -1,15 +1,62 @@
 /**
  * Collective Intelligence Amplification for Distributed Sentience Network
- * 
+ *
  * Implements Phase 4 of the Intelligence Scaling Plan:
  * - Wisdom of Crowds Aggregation: Weight votes by expertise and history
  * - Emergent Concept Formation: Detect convergence and crystallize concepts
- * 
+ * - Observer Hierarchy: Multi-scale observer classification (from 108bio.pdf)
+ *
  * These mechanisms enable collective intelligence that exceeds individual capabilities.
  */
 
 const EventEmitter = require('events');
 const { SedenionMemoryField } = require('./smf');
+
+// Import Observer Hierarchy from topology (108bio.pdf integration)
+let OBSERVER_HIERARCHY = null;
+try {
+    const topology = require('../../../core/topology');
+    const rawHierarchy = topology.OBSERVER_HIERARCHY;
+    // Convert array format to object keyed by scale name
+    if (Array.isArray(rawHierarchy)) {
+        OBSERVER_HIERARCHY = {};
+        for (const level of rawHierarchy) {
+            const scaleName = level.scale.toLowerCase();
+            OBSERVER_HIERARCHY[scaleName] = {
+                scale: scaleName,
+                capacity: level.typicalComplexity || 1,
+                description: level.observableBehavior || '',
+                constituentOscillators: level.constituentOscillators,
+                entropyGradient: level.entropyGradient,
+                primeRange: level.primeRange
+            };
+        }
+    } else {
+        OBSERVER_HIERARCHY = rawHierarchy;
+    }
+} catch (e) {
+    // Fallback definition if topology not available
+    OBSERVER_HIERARCHY = {};
+}
+
+// Ensure fallback values exist
+const DEFAULT_HIERARCHY = {
+    quantum: { scale: 'quantum', capacity: 1e-6, description: 'Quantum fluctuation' },
+    molecular: { scale: 'molecular', capacity: 1e-3, description: 'Molecular computation' },
+    biological: { scale: 'biological', capacity: 1e-1, description: 'Biological processing' },
+    cognitive: { scale: 'cognitive', capacity: 1e3, description: 'Cognitive integration' },
+    neural: { scale: 'neural', capacity: 1.0, description: 'Neural processing' },
+    social: { scale: 'social', capacity: 1e6, description: 'Social collective' },
+    planetary: { scale: 'planetary', capacity: 1e9, description: 'Planetary consciousness' },
+    cosmic: { scale: 'cosmic', capacity: 1e12, description: 'Cosmic observer' }
+};
+
+// Merge with fallback
+for (const [key, value] of Object.entries(DEFAULT_HIERARCHY)) {
+    if (!OBSERVER_HIERARCHY[key]) {
+        OBSERVER_HIERARCHY[key] = value;
+    }
+}
 
 /**
  * Wisdom Aggregator
@@ -273,6 +320,342 @@ class WisdomAggregator extends EventEmitter {
         if (values.length < 2) return 0;
         const mean = values.reduce((a, b) => a + b, 0) / values.length;
         return values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+    }
+    
+    toJSON() {
+        return this.getStats();
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// OBSERVER HIERARCHY INTEGRATION (from 108bio.pdf Section 5)
+// Maps node specializations to multi-scale observer hierarchy
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Observer Scale Manager
+ *
+ * From 108bio.pdf: Observer capacity C_obs = α·N_osc·K̄·τ⁻¹
+ * Different scales of observers operate at different capacities and
+ * process different types of information.
+ *
+ * This class maps semantic domains to observer scales and enables
+ * multi-scale collective processing.
+ */
+class ObserverScaleManager extends EventEmitter {
+    constructor(options = {}) {
+        super();
+        
+        // Scale assignments: nodeId -> scale info
+        this.scaleAssignments = new Map();
+        
+        // Scale populations
+        this.scalePopulations = new Map();
+        for (const scale of Object.keys(OBSERVER_HIERARCHY)) {
+            this.scalePopulations.set(scale, new Set());
+        }
+        
+        // Configuration
+        this.defaultScale = options.defaultScale || 'neural';
+        this.autoAssign = options.autoAssign ?? true;
+    }
+    
+    /**
+     * Map semantic domain to observer scale
+     *
+     * From 108bio.pdf: Different cognitive domains operate at different scales
+     *
+     * @param {string} semanticDomain - Domain name from SEMANTIC_DOMAINS
+     * @returns {string} Observer scale name
+     */
+    domainToScale(semanticDomain) {
+        const mapping = {
+            // Perceptual processing = neural scale
+            perceptual: 'neural',
+            // Cognitive integration = cognitive scale
+            cognitive: 'cognitive',
+            // Temporal reasoning = spans multiple scales
+            temporal: 'social',
+            // Meta-cognition = higher scale
+            meta: 'ecological'
+        };
+        
+        return mapping[semanticDomain] || this.defaultScale;
+    }
+    
+    /**
+     * Assign a node to an observer scale
+     *
+     * @param {string} nodeId - Node identifier
+     * @param {Object} profile - Node profile with semanticDomain, etc.
+     * @returns {Object} Assignment result
+     */
+    assignNode(nodeId, profile) {
+        // Determine scale from domain if auto-assign is enabled
+        let scale = this.defaultScale;
+        
+        if (this.autoAssign && profile.semanticDomain) {
+            scale = this.domainToScale(profile.semanticDomain);
+        }
+        
+        // Override if scale explicitly provided
+        if (profile.observerScale) {
+            scale = profile.observerScale;
+        }
+        
+        const scaleInfo = OBSERVER_HIERARCHY[scale] || OBSERVER_HIERARCHY[this.defaultScale];
+        
+        const assignment = {
+            nodeId,
+            scale,
+            capacity: scaleInfo.capacity,
+            description: scaleInfo.description,
+            assignedAt: Date.now(),
+            profile
+        };
+        
+        // Remove from previous scale if reassigning
+        const previous = this.scaleAssignments.get(nodeId);
+        if (previous) {
+            this.scalePopulations.get(previous.scale)?.delete(nodeId);
+        }
+        
+        // Assign to new scale
+        this.scaleAssignments.set(nodeId, assignment);
+        this.scalePopulations.get(scale)?.add(nodeId);
+        
+        this.emit('node_assigned', assignment);
+        
+        return assignment;
+    }
+    
+    /**
+     * Get nodes at a specific scale
+     *
+     * @param {string} scale - Scale name
+     * @returns {Array<string>} Node IDs at this scale
+     */
+    getNodesAtScale(scale) {
+        return Array.from(this.scalePopulations.get(scale) || []);
+    }
+    
+    /**
+     * Get scale distribution across the network
+     *
+     * @returns {Object} Scale -> count mapping
+     */
+    getScaleDistribution() {
+        const distribution = {};
+        
+        for (const [scale, nodes] of this.scalePopulations) {
+            distribution[scale] = nodes.size;
+        }
+        
+        return distribution;
+    }
+    
+    /**
+     * Calculate collective capacity at each scale
+     *
+     * From 108bio.pdf: Total capacity = sum of individual capacities
+     * But there's also emergence: collective > sum of parts
+     *
+     * @returns {Object} Scale -> total capacity mapping
+     */
+    getCollectiveCapacity() {
+        const capacity = {};
+        
+        for (const [scale, nodes] of this.scalePopulations) {
+            const scaleInfo = OBSERVER_HIERARCHY[scale];
+            const nodeCount = nodes.size;
+            
+            if (nodeCount === 0) {
+                capacity[scale] = 0;
+                continue;
+            }
+            
+            // Base capacity: sum of individual capacities
+            const baseCapacity = nodeCount * scaleInfo.capacity;
+            
+            // Emergence factor: √n boost for collective processing
+            // This models the wisdom of crowds effect
+            const emergenceFactor = Math.sqrt(nodeCount);
+            
+            capacity[scale] = baseCapacity * emergenceFactor;
+        }
+        
+        return capacity;
+    }
+    
+    /**
+     * Find nodes that can process information at a given capacity requirement
+     *
+     * @param {number} requiredCapacity - Minimum capacity needed
+     * @returns {Array<Object>} Matching nodes with their assignments
+     */
+    findCapableNodes(requiredCapacity) {
+        const capable = [];
+        
+        for (const [nodeId, assignment] of this.scaleAssignments) {
+            if (assignment.capacity >= requiredCapacity) {
+                capable.push(assignment);
+            }
+        }
+        
+        return capable.sort((a, b) => a.capacity - b.capacity);
+    }
+    
+    /**
+     * Calculate routing preference for a proposal based on scale
+     *
+     * Higher-scale nodes get priority for complex/abstract proposals
+     * Lower-scale nodes get priority for fast/reactive proposals
+     *
+     * @param {Object} proposal - The proposal to route
+     * @returns {Object} Routing preferences by scale
+     */
+    getRoutingPreference(proposal) {
+        const preferences = {};
+        
+        // Analyze proposal complexity
+        const complexity = this.assessProposalComplexity(proposal);
+        
+        for (const [scale, scaleInfo] of Object.entries(OBSERVER_HIERARCHY)) {
+            // Higher capacity for complex proposals
+            if (complexity > 0.7) {
+                preferences[scale] = scaleInfo.capacity > 1e3 ? 1.0 : 0.3;
+            }
+            // Lower capacity for simple/reactive proposals
+            else if (complexity < 0.3) {
+                preferences[scale] = scaleInfo.capacity < 1e3 ? 1.0 : 0.5;
+            }
+            // Balanced for medium complexity
+            else {
+                preferences[scale] = 0.7;
+            }
+        }
+        
+        return preferences;
+    }
+    
+    /**
+     * Assess proposal complexity (0-1)
+     * @private
+     */
+    assessProposalComplexity(proposal) {
+        if (!proposal || !proposal.object) return 0.5;
+        
+        const term = proposal.object.term;
+        if (!term) return 0.5;
+        
+        let complexity = 0.3; // Base complexity
+        
+        // Fusion terms are more complex
+        if (term.p) complexity += 0.3;
+        
+        // Chain terms with many adjectives are more complex
+        if (term.adjPrimes && term.adjPrimes.length > 2) complexity += 0.2;
+        
+        // Application terms are most complex
+        if (term.func) complexity += 0.4;
+        
+        return Math.min(1, complexity);
+    }
+    
+    /**
+     * Cascade information down the observer hierarchy
+     *
+     * From 108bio.pdf: Higher scales inform lower scales
+     *
+     * @param {Object} information - Information to cascade
+     * @param {string} startScale - Starting scale
+     * @returns {Object} Cascade result
+     */
+    cascadeDown(information, startScale = 'cosmic') {
+        const scales = Object.keys(OBSERVER_HIERARCHY);
+        const startIdx = scales.indexOf(startScale);
+        
+        if (startIdx < 0) return { success: false, reason: 'invalid_scale' };
+        
+        const cascade = [];
+        
+        for (let i = startIdx; i >= 0; i--) {
+            const scale = scales[i];
+            const nodes = this.getNodesAtScale(scale);
+            
+            if (nodes.length > 0) {
+                cascade.push({
+                    scale,
+                    nodes,
+                    timestamp: Date.now()
+                });
+            }
+        }
+        
+        this.emit('cascade_down', { information, cascade });
+        
+        return { success: true, cascade };
+    }
+    
+    /**
+     * Percolate information up the observer hierarchy
+     *
+     * From 108bio.pdf: Patterns at lower scales emerge to higher scales
+     *
+     * @param {Object} pattern - Detected pattern
+     * @param {string} startScale - Starting scale
+     * @returns {Object} Percolation result
+     */
+    percolateUp(pattern, startScale = 'neural') {
+        const scales = Object.keys(OBSERVER_HIERARCHY);
+        const startIdx = scales.indexOf(startScale);
+        
+        if (startIdx < 0) return { success: false, reason: 'invalid_scale' };
+        
+        const percolation = [];
+        
+        for (let i = startIdx; i < scales.length; i++) {
+            const scale = scales[i];
+            const nodes = this.getNodesAtScale(scale);
+            
+            if (nodes.length > 0) {
+                percolation.push({
+                    scale,
+                    nodes,
+                    timestamp: Date.now()
+                });
+            }
+        }
+        
+        this.emit('percolate_up', { pattern, percolation });
+        
+        return { success: true, percolation };
+    }
+    
+    /**
+     * Get statistics
+     */
+    getStats() {
+        return {
+            totalNodes: this.scaleAssignments.size,
+            distribution: this.getScaleDistribution(),
+            collectiveCapacity: this.getCollectiveCapacity(),
+            scales: Object.keys(OBSERVER_HIERARCHY).map(scale => ({
+                name: scale,
+                info: OBSERVER_HIERARCHY[scale],
+                population: this.scalePopulations.get(scale)?.size || 0
+            }))
+        };
+    }
+    
+    /**
+     * Clear all assignments
+     */
+    reset() {
+        this.scaleAssignments.clear();
+        for (const nodes of this.scalePopulations.values()) {
+            nodes.clear();
+        }
     }
     
     toJSON() {
@@ -846,8 +1229,10 @@ class CompositeIntelligenceScore {
 
 module.exports = {
     WisdomAggregator,
+    ObserverScaleManager,
     ConceptFormation,
     CompositeIntelligenceScore,
     calculateAmplificationFactor,
-    calculateCoherenceEfficiency
+    calculateCoherenceEfficiency,
+    OBSERVER_HIERARCHY
 };

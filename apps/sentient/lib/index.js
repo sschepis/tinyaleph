@@ -95,6 +95,26 @@ const {
     SentientObserver
 } = require('./sentient-core');
 
+// Symbolic Extensions (v1.3.0)
+const {
+    SymbolicSMF,
+    SMFSymbolMapper,
+    AXIS_SYMBOL_MAPPING,
+    TAG_TO_AXIS
+} = require('./symbolic-smf');
+
+const {
+    SymbolicMoment,
+    SymbolicTemporalLayer,
+    SymbolicPatternDetector,
+    HEXAGRAM_ARCHETYPES
+} = require('./symbolic-temporal');
+
+const {
+    SymbolicState,
+    SymbolicObserver
+} = require('./symbolic-observer');
+
 // Evaluation Assays (Section 15)
 const {
     TimeDilationAssay,
@@ -275,6 +295,20 @@ module.exports = {
     
     SentientState,
     SentientObserver,
+    
+    // Symbolic Extensions (v1.3.0 - tinyaleph symbolic integration)
+    SymbolicSMF,
+    SMFSymbolMapper,
+    AXIS_SYMBOL_MAPPING,
+    TAG_TO_AXIS,
+    
+    SymbolicMoment,
+    SymbolicTemporalLayer,
+    SymbolicPatternDetector,
+    HEXAGRAM_ARCHETYPES,
+    
+    SymbolicState,
+    SymbolicObserver,
     
     // Evaluation Assays
     TimeDilationAssay,

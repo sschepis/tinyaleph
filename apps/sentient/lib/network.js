@@ -236,13 +236,30 @@ class LocalField {
 // PROPOSAL SYSTEM
 // ============================================================================
 
+// ════════════════════════════════════════════════════════════════════
+// FORMALIZED PROPOSAL CLASS (from discrete.pdf Section 3.3)
+// Enhanced with tick_proof, smf_hash, and kernel NF claim
+// ════════════════════════════════════════════════════════════════════
+
 /**
  * Proposal
- * 
+ *
  * A proposed insert to the Global Memory Field.
  * Contains semantic object, proofs, and metadata.
+ *
+ * From discrete.pdf: Proposals must include:
+ * - tick_proof: Evidence of coherent tick event triggering the proposal
+ * - smf_hash: Hash of SMF state at proposal time for replay verification
+ * - kernel_nf_claim: The claimed normal form from the kernel
  */
 class Proposal {
+    /**
+     * Create a new proposal
+     *
+     * @param {Object} semanticObject - The semantic object being proposed
+     * @param {Object} proofs - Proof bundle
+     * @param {Object} metadata - Additional metadata
+     */
     constructor(semanticObject, proofs = {}, metadata = {}) {
         this.id = crypto.randomBytes(8).toString('hex');
         this.object = semanticObject;
@@ -252,6 +269,205 @@ class Proposal {
         this.nodeId = metadata.nodeId || null;
         this.status = 'pending'; // pending, accepted, rejected
         this.votes = new Map(); // nodeId -> vote
+        
+        // ════════════════════════════════════════════════════════════
+        // DISCRETE.PDF ENHANCEMENTS
+        // ════════════════════════════════════════════════════════════
+        
+        // Tick proof: Evidence that a coherent tick event triggered this proposal
+        // From discrete.pdf Section 4.2: tick_proof ensures proposals are grounded in tick events
+        this.tickProof = metadata.tickProof || proofs.tickProof || {
+            tickNumber: 0,
+            coherenceAtTick: 0,
+            tickTimestamp: Date.now(),
+            valid: false
+        };
+        
+        // SMF hash: Hash of the SMF state at proposal creation
+        // From discrete.pdf Section 3.3: smf_hash enables replay verification
+        this.smfHash = metadata.smfHash || this.computeSmfHash(metadata.smf);
+        
+        // Kernel NF claim: The claimed normal form from prime calculus
+        // From discrete.pdf Section 5.1: kernel verifies NF claims deterministically
+        this.kernelNfClaim = metadata.kernelNfClaim || this.extractNfClaim(semanticObject);
+        
+        // Proposal quality metrics
+        this.quality = {
+            hasTickProof: !!proofs.tickProof || this.tickProof.valid,
+            hasSmfHash: !!this.smfHash,
+            hasNfClaim: !!this.kernelNfClaim,
+            score: 0 // Computed below
+        };
+        this.quality.score = this.computeQualityScore();
+    }
+    
+    /**
+     * Compute hash of SMF state for replay verification
+     * @private
+     */
+    computeSmfHash(smf) {
+        if (!smf) return null;
+        
+        const s = smf.s || smf;
+        if (!Array.isArray(s) && !ArrayBuffer.isView(s)) return null;
+        
+        // Create deterministic hash of SMF axes
+        let hash = 0;
+        for (let i = 0; i < 16; i++) {
+            const value = s[i] || 0;
+            // Fixed-point representation for determinism (8 decimal places)
+            const fixedValue = Math.round(value * 1e8);
+            hash = ((hash << 5) - hash + fixedValue) | 0;
+        }
+        
+        return hash.toString(16).padStart(8, '0');
+    }
+    
+    /**
+     * Extract normal form claim from semantic object
+     * @private
+     */
+    extractNfClaim(semanticObject) {
+        if (!semanticObject) return null;
+        
+        // If object has normalForm method, use it
+        if (semanticObject.normalForm && typeof semanticObject.normalForm === 'function') {
+            const nf = semanticObject.normalForm();
+            if (nf && typeof nf.signature === 'function') {
+                return nf.signature();
+            }
+            return JSON.stringify(nf);
+        }
+        
+        // Otherwise, derive from term structure
+        const term = semanticObject.term;
+        if (!term) return null;
+        
+        // Generate canonical signature for the term
+        if (term.prime) return `atomic:${term.prime}`;
+        if (term.p) return `fusion:${term.p}+${term.q}+${term.r}=${term.p + term.q + term.r}`;
+        if (term.nounPrime) {
+            const adjs = (term.adjPrimes || []).sort((a, b) => a - b).join(',');
+            return `chain:${term.nounPrime}[${adjs}]`;
+        }
+        
+        return JSON.stringify(term);
+    }
+    
+    /**
+     * Compute proposal quality score (0-1)
+     * Higher scores indicate more verifiable proposals
+     */
+    computeQualityScore() {
+        let score = 0.5; // Base score
+        
+        // Tick proof adds credibility
+        if (this.tickProof.valid) {
+            score += 0.2;
+            // High coherence tick adds more
+            if (this.tickProof.coherenceAtTick > 0.7) {
+                score += 0.1;
+            }
+        }
+        
+        // SMF hash enables verification
+        if (this.smfHash) {
+            score += 0.1;
+        }
+        
+        // NF claim enables kernel verification
+        if (this.kernelNfClaim) {
+            score += 0.1;
+        }
+        
+        return Math.min(1, score);
+    }
+    
+    /**
+     * Set tick proof (called when proposal is triggered by tick event)
+     *
+     * @param {Object} tickInfo - Information about the triggering tick
+     */
+    setTickProof(tickInfo) {
+        this.tickProof = {
+            tickNumber: tickInfo.tickNumber || 0,
+            coherenceAtTick: tickInfo.coherence || 0,
+            tickTimestamp: tickInfo.timestamp || Date.now(),
+            valid: true
+        };
+        
+        this.quality.hasTickProof = true;
+        this.quality.score = this.computeQualityScore();
+    }
+    
+    /**
+     * Verify tick proof against current tick state
+     *
+     * @param {Object} currentTickState - Current tick state from TickGate
+     * @returns {Object} Verification result
+     */
+    verifyTickProof(currentTickState) {
+        if (!this.tickProof.valid) {
+            return { valid: false, reason: 'no_tick_proof' };
+        }
+        
+        // Check that tick number is not in the future
+        if (this.tickProof.tickNumber > currentTickState.tickCount) {
+            return { valid: false, reason: 'future_tick' };
+        }
+        
+        // Check that tick is not too old (configurable, default 1000 ticks)
+        const maxAge = 1000;
+        if (currentTickState.tickCount - this.tickProof.tickNumber > maxAge) {
+            return { valid: false, reason: 'stale_tick' };
+        }
+        
+        return { valid: true, tickNumber: this.tickProof.tickNumber };
+    }
+    
+    /**
+     * Verify SMF hash against a given SMF state
+     *
+     * @param {Object} smf - SMF state to verify against
+     * @returns {boolean} Whether hash matches
+     */
+    verifySmfHash(smf) {
+        const computedHash = this.computeSmfHash(smf);
+        return computedHash === this.smfHash;
+    }
+    
+    /**
+     * Verify kernel NF claim against kernel computation
+     *
+     * @param {Object} verifier - PrimeCalculusVerifier instance
+     * @returns {Object} Verification result
+     */
+    verifyNfClaim(verifier) {
+        if (!this.kernelNfClaim) {
+            return { valid: false, reason: 'no_nf_claim' };
+        }
+        
+        if (!this.object || !this.object.term) {
+            return { valid: false, reason: 'no_term' };
+        }
+        
+        try {
+            // Compute NF using verifier
+            const verification = verifier.verify({
+                term: this.object.term,
+                claimedNF: { signature: () => this.kernelNfClaim },
+                proofs: this.proofs
+            });
+            
+            return {
+                valid: verification.valid,
+                reason: verification.valid ? 'nf_matches' : 'nf_mismatch',
+                computed: verification.computedNF,
+                claimed: this.kernelNfClaim
+            };
+        } catch (e) {
+            return { valid: false, reason: 'verification_error', error: e.message };
+        }
     }
     
     /**
@@ -274,6 +490,23 @@ class Proposal {
         return agrees / this.votes.size;
     }
     
+    /**
+     * Get comprehensive proposal status
+     */
+    getProposalStatus() {
+        return {
+            id: this.id,
+            status: this.status,
+            quality: this.quality,
+            votes: this.votes.size,
+            redundancy: this.redundancyScore(),
+            tickProofValid: this.tickProof.valid,
+            hasSmfHash: !!this.smfHash,
+            hasNfClaim: !!this.kernelNfClaim,
+            age: Date.now() - this.timestamp
+        };
+    }
+    
     toJSON() {
         return {
             id: this.id,
@@ -282,7 +515,12 @@ class Proposal {
             timestamp: this.timestamp,
             nodeId: this.nodeId,
             status: this.status,
-            redundancyScore: this.redundancyScore()
+            redundancyScore: this.redundancyScore(),
+            // New discrete.pdf fields
+            tickProof: this.tickProof,
+            smfHash: this.smfHash,
+            kernelNfClaim: this.kernelNfClaim,
+            quality: this.quality
         };
     }
 }

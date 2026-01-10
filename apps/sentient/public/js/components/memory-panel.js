@@ -876,6 +876,66 @@ export class MemoryPanel extends BaseComponent {
             .replace(/"/g, '&quot;');
     }
     
+    /**
+     * Extract text content from a trace object, handling various data structures
+     */
+    extractTextContent(trace) {
+        if (!trace) return '';
+        
+        // Try direct string properties first
+        if (typeof trace.content === 'string' && trace.content) return trace.content;
+        if (typeof trace.text === 'string' && trace.text) return trace.text;
+        if (typeof trace.message === 'string' && trace.message) return trace.message;
+        
+        // Handle content as object with nested text
+        if (trace.content && typeof trace.content === 'object') {
+            // Try common nested properties
+            if (typeof trace.content.text === 'string') return trace.content.text;
+            if (typeof trace.content.content === 'string') return trace.content.content;
+            if (typeof trace.content.message === 'string') return trace.content.message;
+            if (typeof trace.content.value === 'string') return trace.content.value;
+            
+            // Handle array of content parts (like OpenAI format)
+            if (Array.isArray(trace.content)) {
+                return trace.content
+                    .map(part => {
+                        if (typeof part === 'string') return part;
+                        if (part && typeof part.text === 'string') return part.text;
+                        return '';
+                    })
+                    .filter(Boolean)
+                    .join(' ');
+            }
+            
+            // Last resort: try to stringify but limit length
+            try {
+                const str = JSON.stringify(trace.content);
+                return str.length > 200 ? str.slice(0, 200) + '...' : str;
+            } catch {
+                return '[Complex Object]';
+            }
+        }
+        
+        // Handle text as object
+        if (trace.text && typeof trace.text === 'object') {
+            if (typeof trace.text.content === 'string') return trace.text.content;
+            if (typeof trace.text.value === 'string') return trace.text.value;
+        }
+        
+        // Check for experience/memory specific formats
+        if (trace.experience && typeof trace.experience === 'object') {
+            if (typeof trace.experience.content === 'string') return trace.experience.content;
+            if (typeof trace.experience.text === 'string') return trace.experience.text;
+            if (typeof trace.experience.summary === 'string') return trace.experience.summary;
+        }
+        
+        // Check for user/assistant message format
+        if (typeof trace.user === 'string') return trace.user;
+        if (typeof trace.assistant === 'string') return trace.assistant;
+        
+        return '';
+    }
+    
     highlightMatch(content, query) {
         if (!query || !content) return this.escapeHtml(content);
         
@@ -989,7 +1049,7 @@ export class MemoryPanel extends BaseComponent {
             this._state.traces = (data.recent || []).map(t => ({
                 id: t.id || Math.random().toString(36).substr(2, 9),
                 type: t.type || 'output',
-                content: t.content || t.text || '',
+                content: this.extractTextContent(t),
                 timestamp: t.timestamp || Date.now(),
                 importance: t.importance || Math.random() * 0.5 + 0.3,
                 quaternionMag: t.quaternion ? Math.sqrt(

@@ -64,6 +64,13 @@ export class StructurePanel extends BaseComponent {
         this.refreshInterval = null;
         this.graphZoom = 1;
         this.graphOffset = { x: 0, y: 0 };
+        
+        // Track data changes to avoid unnecessary updates
+        this.lastNodeCount = 0;
+        this.lastConceptCount = 0;
+        this.layoutStable = false;
+        this.layoutIterations = 0;
+        this.maxLayoutIterations = 100; // Stop force layout after stabilization
     }
     
     attributeChangedCallback(name, oldValue, newValue) {
@@ -620,6 +627,9 @@ export class StructurePanel extends BaseComponent {
             });
         });
         
+        // Setup graph control button handlers
+        this.setupGraphControlHandlers();
+        
         // Also setup click handlers for items
         this.addEventListener('click', (e) => {
             const primeCell = e.target.closest('.prime-cell');
@@ -634,6 +644,146 @@ export class StructurePanel extends BaseComponent {
                 this._state.selectedMemory = this._state.memories.find(m => m.timestamp === timestamp);
                 this.updateMemoryView();
             }
+        });
+    }
+    
+    /**
+     * Setup handlers for graph control buttons (layout, refresh, zoom)
+     */
+    setupGraphControlHandlers() {
+        // Layout buttons (force and radial)
+        this.$$('.graph-control-btn[data-layout]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const layout = btn.dataset.layout;
+                if (layout === this._state.graphLayout) return;
+                
+                this._state.graphLayout = layout;
+                this.layoutStable = false;
+                this.layoutIterations = 0;
+                
+                // Apply the new layout
+                if (layout === 'radial') {
+                    this.applyRadialLayout();
+                } else {
+                    // Force layout will be applied in drawKnowledgeGraph
+                    this.resetNodePositions();
+                }
+                
+                // Update button active states
+                this.$$('.graph-control-btn[data-layout]').forEach(b => {
+                    b.classList.toggle('active', b.dataset.layout === layout);
+                });
+                
+                // Redraw the graph
+                this.drawKnowledgeGraph();
+            });
+        });
+        
+        // Refresh button
+        const refreshBtn = this.$('#graphRefresh');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.layoutStable = false;
+                this.layoutIterations = 0;
+                this.lastConceptCount = -1; // Force reload
+                this.loadGraphData();
+            });
+        }
+        
+        // Zoom In button
+        const zoomInBtn = this.$('#graphZoomIn');
+        if (zoomInBtn) {
+            zoomInBtn.addEventListener('click', () => {
+                this.graphZoom = Math.min(3, this.graphZoom + 0.2);
+                this.drawKnowledgeGraph();
+            });
+        }
+        
+        // Zoom Out button
+        const zoomOutBtn = this.$('#graphZoomOut');
+        if (zoomOutBtn) {
+            zoomOutBtn.addEventListener('click', () => {
+                this.graphZoom = Math.max(0.3, this.graphZoom - 0.2);
+                this.drawKnowledgeGraph();
+            });
+        }
+    }
+    
+    /**
+     * Apply radial layout - arrange nodes in concentric circles
+     */
+    applyRadialLayout() {
+        const { graphNodes } = this._state;
+        if (graphNodes.length === 0) return;
+        
+        const canvas = this.graphCanvas;
+        if (!canvas) return;
+        
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Separate nodes by type
+        const axisNodes = graphNodes.filter(n => n.type === 'axis');
+        const learnedNodes = graphNodes.filter(n => n.type === 'learned');
+        const otherNodes = graphNodes.filter(n => n.type !== 'axis' && n.type !== 'learned');
+        
+        // Inner ring: SMF axis nodes
+        const innerRadius = Math.min(width, height) * 0.25;
+        axisNodes.forEach((node, i) => {
+            const angle = (i / axisNodes.length) * Math.PI * 2 - Math.PI / 2;
+            node.x = centerX + Math.cos(angle) * innerRadius;
+            node.y = centerY + Math.sin(angle) * innerRadius;
+            node.vx = 0;
+            node.vy = 0;
+        });
+        
+        // Outer ring: learned concept nodes
+        const outerRadius = Math.min(width, height) * 0.4;
+        learnedNodes.forEach((node, i) => {
+            const angle = (i / Math.max(learnedNodes.length, 1)) * Math.PI * 2 - Math.PI / 2;
+            node.x = centerX + Math.cos(angle) * outerRadius;
+            node.y = centerY + Math.sin(angle) * outerRadius;
+            node.vx = 0;
+            node.vy = 0;
+        });
+        
+        // Middle ring: other nodes
+        const middleRadius = Math.min(width, height) * 0.33;
+        otherNodes.forEach((node, i) => {
+            const angle = (i / Math.max(otherNodes.length, 1)) * Math.PI * 2 - Math.PI / 2;
+            node.x = centerX + Math.cos(angle) * middleRadius;
+            node.y = centerY + Math.sin(angle) * middleRadius;
+            node.vx = 0;
+            node.vy = 0;
+        });
+        
+        // Mark layout as stable since radial is a static layout
+        this.layoutStable = true;
+    }
+    
+    /**
+     * Reset node positions for force layout recalculation
+     */
+    resetNodePositions() {
+        const { graphNodes } = this._state;
+        const canvas = this.graphCanvas;
+        if (!canvas || graphNodes.length === 0) return;
+        
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Scatter nodes around center with some randomness
+        graphNodes.forEach((node, i) => {
+            const angle = (i / graphNodes.length) * Math.PI * 2;
+            const radius = 50 + Math.random() * 80;
+            node.x = centerX + Math.cos(angle) * radius;
+            node.y = centerY + Math.sin(angle) * radius;
+            node.vx = 0;
+            node.vy = 0;
         });
     }
     
@@ -652,7 +802,33 @@ export class StructurePanel extends BaseComponent {
         if (this._state.activeTab === 'primes') {
             await this.loadOscillatorData();
         } else if (this._state.activeTab === 'graph') {
-            await this.loadGraphData();
+            // Only check for new data, don't rebuild if nothing changed
+            await this.checkForGraphUpdates();
+        }
+    }
+    
+    /**
+     * Check if graph needs updating (only when new concepts are learned)
+     * This avoids constant re-rendering when data hasn't changed
+     */
+    async checkForGraphUpdates() {
+        try {
+            // Only fetch learning status to check for new concepts
+            const learningRes = await fetch('/learning/status');
+            if (!learningRes.ok) return;
+            
+            const learningData = await learningRes.json();
+            const conceptCount = learningData.session?.conceptsLearned?.length || 0;
+            
+            // Only rebuild if concept count changed
+            if (conceptCount !== this.lastConceptCount) {
+                this.lastConceptCount = conceptCount;
+                this.layoutStable = false;
+                this.layoutIterations = 0;
+                await this.loadGraphData();
+            }
+        } catch (err) {
+            // Silently fail - don't spam console for polling
         }
     }
     
@@ -700,9 +876,18 @@ export class StructurePanel extends BaseComponent {
                 if (learningRes.ok) {
                     const learningData = await learningRes.json();
                     learnedConcepts = learningData.session?.conceptsLearned || [];
+                    this.lastConceptCount = learnedConcepts.length;
                 }
             } catch (e) {
                 console.warn('Failed to fetch learning status:', e);
+            }
+            
+            // Check if node count changed - only rebuild if needed
+            const expectedNodeCount = 16 + Math.min(learnedConcepts.length, 20);
+            if (this._state.graphNodes.length === expectedNodeCount && this.layoutStable) {
+                // Data hasn't changed significantly, skip rebuild
+                this._state.loading.graph = false;
+                return;
             }
             
             // Build graph with both SMF and learned concepts
@@ -712,6 +897,12 @@ export class StructurePanel extends BaseComponent {
                 console.warn('SMF endpoint not available, using default graph');
                 this.buildDefaultGraph(learnedConcepts);
             }
+            
+            // Reset layout state for new data
+            this.layoutStable = false;
+            this.layoutIterations = 0;
+            this.lastNodeCount = this._state.graphNodes.length;
+            
         } catch (err) {
             console.warn('Failed to load graph data:', err);
             // Create default graph if SMF not available
@@ -726,6 +917,41 @@ export class StructurePanel extends BaseComponent {
             this.graphCtx = graphCanvas.getContext('2d');
             this.resizeCanvas(graphCanvas);
             this.drawKnowledgeGraph();
+        }
+        
+        // Update the stats section and info overlay
+        this.updateGraphStats();
+    }
+    
+    /**
+     * Update the graph stats section with current node/edge counts
+     */
+    updateGraphStats() {
+        const { graphNodes, graphEdges } = this._state;
+        
+        // Update the stats bar at the bottom
+        const statsContainer = this.$('.graph-stats');
+        if (statsContainer) {
+            statsContainer.innerHTML = `
+                <div class="graph-stat"><div class="graph-stat-value">${graphNodes.length}</div><div class="graph-stat-label">Concepts</div></div>
+                <div class="graph-stat"><div class="graph-stat-value">${graphEdges.length}</div><div class="graph-stat-label">Relations</div></div>
+                <div class="graph-stat"><div class="graph-stat-value">${this.getGraphDensity().toFixed(2)}</div><div class="graph-stat-label">Density</div></div>
+            `;
+        }
+        
+        // Update the info overlay on the canvas
+        const infoContainer = this.$('.graph-info');
+        if (infoContainer) {
+            infoContainer.textContent = `Nodes: ${graphNodes.length} | Edges: ${graphEdges.length} | Click nodes to explore`;
+        } else if (graphNodes.length > 0) {
+            // Create info overlay if it doesn't exist but we have nodes
+            const canvasContainer = this.$('.graph-canvas-container');
+            if (canvasContainer) {
+                const info = document.createElement('div');
+                info.className = 'graph-info';
+                info.textContent = `Nodes: ${graphNodes.length} | Edges: ${graphEdges.length} | Click nodes to explore`;
+                canvasContainer.appendChild(info);
+            }
         }
     }
     
@@ -912,7 +1138,130 @@ export class StructurePanel extends BaseComponent {
             this.graphCanvas = graphCanvas;
             this.graphCtx = graphCanvas.getContext('2d');
             this.resizeCanvas(graphCanvas);
+            this.setupGraphCanvasInteraction(graphCanvas);
             this.drawKnowledgeGraph();
+        }
+    }
+    
+    /**
+     * Setup mouse/touch interaction for graph canvas (click, wheel zoom, pan)
+     */
+    setupGraphCanvasInteraction(canvas) {
+        // Prevent duplicate event listeners
+        if (canvas._hasInteraction) return;
+        canvas._hasInteraction = true;
+        
+        // Click to select nodes
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width / window.devicePixelRatio;
+            const scaleY = canvas.height / rect.height / window.devicePixelRatio;
+            
+            // Get click position in canvas coordinates
+            let x = (e.clientX - rect.left) * scaleX;
+            let y = (e.clientY - rect.top) * scaleY;
+            
+            // Adjust for zoom and offset
+            const width = canvas.width / window.devicePixelRatio;
+            const height = canvas.height / window.devicePixelRatio;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // Transform click position to graph coordinates
+            x = (x - centerX) / this.graphZoom + centerX - this.graphOffset.x;
+            y = (y - centerY) / this.graphZoom + centerY - this.graphOffset.y;
+            
+            // Find clicked node
+            const { graphNodes } = this._state;
+            let clickedNode = null;
+            
+            for (const node of graphNodes) {
+                const nodeRadius = 8 + (node.value || 0.5) * 12;
+                const dx = node.x - x;
+                const dy = node.y - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist <= nodeRadius) {
+                    clickedNode = node;
+                    break;
+                }
+            }
+            
+            // Update selection
+            if (clickedNode) {
+                this._state.selectedNode = this._state.selectedNode?.id === clickedNode.id ? null : clickedNode;
+            } else {
+                this._state.selectedNode = null;
+            }
+            
+            // Re-render node detail and redraw graph
+            this.updateNodeDetailPanel();
+            this.drawKnowledgeGraph();
+        });
+        
+        // Mouse wheel to zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            this.graphZoom = Math.max(0.3, Math.min(3, this.graphZoom + delta));
+            this.drawKnowledgeGraph();
+        }, { passive: false });
+        
+        // Drag to pan (when zoomed in)
+        let isDragging = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        canvas.addEventListener('mousedown', (e) => {
+            if (this.graphZoom > 1) {
+                isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                canvas.style.cursor = 'grabbing';
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                this.graphOffset.x += dx / this.graphZoom;
+                this.graphOffset.y += dy / this.graphZoom;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                this.drawKnowledgeGraph();
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            canvas.style.cursor = 'default';
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            canvas.style.cursor = 'default';
+        });
+    }
+    
+    /**
+     * Update the node detail panel after selection changes
+     */
+    updateNodeDetailPanel() {
+        const { selectedNode } = this._state;
+        const graphView = this.$('.graph-view');
+        if (!graphView) return;
+        
+        // Remove existing detail panel
+        const existingDetail = graphView.querySelector('.node-detail');
+        if (existingDetail) {
+            existingDetail.remove();
+        }
+        
+        // Add new detail panel if node is selected
+        if (selectedNode) {
+            const detailHtml = this.renderNodeDetail(selectedNode);
+            graphView.insertAdjacentHTML('beforeend', detailHtml);
         }
     }
     
@@ -1188,10 +1537,11 @@ export class StructurePanel extends BaseComponent {
         const width = canvas.width / window.devicePixelRatio;
         const height = canvas.height / window.devicePixelRatio;
         
+        // Clear canvas
         ctx.fillStyle = 'rgb(24, 24, 27)';
         ctx.fillRect(0, 0, width, height);
         
-        const { graphNodes, graphEdges, selectedNode } = this._state;
+        const { graphNodes, graphEdges, selectedNode, graphLayout } = this._state;
         
         if (graphNodes.length === 0) {
             ctx.font = '14px sans-serif';
@@ -1202,7 +1552,27 @@ export class StructurePanel extends BaseComponent {
             return;
         }
         
-        this.stepForceLayout(width, height);
+        // Only run force layout if not yet stable and using force layout mode
+        if (!this.layoutStable && graphLayout === 'force') {
+            this.stepForceLayout(width, height);
+            this.layoutIterations++;
+            
+            // Check if layout has stabilized (velocities are low)
+            const totalVelocity = graphNodes.reduce((sum, node) =>
+                sum + Math.abs(node.vx || 0) + Math.abs(node.vy || 0), 0);
+            
+            if (this.layoutIterations > this.maxLayoutIterations || totalVelocity < 0.5) {
+                this.layoutStable = true;
+            }
+        }
+        
+        // Apply zoom transform
+        ctx.save();
+        const centerX = width / 2;
+        const centerY = height / 2;
+        ctx.translate(centerX, centerY);
+        ctx.scale(this.graphZoom, this.graphZoom);
+        ctx.translate(-centerX + this.graphOffset.x, -centerY + this.graphOffset.y);
         
         // Draw edges
         graphEdges.forEach(edge => {
@@ -1215,9 +1585,22 @@ export class StructurePanel extends BaseComponent {
             ctx.lineTo(target.x, target.y);
             
             const isHighlighted = selectedNode && (edge.source === selectedNode.id || edge.target === selectedNode.id);
-            ctx.strokeStyle = isHighlighted ? 'rgba(96, 165, 250, 0.6)' : 'rgba(100, 100, 100, 0.3)';
+            
+            // Different edge styles for different types
+            if (edge.type === 'complementary') {
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = isHighlighted ? 'rgba(168, 85, 247, 0.6)' : 'rgba(168, 85, 247, 0.2)';
+            } else if (edge.type === 'learned') {
+                ctx.setLineDash([]);
+                ctx.strokeStyle = isHighlighted ? 'rgba(34, 211, 238, 0.7)' : 'rgba(34, 211, 238, 0.3)';
+            } else {
+                ctx.setLineDash([]);
+                ctx.strokeStyle = isHighlighted ? 'rgba(96, 165, 250, 0.6)' : 'rgba(100, 100, 100, 0.3)';
+            }
+            
             ctx.lineWidth = isHighlighted ? 2 : 1;
             ctx.stroke();
+            ctx.setLineDash([]);
         });
         
         // Draw nodes
@@ -1225,10 +1608,30 @@ export class StructurePanel extends BaseComponent {
             const isSelected = selectedNode?.id === node.id;
             const nodeRadius = 8 + (node.value || 0.5) * 12;
             
+            // Glow effect for active/selected nodes
+            if (isSelected || node.type === 'learned') {
+                const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, nodeRadius * 2);
+                gradient.addColorStop(0, (node.color || '#60a5fa') + '40');
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, nodeRadius * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
             ctx.beginPath();
             ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
             ctx.fillStyle = node.color || '#60a5fa';
             ctx.fill();
+            
+            // Draw symbol inside node for axis nodes
+            if (node.symbol && node.type === 'axis') {
+                ctx.font = `${nodeRadius}px sans-serif`;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.symbol, node.x, node.y);
+            }
             
             if (isSelected) {
                 ctx.beginPath();
@@ -1238,6 +1641,7 @@ export class StructurePanel extends BaseComponent {
                 ctx.stroke();
             }
             
+            // Draw label below node
             ctx.font = '10px sans-serif';
             ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
@@ -1245,7 +1649,19 @@ export class StructurePanel extends BaseComponent {
             ctx.fillText(node.label, node.x, node.y + nodeRadius + 4);
         });
         
-        if (this._state.activeTab === 'graph') {
+        ctx.restore();
+        
+        // Draw zoom indicator
+        if (this.graphZoom !== 1) {
+            ctx.font = '10px monospace';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText(`${Math.round(this.graphZoom * 100)}%`, width - 10, 10);
+        }
+        
+        // Only continue animation if layout isn't stable or we have active selection
+        if (this._state.activeTab === 'graph' && (!this.layoutStable || selectedNode)) {
             this.animationFrame = requestAnimationFrame(() => this.drawKnowledgeGraph());
         }
     }

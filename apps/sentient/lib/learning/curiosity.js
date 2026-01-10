@@ -1,19 +1,29 @@
 
 /**
  * Curiosity Engine
- * 
+ *
  * Detects knowledge gaps and generates learning curiosity signals based on:
  * - SMF axis imbalances (e.g., low "wisdom" axis)
  * - Memory retrieval failures (queries with low matches)
  * - Coherence drops during topic exploration
  * - Explicit questions without satisfactory answers
- * 
+ * - Cubic Free Energy dynamics (from 108bio.pdf)
+ *
  * The curiosity engine drives autonomous learning by identifying what
  * the observer should explore next.
  */
 
 const config = require('./config');
 const { createLogger } = require('../app/constants');
+
+// Import Free Energy Dynamics from topology (108bio.pdf integration)
+let FreeEnergyDynamics = null;
+try {
+    const topology = require('../../../../core/topology');
+    FreeEnergyDynamics = topology.FreeEnergyDynamics;
+} catch (e) {
+    // Topology module not available - will use fallback
+}
 
 const log = createLogger('learning:curiosity');
 
@@ -209,6 +219,238 @@ const GENERAL_EXPLORATION_QUERIES = [
     'How do compression and abstraction enable efficient representation?'
 ];
 
+// ════════════════════════════════════════════════════════════════════
+// CUBIC FREE ENERGY CURIOSITY (from 108bio.pdf Section 4)
+// Integrates cubic FEP dynamics for exploration/exploitation balance
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Free Energy Curiosity Calculator
+ *
+ * Uses cubic potential dynamics from 108bio.pdf:
+ * dψ/dt = αψ + βψ² + γψ³
+ *
+ * The free energy F = -∫ψ² + (β/3)ψ³ + (γ/4)ψ⁴ guides curiosity:
+ * - High F → system is far from attractor → high curiosity
+ * - Low F → system is at stable attractor → low curiosity
+ */
+class FreeEnergyCuriosity {
+    /**
+     * Create a free energy curiosity calculator
+     * @param {Object} options - Configuration
+     */
+    constructor(options = {}) {
+        // Cubic potential parameters (from 108bio.pdf Table 2)
+        this.alpha = options.alpha || 0.1;   // Linear term
+        this.beta = options.beta || -0.5;    // Quadratic term (bifurcation control)
+        this.gamma = options.gamma || 0.1;   // Cubic term (stabilization)
+        
+        // State tracking
+        this.psi = options.initialPsi || 0.5;  // Current "understanding" state
+        this.psiHistory = [];
+        this.maxHistory = options.maxHistory || 100;
+        
+        // Curiosity thresholds
+        this.explorationThreshold = options.explorationThreshold || 0.6;
+        this.exploitationThreshold = options.exploitationThreshold || 0.3;
+        
+        // Use imported FreeEnergyDynamics if available
+        if (FreeEnergyDynamics) {
+            this.dynamics = new FreeEnergyDynamics({
+                alpha: this.alpha,
+                beta: this.beta,
+                gamma: this.gamma
+            });
+        }
+    }
+    
+    /**
+     * Calculate free energy at current state
+     * F(ψ) = -(α/2)ψ² + (β/3)ψ³ + (γ/4)ψ⁴
+     *
+     * @param {number} psi - Current state (default: this.psi)
+     * @returns {number} Free energy value
+     */
+    freeEnergy(psi = this.psi) {
+        // Note: FreeEnergyDynamics.potential() has different sign conventions,
+        // so we always use our own formula for consistency
+        const psi2 = psi * psi;
+        const psi3 = psi2 * psi;
+        const psi4 = psi3 * psi;
+        
+        return -(this.alpha / 2) * psi2 +
+               (this.beta / 3) * psi3 +
+               (this.gamma / 4) * psi4;
+    }
+    
+    /**
+     * Calculate the gradient of free energy (curiosity drive)
+     * dF/dψ = -αψ + βψ² + γψ³
+     *
+     * @param {number} psi - Current state
+     * @returns {number} Gradient (negative = attracted, positive = repelled)
+     */
+    gradient(psi = this.psi) {
+        // Note: FreeEnergyDynamics.derivative() computes dψ/dt which is different
+        // from the gradient of free energy, so we use our own formula
+        return -this.alpha * psi +
+               this.beta * psi * psi +
+               this.gamma * psi * psi * psi;
+    }
+    
+    /**
+     * Update state based on learning input
+     *
+     * @param {number} learningSignal - How much was learned (0-1)
+     * @param {number} dt - Time step
+     * @returns {Object} Update result
+     */
+    update(learningSignal, dt = 0.1) {
+        // Learning reduces free energy by moving toward attractor
+        const gradientForce = -this.gradient() * dt;
+        const learningForce = learningSignal * 0.5 * dt;
+        
+        const oldPsi = this.psi;
+        this.psi = Math.max(0, Math.min(1, this.psi + gradientForce + learningForce));
+        
+        // Record history
+        this.psiHistory.push({
+            psi: this.psi,
+            freeEnergy: this.freeEnergy(),
+            timestamp: Date.now()
+        });
+        
+        if (this.psiHistory.length > this.maxHistory) {
+            this.psiHistory.shift();
+        }
+        
+        return {
+            oldPsi,
+            newPsi: this.psi,
+            freeEnergy: this.freeEnergy(),
+            delta: this.psi - oldPsi,
+            curiosityMode: this.getCuriosityMode()
+        };
+    }
+    
+    /**
+     * Get current curiosity mode based on free energy
+     *
+     * @returns {string} 'explore' | 'exploit' | 'balanced'
+     */
+    getCuriosityMode() {
+        const F = this.freeEnergy();
+        const normalizedF = Math.tanh(F); // Normalize to [-1, 1]
+        
+        if (normalizedF > this.explorationThreshold) {
+            return 'explore';  // High free energy → explore new territory
+        } else if (normalizedF < -this.exploitationThreshold) {
+            return 'exploit';  // Low free energy → exploit known territory
+        }
+        return 'balanced';
+    }
+    
+    /**
+     * Calculate curiosity intensity from free energy
+     *
+     * @returns {number} Curiosity intensity (0-1)
+     */
+    getCuriosityIntensity() {
+        const F = this.freeEnergy();
+        const gradient = Math.abs(this.gradient());
+        
+        // High free energy + steep gradient = high curiosity
+        // Normalized using sigmoid
+        const rawIntensity = Math.abs(F) + gradient;
+        return 1 / (1 + Math.exp(-rawIntensity + 1));
+    }
+    
+    /**
+     * Find stable attractors of the cubic dynamics
+     *
+     * @returns {Array<number>} Attractor positions
+     */
+    findAttractors() {
+        // Use FreeEnergyDynamics.fixedPoints() if available
+        if (this.dynamics && typeof this.dynamics.fixedPoints === 'function') {
+            const fixedPts = this.dynamics.fixedPoints();
+            // Extract values and filter to [0, 1] range
+            return fixedPts
+                .map(fp => fp.value)
+                .filter(a => a >= 0 && a <= 1)
+                .sort((a, b) => a - b);
+        }
+        
+        // For dψ/dt = αψ + βψ² + γψ³ = ψ(α + βψ + γψ²) = 0
+        // Attractors at ψ = 0 and roots of α + βψ + γψ² = 0
+        const attractors = [0];
+        
+        if (Math.abs(this.gamma) > 1e-10) {
+            const discriminant = this.beta * this.beta - 4 * this.gamma * this.alpha;
+            if (discriminant >= 0) {
+                const sqrtD = Math.sqrt(discriminant);
+                attractors.push((-this.beta + sqrtD) / (2 * this.gamma));
+                attractors.push((-this.beta - sqrtD) / (2 * this.gamma));
+            }
+        } else if (Math.abs(this.beta) > 1e-10) {
+            attractors.push(-this.alpha / this.beta);
+        }
+        
+        return attractors.filter(a => a >= 0 && a <= 1).sort((a, b) => a - b);
+    }
+    
+    /**
+     * Check if system is near a stable attractor
+     *
+     * @param {number} tolerance - Distance tolerance
+     * @returns {Object} Attractor proximity info
+     */
+    nearAttractor(tolerance = 0.1) {
+        const attractors = this.findAttractors();
+        
+        for (const attractor of attractors) {
+            if (Math.abs(this.psi - attractor) < tolerance) {
+                return {
+                    near: true,
+                    attractor,
+                    distance: Math.abs(this.psi - attractor)
+                };
+            }
+        }
+        
+        return { near: false, attractor: null, distance: Infinity };
+    }
+    
+    /**
+     * Get statistics for analysis
+     */
+    getStats() {
+        return {
+            psi: this.psi,
+            freeEnergy: this.freeEnergy(),
+            gradient: this.gradient(),
+            mode: this.getCuriosityMode(),
+            intensity: this.getCuriosityIntensity(),
+            attractors: this.findAttractors(),
+            nearAttractor: this.nearAttractor(),
+            historyLength: this.psiHistory.length,
+            parameters: {
+                alpha: this.alpha,
+                beta: this.beta,
+                gamma: this.gamma
+            }
+        };
+    }
+    
+    /**
+     * Reset state
+     */
+    reset() {
+        this.psi = 0.5;
+        this.psiHistory = [];
+    }
+}
+
 class CuriosityEngine {
     /**
      * Create a new CuriosityEngine
@@ -278,7 +520,11 @@ class CuriosityEngine {
         this.explicitQuestions = [];  // Questions user directly asked
         this.explicitQuestionPriority = 6.0;  // Even higher than conversation topics
         
+        // Cubic Free Energy dynamics for exploration/exploitation balance
+        this.freeEnergyCuriosity = new FreeEnergyCuriosity(options.freeEnergy || {});
+        
         log('CuriosityEngine initialized with enhanced conversation topic focus for deep understanding');
+        log('Free energy curiosity enabled with cubic dynamics');
         log('Session tracking enabled:', this.sessionId);
     }
     
@@ -779,8 +1025,90 @@ class CuriosityEngine {
     }
     
     /**
+     * Assess how specific/actionable a topic is
+     * Returns specificity score (0-1) and detected domain
+     * @param {Object} topic - Topic object with topic, keywords, context
+     * @returns {Object} { specificity, domain, enrichedTopic }
+     */
+    assessTopicSpecificity(topic) {
+        const topicText = topic.topic.toLowerCase().trim();
+        const keywords = topic.keywords || [];
+        const context = topic.context || '';
+        
+        // Very generic single-word terms that need enrichment
+        const veryGenericTerms = new Set([
+            'api', 'data', 'code', 'file', 'function', 'method', 'class', 'type',
+            'object', 'array', 'string', 'number', 'value', 'result', 'error',
+            'issue', 'problem', 'solution', 'approach', 'way', 'thing', 'stuff',
+            'system', 'service', 'server', 'client', 'request', 'response',
+            'config', 'setting', 'option', 'parameter', 'argument', 'variable'
+        ]);
+        
+        // Domain-specific keyword patterns
+        const domainPatterns = {
+            web: /\b(http|rest|graphql|websocket|cors|fetch|axios|express|fastify|router|endpoint|middleware)\b/i,
+            database: /\b(sql|nosql|mongodb|postgres|mysql|redis|query|schema|migration|orm|prisma|sequelize)\b/i,
+            frontend: /\b(react|vue|angular|svelte|css|html|dom|component|state|props|hooks|render)\b/i,
+            backend: /\b(node|python|java|rust|go|microservice|docker|kubernetes|container|deploy)\b/i,
+            ai_ml: /\b(model|training|inference|embedding|vector|neural|transformer|gpt|llm|prompt|token)\b/i,
+            security: /\b(auth|oauth|jwt|token|encryption|hash|password|permission|role|access)\b/i,
+            testing: /\b(test|spec|mock|stub|fixture|assertion|coverage|jest|mocha|pytest)\b/i,
+            devops: /\b(ci|cd|pipeline|build|deploy|github|gitlab|action|workflow|artifact)\b/i
+        };
+        
+        // Calculate specificity
+        let specificity = 0.5; // Base specificity
+        
+        // Single very generic word = low specificity
+        if (veryGenericTerms.has(topicText) && keywords.length === 0) {
+            specificity = 0.1;
+        }
+        // Multi-word topic = higher specificity
+        else if (topicText.includes(' ')) {
+            specificity = 0.6 + Math.min(0.3, topicText.split(' ').length * 0.1);
+        }
+        // Has meaningful keywords = higher specificity
+        else if (keywords.length > 0) {
+            const meaningfulKeywords = keywords.filter(k => !veryGenericTerms.has(k.toLowerCase()));
+            specificity = 0.5 + Math.min(0.4, meaningfulKeywords.length * 0.15);
+        }
+        
+        // Detect domain
+        let detectedDomain = null;
+        const contextAndTopic = `${topicText} ${keywords.join(' ')} ${context}`;
+        for (const [domain, pattern] of Object.entries(domainPatterns)) {
+            if (pattern.test(contextAndTopic)) {
+                detectedDomain = domain;
+                specificity = Math.min(1, specificity + 0.2); // Domain detection increases specificity
+                break;
+            }
+        }
+        
+        // Build enriched topic using context and keywords
+        let enrichedTopic = topicText;
+        if (specificity < 0.5 && keywords.length > 0) {
+            // For vague topics, include keywords to add context
+            const relevantKeywords = keywords
+                .filter(k => k.toLowerCase() !== topicText && k.length > 2)
+                .slice(0, 2);
+            if (relevantKeywords.length > 0) {
+                enrichedTopic = `${topicText} (${relevantKeywords.join(', ')})`;
+                specificity += 0.2;
+            }
+        }
+        
+        return {
+            specificity,
+            domain: detectedDomain,
+            enrichedTopic,
+            isGeneric: specificity < 0.4
+        };
+    }
+    
+    /**
      * Generate a learning question for a conversation topic
      * Uses progressive depth based on how many times the topic has been explored
+     * Creates specific, actionable questions based on context and domain
      * @param {Object} topic - Conversation topic object
      * @returns {string} Generated question
      */
@@ -788,61 +1116,313 @@ class CuriosityEngine {
         const topicId = topic.id || topic.topic;
         const currentDepth = this.explorationDepth[topicId] || 0;
         
-        // Basic understanding questions (depth 0)
-        const basicTemplates = [
-            `What are the key concepts and principles behind ${topic.topic}?`,
-            `Can you explain ${topic.topic}? What should I understand first?`,
-            `What is ${topic.topic} and why is it important?`,
-            `How does ${topic.topic} work at a fundamental level?`
-        ];
+        // Assess topic specificity and detect domain
+        const assessment = this.assessTopicSpecificity(topic);
+        const { specificity, domain, enrichedTopic, isGeneric } = assessment;
         
-        // Intermediate understanding questions (depth 1-2)
-        const intermediateTemplates = [
-            `What are the best practices and common patterns related to ${topic.topic}?`,
-            `What are some advanced aspects of ${topic.topic} that are worth understanding?`,
-            `What are common challenges or pitfalls when working with ${topic.topic}?`,
-            `How does ${topic.topic} relate to broader concepts in its field?`,
-            `What are the trade-offs and design decisions involved in ${topic.topic}?`
-        ];
-        
-        // Deep understanding questions (depth 3+)
-        const deepTemplates = [
-            `What are the subtle nuances and edge cases in ${topic.topic} that experts should know?`,
-            `How has ${topic.topic} evolved over time and what are the latest developments?`,
-            `What are contrarian or alternative perspectives on ${topic.topic}?`,
-            `How do different implementations of ${topic.topic} compare? What are their strengths?`,
-            `What research or innovations are happening in the field of ${topic.topic}?`,
-            `What are the theoretical foundations underlying ${topic.topic}?`
-        ];
-        
-        // Questions that connect to user's context
-        const contextualTemplates = [
-            `Given our discussion about ${topic.topic}, what practical applications should I consider?`,
-            `Based on what we discussed about ${topic.topic}, what related topics would deepen my understanding?`,
-            `What are the most common misconceptions about ${topic.topic} that I should avoid?`
-        ];
-        
-        // Select template set based on exploration depth and mention count
-        let templates;
-        const isDeepDive = topic.mentionCount >= this.deepDiveThreshold;
-        
-        if (currentDepth === 0) {
-            templates = basicTemplates;
-        } else if (currentDepth <= 2 || !isDeepDive) {
-            templates = intermediateTemplates;
-        } else {
-            // Mix deep and contextual questions for frequently discussed topics
-            templates = [...deepTemplates, ...contextualTemplates];
+        // For very generic topics, ask clarifying/context-aware questions
+        if (isGeneric) {
+            return this.generateClarifyingQuestion(topic, domain);
         }
         
-        // Update exploration depth for next time
-        this.explorationDepth[topicId] = currentDepth + 1;
+        // Use domain-specific templates when domain is detected
+        if (domain) {
+            return this.generateDomainSpecificQuestion(topic, domain, currentDepth, enrichedTopic);
+        }
         
-        // Select a template based on topic hash + depth for variety
-        const hash = topic.topic.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const templateIndex = (hash + currentDepth) % templates.length;
+        // Use context-enriched general templates
+        return this.generateEnrichedQuestion(topic, currentDepth, enrichedTopic);
+    }
+    
+    /**
+     * Generate a clarifying question for generic/vague topics
+     * @param {Object} topic - Topic object
+     * @param {string|null} domain - Detected domain if any
+     * @returns {string} Clarifying question
+     */
+    generateClarifyingQuestion(topic, domain) {
+        const topicText = topic.topic;
+        const context = topic.context || '';
+        const keywords = topic.keywords || [];
         
-        return templates[templateIndex];
+        // If we have context, use it to make the question specific
+        if (context && context.length > 20) {
+            // Extract a meaningful phrase from context
+            const contextWords = context.split(/\s+/).slice(0, 8).join(' ');
+            return `In the context of "${contextWords}...", what specifically about ${topicText} would be most useful to understand?`;
+        }
+        
+        // If we have keywords, ask about their relationship
+        if (keywords.length >= 2) {
+            const keywordList = keywords.slice(0, 3).join(', ');
+            return `How do ${topicText} and ${keywordList} work together? What's the relationship between them?`;
+        }
+        
+        // Domain-aware clarifying questions
+        const domainQuestions = {
+            web: `What kind of ${topicText} are you working with - REST endpoints, authentication, data fetching, or something else?`,
+            database: `Is your ${topicText} question about schema design, queries, performance, or data modeling?`,
+            frontend: `What aspect of ${topicText} do you need help with - state management, rendering, styling, or component architecture?`,
+            backend: `Are you asking about ${topicText} in terms of architecture, implementation patterns, or deployment?`,
+            ai_ml: `What's your ${topicText} question about - model architecture, training, inference, or integration?`,
+            security: `Is your ${topicText} question about authentication, authorization, encryption, or security best practices?`
+        };
+        
+        if (domain && domainQuestions[domain]) {
+            return domainQuestions[domain];
+        }
+        
+        // Fallback: Ask for specifics but make it actionable
+        const fallbackQuestions = [
+            `What specific problem are you trying to solve with ${topicText}?`,
+            `What have you tried so far with ${topicText}, and what's not working?`,
+            `What would success look like for your ${topicText} implementation?`,
+            `Are you building, debugging, or trying to understand ${topicText}?`
+        ];
+        
+        const hash = topicText.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return fallbackQuestions[hash % fallbackQuestions.length];
+    }
+    
+    /**
+     * Generate domain-specific questions that are more actionable
+     * @param {Object} topic - Topic object
+     * @param {string} domain - Detected domain
+     * @param {number} depth - Exploration depth
+     * @param {string} enrichedTopic - Context-enriched topic text
+     * @returns {string} Domain-specific question
+     */
+    generateDomainSpecificQuestion(topic, domain, depth, enrichedTopic) {
+        const topicId = topic.id || topic.topic;
+        
+        // Domain-specific question templates by depth
+        const domainTemplates = {
+            web: {
+                basic: [
+                    `How do I properly structure ${enrichedTopic} for a web application?`,
+                    `What's the recommended approach for implementing ${enrichedTopic} in modern web development?`,
+                    `What HTTP methods and status codes are appropriate for ${enrichedTopic}?`
+                ],
+                intermediate: [
+                    `How do I handle error cases and edge conditions for ${enrichedTopic}?`,
+                    `What's the best way to test ${enrichedTopic} functionality?`,
+                    `How do I optimize ${enrichedTopic} for performance and caching?`
+                ],
+                advanced: [
+                    `How do I scale ${enrichedTopic} for high traffic scenarios?`,
+                    `What are the security considerations for ${enrichedTopic}?`,
+                    `How do I implement ${enrichedTopic} with proper observability and monitoring?`
+                ]
+            },
+            database: {
+                basic: [
+                    `What's the optimal schema design for ${enrichedTopic}?`,
+                    `How do I query ${enrichedTopic} efficiently?`,
+                    `What indexes should I create for ${enrichedTopic}?`
+                ],
+                intermediate: [
+                    `How do I handle ${enrichedTopic} migrations safely?`,
+                    `What's the best approach for ${enrichedTopic} with concurrent access?`,
+                    `How do I optimize ${enrichedTopic} query performance?`
+                ],
+                advanced: [
+                    `How do I implement ${enrichedTopic} for horizontal scaling?`,
+                    `What's the replication and backup strategy for ${enrichedTopic}?`,
+                    `How do I handle ${enrichedTopic} in a distributed system?`
+                ]
+            },
+            frontend: {
+                basic: [
+                    `How do I structure ${enrichedTopic} components for reusability?`,
+                    `What's the recommended state management approach for ${enrichedTopic}?`,
+                    `How do I handle ${enrichedTopic} events and user interactions?`
+                ],
+                intermediate: [
+                    `How do I optimize ${enrichedTopic} rendering performance?`,
+                    `What's the testing strategy for ${enrichedTopic} components?`,
+                    `How do I handle ${enrichedTopic} accessibility requirements?`
+                ],
+                advanced: [
+                    `How do I implement ${enrichedTopic} with code splitting and lazy loading?`,
+                    `What's the approach for ${enrichedTopic} in a micro-frontend architecture?`,
+                    `How do I handle ${enrichedTopic} state synchronization across tabs/windows?`
+                ]
+            },
+            backend: {
+                basic: [
+                    `What's the recommended architecture for ${enrichedTopic}?`,
+                    `How do I implement ${enrichedTopic} with proper error handling?`,
+                    `What's the input validation approach for ${enrichedTopic}?`
+                ],
+                intermediate: [
+                    `How do I add logging and tracing to ${enrichedTopic}?`,
+                    `What's the caching strategy for ${enrichedTopic}?`,
+                    `How do I implement ${enrichedTopic} with graceful degradation?`
+                ],
+                advanced: [
+                    `How do I implement ${enrichedTopic} in an event-driven architecture?`,
+                    `What's the deployment strategy for ${enrichedTopic} with zero downtime?`,
+                    `How do I handle ${enrichedTopic} in a multi-tenant environment?`
+                ]
+            },
+            ai_ml: {
+                basic: [
+                    `What's the right model architecture for ${enrichedTopic}?`,
+                    `How do I prepare training data for ${enrichedTopic}?`,
+                    `What evaluation metrics should I use for ${enrichedTopic}?`
+                ],
+                intermediate: [
+                    `How do I optimize ${enrichedTopic} inference latency?`,
+                    `What's the fine-tuning approach for ${enrichedTopic}?`,
+                    `How do I handle ${enrichedTopic} model versioning and deployment?`
+                ],
+                advanced: [
+                    `How do I implement ${enrichedTopic} with model distillation or quantization?`,
+                    `What's the approach for ${enrichedTopic} in a multi-model ensemble?`,
+                    `How do I handle ${enrichedTopic} for streaming/real-time inference?`
+                ]
+            },
+            security: {
+                basic: [
+                    `What's the secure implementation approach for ${enrichedTopic}?`,
+                    `How do I validate and sanitize input for ${enrichedTopic}?`,
+                    `What secrets/credentials management is needed for ${enrichedTopic}?`
+                ],
+                intermediate: [
+                    `How do I implement ${enrichedTopic} with proper audit logging?`,
+                    `What's the rate limiting and abuse prevention for ${enrichedTopic}?`,
+                    `How do I handle ${enrichedTopic} token/session management securely?`
+                ],
+                advanced: [
+                    `How do I implement ${enrichedTopic} with defense in depth?`,
+                    `What's the incident response plan for ${enrichedTopic} breaches?`,
+                    `How do I handle ${enrichedTopic} compliance requirements (GDPR, SOC2, etc.)?`
+                ]
+            },
+            testing: {
+                basic: [
+                    `What unit tests should I write for ${enrichedTopic}?`,
+                    `How do I mock dependencies when testing ${enrichedTopic}?`,
+                    `What's the test data strategy for ${enrichedTopic}?`
+                ],
+                intermediate: [
+                    `How do I implement integration tests for ${enrichedTopic}?`,
+                    `What's the approach for testing ${enrichedTopic} edge cases?`,
+                    `How do I measure and improve test coverage for ${enrichedTopic}?`
+                ],
+                advanced: [
+                    `How do I implement property-based testing for ${enrichedTopic}?`,
+                    `What's the mutation testing approach for ${enrichedTopic}?`,
+                    `How do I set up chaos testing for ${enrichedTopic}?`
+                ]
+            },
+            devops: {
+                basic: [
+                    `What's the CI/CD pipeline structure for ${enrichedTopic}?`,
+                    `How do I configure ${enrichedTopic} for different environments?`,
+                    `What's the artifact management approach for ${enrichedTopic}?`
+                ],
+                intermediate: [
+                    `How do I implement ${enrichedTopic} with infrastructure as code?`,
+                    `What's the monitoring and alerting setup for ${enrichedTopic}?`,
+                    `How do I handle ${enrichedTopic} secrets and configuration management?`
+                ],
+                advanced: [
+                    `How do I implement ${enrichedTopic} with GitOps workflows?`,
+                    `What's the disaster recovery plan for ${enrichedTopic}?`,
+                    `How do I handle ${enrichedTopic} in a multi-region deployment?`
+                ]
+            }
+        };
+        
+        const templates = domainTemplates[domain];
+        if (!templates) {
+            return this.generateEnrichedQuestion(topic, depth, enrichedTopic);
+        }
+        
+        // Select depth level
+        let depthLevel = 'basic';
+        if (depth >= 3) depthLevel = 'advanced';
+        else if (depth >= 1) depthLevel = 'intermediate';
+        
+        const questionList = templates[depthLevel] || templates.basic;
+        
+        // Update exploration depth
+        this.explorationDepth[topicId] = depth + 1;
+        
+        // Select question based on hash + depth for variety
+        const hash = (topic.topic + depth).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return questionList[hash % questionList.length];
+    }
+    
+    /**
+     * Generate enriched general questions using context and keywords
+     * @param {Object} topic - Topic object
+     * @param {number} depth - Exploration depth
+     * @param {string} enrichedTopic - Context-enriched topic text
+     * @returns {string} Enriched question
+     */
+    generateEnrichedQuestion(topic, depth, enrichedTopic) {
+        const topicId = topic.id || topic.topic;
+        const keywords = topic.keywords || [];
+        const context = topic.context || '';
+        
+        // Build context-aware question parts
+        const hasContext = context.length > 20;
+        const hasKeywords = keywords.length > 0;
+        
+        // Depth 0: Foundational understanding
+        const basicTemplates = [
+            `What are the core concepts I need to understand about ${enrichedTopic}?`,
+            `How does ${enrichedTopic} work, and what problem does it solve?`,
+            `What's the mental model for thinking about ${enrichedTopic}?`,
+            hasKeywords ?
+                `How do ${keywords.slice(0, 2).join(' and ')} relate to ${topic.topic}?` :
+                `What are the key components of ${enrichedTopic}?`
+        ];
+        
+        // Depth 1-2: Practical application
+        const intermediateTemplates = [
+            `What are the common implementation patterns for ${enrichedTopic}?`,
+            `What mistakes should I avoid when working with ${enrichedTopic}?`,
+            `How do I debug issues with ${enrichedTopic}?`,
+            hasContext ?
+                `Given the context "${context.slice(0, 40)}...", how should I approach ${topic.topic}?` :
+                `What are the real-world use cases for ${enrichedTopic}?`,
+            hasKeywords ?
+                `How do I effectively use ${keywords[0]} with ${topic.topic}?` :
+                `What tools and libraries work well with ${enrichedTopic}?`
+        ];
+        
+        // Depth 3+: Deep expertise
+        const advancedTemplates = [
+            `What are the edge cases and failure modes for ${enrichedTopic}?`,
+            `How do experts think differently about ${enrichedTopic}?`,
+            `What are the performance considerations for ${enrichedTopic} at scale?`,
+            `How has ${enrichedTopic} evolved, and where is it heading?`,
+            hasKeywords && keywords.length >= 2 ?
+                `What are the tradeoffs between different approaches to ${keywords.slice(0, 2).join(' and ')} in ${topic.topic}?` :
+                `What would change my understanding of ${enrichedTopic} from good to great?`
+        ];
+        
+        // Select template set based on depth
+        let templates;
+        if (depth === 0) {
+            templates = basicTemplates;
+        } else if (depth <= 2) {
+            templates = intermediateTemplates;
+        } else {
+            templates = advancedTemplates;
+        }
+        
+        // Update exploration depth
+        this.explorationDepth[topicId] = depth + 1;
+        
+        // Select question based on hash + depth for variety
+        const hash = (topic.topic + depth).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const selectedIndex = hash % templates.length;
+        
+        return templates[selectedIndex];
     }
     
     /**
@@ -1463,9 +2043,33 @@ class CuriosityEngine {
             this.exploredQuestions = new Set(questionsArray.slice(-100));
         }
         
+        // Update free energy based on gap detection
+        const freeEnergyUpdate = this.freeEnergyCuriosity.update(
+            1 - intensity, // Learning signal inversely related to curiosity
+            0.1
+        );
+        
+        // Adjust intensity based on free energy mode
+        if (freeEnergyUpdate.curiosityMode === 'explore') {
+            // Boost exploration when free energy is high
+            this.currentCuriosity.intensity = Math.min(1.0, intensity * 1.2);
+        } else if (freeEnergyUpdate.curiosityMode === 'exploit') {
+            // Reduce exploration when in exploitation mode
+            this.currentCuriosity.intensity = intensity * 0.8;
+        }
+        
+        // Add free energy info to curiosity signal
+        this.currentCuriosity.freeEnergy = {
+            mode: freeEnergyUpdate.curiosityMode,
+            value: freeEnergyUpdate.freeEnergy,
+            psi: freeEnergyUpdate.newPsi,
+            intensity: this.freeEnergyCuriosity.getCuriosityIntensity()
+        };
+        
         log('Curiosity signal generated:',
-            'intensity:', intensity.toFixed(2),
+            'intensity:', this.currentCuriosity.intensity.toFixed(2),
             'source:', topGap.type,
+            'freeEnergyMode:', freeEnergyUpdate.curiosityMode,
             'topic:', this.currentCuriosity.topic.slice(0, 50));
         
         return this.currentCuriosity;
@@ -1570,12 +2174,29 @@ class CuriosityEngine {
             unansweredQuestions: this.unansweredQuestions.length,
             gapHistoryLength: this.gapHistory.length,
             exploredQuestions: this.exploredQuestions.size,
+            freeEnergy: this.freeEnergyCuriosity.getStats(),
             axisExplorationState: Object.entries(this.axisExplorationIndex).map(([axis, idx]) => ({
                 axis,
                 nextVariantIndex: idx,
                 onCooldown: this.isAxisOnCooldown(axis)
             }))
         };
+    }
+    
+    /**
+     * Get free energy curiosity mode
+     * @returns {string} 'explore' | 'exploit' | 'balanced'
+     */
+    getCuriosityMode() {
+        return this.freeEnergyCuriosity.getCuriosityMode();
+    }
+    
+    /**
+     * Update free energy state based on learning event
+     * @param {number} learningSignal - How much was learned (0-1)
+     */
+    recordLearning(learningSignal) {
+        return this.freeEnergyCuriosity.update(learningSignal, 0.1);
     }
     
     /**
@@ -1672,4 +2293,10 @@ class CuriosityEngine {
     }
 }
 
-module.exports = { CuriosityEngine, SMF_AXES, AXIS_QUERY_VARIANTS, GENERAL_EXPLORATION_QUERIES };
+module.exports = {
+    CuriosityEngine,
+    FreeEnergyCuriosity,
+    SMF_AXES,
+    AXIS_QUERY_VARIANTS,
+    GENERAL_EXPLORATION_QUERIES
+};

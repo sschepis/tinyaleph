@@ -1,14 +1,51 @@
 /**
  * TinyAleph Modular - Main entry point
- * 
+ *
  * A backend-agnostic prime-based computing framework supporting:
  * - Semantic Computing (NLP, concept mapping)
  * - Cryptographic Applications (hashing, key derivation)
  * - Scientific Computing (quantum simulation, particle physics)
+ *
+ * Browser-compatible utilities:
+ * - Error Handling (custom errors, error boundary, event emitter)
+ * - Logging (structured logging with console API)
+ * - Metrics (Prometheus/OTLP compatible telemetry)
+ * - Transport (WebSocket, SSE, polling)
+ * - Profiling (timers, histograms, sampling)
+ *
+ * Observer Architecture (Sentient Observer core):
+ * - SMF (Sedenion Memory Field) - 16-dimensional semantic orientation
+ * - PRSC (Prime Resonance Semantic Computation) - Kuramoto oscillator dynamics
+ * - Temporal Layer - Emergent time from coherence dynamics
+ * - Entanglement Layer - Semantic binding between concepts
+ * - Agency Layer - Attention and goal-directed behavior
+ * - Boundary Layer - Self/environment distinction (objectivity gate)
+ * - Safety Layer - Ethical constraints and emergency shutdown
  */
 
 // Core mathematical foundation
 const core = require('./core');
+
+// Enochian Packet Layer (Section 7.4 of whitepaper)
+const enochian = require('./core/enochian');
+const enochianVocabulary = require('./core/enochian-vocabulary');
+
+// Browser-compatible utilities (extracted from apps/sentient)
+const errors = require('./core/errors');
+const logger = require('./core/logger');
+const metrics = require('./telemetry/metrics');
+const transport = require('./transport');
+const profiling = require('./profiling/primitives');
+
+// Observer architecture (Sentient Observer core modules)
+const smf = require('./observer/smf');
+const prsc = require('./observer/prsc');
+const temporal = require('./observer/temporal');
+const entanglement = require('./observer/entanglement');
+const agency = require('./observer/agency');
+const boundary = require('./observer/boundary');
+const safety = require('./observer/safety');
+const hqe = require('./observer/hqe');
 const {
   Hypercomplex,
   FANO_LINES,
@@ -69,6 +106,37 @@ const {
   Oscillator,
   OscillatorBank,
   KuramotoModel,
+  // Extended sync models
+  NetworkKuramoto,
+  AdaptiveKuramoto,
+  SakaguchiKuramoto,
+  SmallWorldKuramoto,
+  MultiSystemCoupling,
+  createHierarchicalCoupling,
+  createPeerCoupling,
+  // Stochastic models
+  StochasticKuramoto,
+  ColoredNoiseKuramoto,
+  ThermalKuramoto,
+  gaussianRandom,
+  // Primeon Z-Ladder
+  PrimeonZLadderU,
+  createPrimeonLadder,
+  shannonEntropyNats,
+  probsOf,
+  normalizeComplex,
+  // Multi-channel ladder
+  ZChannel,
+  PrimeonZLadderMulti,
+  createMultiChannelLadder,
+  createAdiabaticSchedule,
+  // Kuramoto-coupled ladder
+  KuramotoCoupledLadder,
+  createKuramotoLadder,
+  runCollapsePressureExperiment,
+  kuramotoOrderParameter,
+  getPhase,
+  // Entropy & Information
   shannonEntropy,
   stateEntropy,
   coherence,
@@ -212,10 +280,41 @@ module.exports = {
   sumOfTwoSquares,
   DEFAULT_PRIMES,
   
-  // Physics
+  // Physics - Core oscillators
   Oscillator,
   OscillatorBank,
   KuramotoModel,
+  // Extended sync models
+  NetworkKuramoto,
+  AdaptiveKuramoto,
+  SakaguchiKuramoto,
+  SmallWorldKuramoto,
+  MultiSystemCoupling,
+  createHierarchicalCoupling,
+  createPeerCoupling,
+  // Stochastic models
+  StochasticKuramoto,
+  ColoredNoiseKuramoto,
+  ThermalKuramoto,
+  gaussianRandom,
+  // Primeon Z-Ladder
+  PrimeonZLadderU,
+  createPrimeonLadder,
+  shannonEntropyNats,
+  probsOf,
+  normalizeComplex,
+  // Multi-channel ladder
+  ZChannel,
+  PrimeonZLadderMulti,
+  createMultiChannelLadder,
+  createAdiabaticSchedule,
+  // Kuramoto-coupled ladder
+  KuramotoCoupledLadder,
+  createKuramotoLadder,
+  runCollapsePressureExperiment,
+  kuramotoOrderParameter,
+  getPhase,
+  // Entropy & Information
   shannonEntropy,
   stateEntropy,
   coherence,
@@ -282,5 +381,134 @@ module.exports = {
   core,
   physics,
   backends,
-  engine
+  engine,
+  
+  // Browser-compatible utilities (extracted from apps/sentient)
+  // Error handling
+  errors,
+  SimpleEventEmitter: errors.SimpleEventEmitter,
+  AlephError: errors.AlephError,
+  NetworkError: errors.NetworkError,
+  LLMError: errors.LLMError,
+  ValidationError: errors.ValidationError,
+  TimeoutError: errors.TimeoutError,
+  ErrorHandler: errors.ErrorHandler,
+  withErrorHandling: errors.withErrorHandling,
+  errorBoundary: errors.errorBoundary,
+  withTimeout: errors.withTimeout,
+  LogLevel: errors.LogLevel,
+  ErrorCategory: errors.ErrorCategory,
+  
+  // Logging
+  logger,
+  Logger: logger.Logger,
+  createLogger: logger.createLogger,
+  
+  // Metrics/Telemetry
+  metrics,
+  Counter: metrics.Counter,
+  Gauge: metrics.Gauge,
+  Histogram: metrics.Histogram,
+  Summary: metrics.Summary,
+  MetricRegistry: metrics.MetricRegistry,
+  MetricType: metrics.MetricType,
+  
+  // Transport
+  transport,
+  Transport: transport.Transport,
+  WebSocketTransport: transport.WebSocketTransport,
+  SSETransport: transport.SSETransport,
+  MemoryTransport: transport.MemoryTransport,
+  PollingTransport: transport.PollingTransport,
+  TransportManager: transport.TransportManager,
+  TransportState: transport.TransportState,
+  
+  // Profiling primitives
+  profiling,
+  RingBuffer: profiling.RingBuffer,
+  Timer: profiling.Timer,
+  Sampler: profiling.Sampler,
+  RateCalculator: profiling.RateCalculator,
+  MovingAverage: profiling.MovingAverage,
+  Profiler: profiling.Profiler,
+  hrtime: profiling.hrtime,
+  hrtimeNs: profiling.hrtimeNs,
+  
+  // Observer Architecture (Sentient Observer core)
+  // SMF - Sedenion Memory Field
+  smf,
+  SedenionMemoryField: smf.SedenionMemoryField,
+  SMF_AXES: smf.SMF_AXES,
+  AXIS_INDEX: smf.AXIS_INDEX,
+  SMF_CODEBOOK: smf.SMF_CODEBOOK,
+  CODEBOOK_SIZE: smf.CODEBOOK_SIZE,
+  nearestCodebookAttractor: smf.nearestCodebookAttractor,
+  codebookTunnel: smf.codebookTunnel,
+  getTunnelingCandidates: smf.getTunnelingCandidates,
+  
+  // PRSC - Prime Resonance Semantic Computation
+  prsc,
+  PRSCLayer: prsc.PRSCLayer,
+  PrimeOscillator: prsc.PrimeOscillator,
+  EntanglementDetector: prsc.EntanglementDetector,
+  
+  // Temporal Layer
+  temporal,
+  TemporalLayer: temporal.TemporalLayer,
+  Moment: temporal.Moment,
+  TemporalPatternDetector: temporal.TemporalPatternDetector,
+  
+  // Entanglement Layer
+  entanglement,
+  EntanglementLayer: entanglement.EntanglementLayer,
+  EntangledPair: entanglement.EntangledPair,
+  Phrase: entanglement.Phrase,
+  
+  // Agency Layer
+  agency,
+  AgencyLayer: agency.AgencyLayer,
+  AttentionFocus: agency.AttentionFocus,
+  Goal: agency.Goal,
+  Action: agency.Action,
+  
+  // Boundary Layer
+  boundary,
+  BoundaryLayer: boundary.BoundaryLayer,
+  SensoryChannel: boundary.SensoryChannel,
+  MotorChannel: boundary.MotorChannel,
+  EnvironmentalModel: boundary.EnvironmentalModel,
+  SelfModel: boundary.SelfModel,
+  ObjectivityGate: boundary.ObjectivityGate,
+  
+  // Safety Layer
+  safety,
+  SafetyLayer: safety.SafetyLayer,
+  SafetyConstraint: safety.SafetyConstraint,
+  ViolationEvent: safety.ViolationEvent,
+  SafetyMonitor: safety.SafetyMonitor,
+  
+  // HQE - Holographic Quantum Encoding (discrete.pdf equations 12-15)
+  hqe,
+  TickGate: hqe.TickGate,
+  StabilizationController: hqe.StabilizationController,
+  HolographicEncoder: hqe.HolographicEncoder,
+  HolographicMemory: hqe.HolographicMemory,
+  HolographicSimilarity: hqe.HolographicSimilarity,
+  
+  // Enochian Packet Layer (Section 7.4 - prime-indexed twist encoding)
+  enochian,
+  enochianVocabulary,
+  ENOCHIAN_ALPHABET: enochianVocabulary.ENOCHIAN_ALPHABET,
+  ENOCHIAN_LETTER_PRIMES: enochianVocabulary.ENOCHIAN_LETTER_PRIMES,
+  ENOCHIAN_VOCABULARY: enochianVocabulary.ENOCHIAN_VOCABULARY,
+  ENOCHIAN_CALLS: enochianVocabulary.ENOCHIAN_CALLS,
+  SedenionElement: enochianVocabulary.SedenionElement,
+  TwistOperator: enochianVocabulary.TwistOperator,
+  EnochianWord: enochianVocabulary.EnochianWord,
+  EnochianCall: enochianVocabulary.EnochianCall,
+  EnochianPacket: enochian.EnochianPacket,
+  EnochianEncoder: enochian.EnochianEncoder,
+  EnochianDecoder: enochian.EnochianDecoder,
+  EnhancedEnochianEncoder: enochian.EnhancedEnochianEncoder,
+  EnhancedEnochianDecoder: enochian.EnhancedEnochianDecoder
 };

@@ -325,7 +325,11 @@ class VertexAIClient {
         for (const msg of messages) {
             if (msg.role === 'system') {
                 // Vertex AI uses systemInstruction separately
-                systemInstruction = { parts: [{ text: msg.content }] };
+                // According to API spec, it needs role and parts
+                systemInstruction = {
+                    role: 'user',  // systemInstruction role is typically 'user' in Vertex AI
+                    parts: [{ text: msg.content }]
+                };
             } else {
                 // Map 'assistant' to 'model' for Vertex AI
                 const role = msg.role === 'assistant' ? 'model' : 'user';
@@ -459,11 +463,25 @@ class VertexAIClient {
             { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }
         ];
 
+        console.log('[VertexAI] Sending chat request to:', path);
         const response = await this._request('POST', path, body);
         
-        // Parse Vertex AI response
+        console.log('[VertexAI] Raw response:', JSON.stringify(response).substring(0, 500));
+        
+        // Parse Vertex AI response - handle both formats
         const candidate = response.candidates?.[0];
         const content = candidate?.content;
+        
+        // Debug log the response structure
+        if (!response.candidates || response.candidates.length === 0) {
+            console.warn('[VertexAI] No candidates in response. Full response:', JSON.stringify(response));
+        }
+        if (candidate && !content) {
+            console.warn('[VertexAI] Candidate has no content:', JSON.stringify(candidate));
+        }
+        if (content && (!content.parts || content.parts.length === 0)) {
+            console.warn('[VertexAI] Content has no parts:', JSON.stringify(content));
+        }
         
         // Extract text and function calls
         let textContent = '';
@@ -487,6 +505,8 @@ class VertexAIClient {
                 }
             }
         }
+        
+        console.log('[VertexAI] Extracted content length:', textContent.length);
         
         return {
             content: textContent,
@@ -568,6 +588,7 @@ class VertexAIClient {
         let buffer = '';
         let toolCallsBuffer = [];
         let chunkCount = 0;
+        let textYieldedCount = 0;
         
         console.log('[VertexAI] Starting stream read...');
         
@@ -575,8 +596,8 @@ class VertexAIClient {
             const chunkStr = chunk.toString();
             chunkCount++;
             
-            if (chunkCount <= 3) {
-                console.log('[VertexAI] Raw chunk #' + chunkCount + ':', chunkStr.substring(0, 200));
+            if (chunkCount <= 5) {
+                console.log('[VertexAI] Raw chunk #' + chunkCount + ' (length=' + chunkStr.length + '):', chunkStr.substring(0, 300));
             }
             
             buffer += chunkStr;
@@ -584,40 +605,105 @@ class VertexAIClient {
             buffer = lines.pop() || '';
 
             for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const data = line.slice(6).trim();
-                    if (data === '[DONE]' || !data) continue;
+                const trimmedLine = line.trim();
+                if (!trimmedLine) continue;
+                
+                // Handle SSE format: "data: {json}" or "data:{json}"
+                let jsonData = null;
+                if (trimmedLine.startsWith('data:')) {
+                    const dataContent = trimmedLine.slice(5).trim();
+                    if (dataContent === '[DONE]' || !dataContent) continue;
+                    jsonData = dataContent;
+                } else if (trimmedLine.startsWith('{')) {
+                    // Handle newline-delimited JSON format
+                    jsonData = trimmedLine;
+                }
+                
+                if (!jsonData) continue;
+                
+                try {
+                    const json = JSON.parse(jsonData);
                     
-                    try {
-                        const json = JSON.parse(data);
-                        const candidate = json.candidates?.[0];
-                        const content = candidate?.content;
-                        
-                        if (content?.parts) {
-                            for (const part of content.parts) {
-                                if (part.text) {
-                                    yield part.text;
+                    // Debug first few parsed responses
+                    if (chunkCount <= 3) {
+                        console.log('[VertexAI] Parsed JSON candidates:', json.candidates?.length,
+                            'parts:', json.candidates?.[0]?.content?.parts?.length);
+                    }
+                    
+                    const candidate = json.candidates?.[0];
+                    const content = candidate?.content;
+                    
+                    // Check for finish reason
+                    if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+                        console.log('[VertexAI] Finish reason:', candidate.finishReason);
+                    }
+                    
+                    // Check for safety blocks
+                    if (candidate?.safetyRatings) {
+                        const blocked = candidate.safetyRatings.filter(r => r.blocked);
+                        if (blocked.length > 0) {
+                            console.warn('[VertexAI] Content blocked by safety:', JSON.stringify(blocked));
+                        }
+                    }
+                    
+                    if (content?.parts) {
+                        for (const part of content.parts) {
+                            if (part.text) {
+                                textYieldedCount++;
+                                if (textYieldedCount <= 3) {
+                                    console.log('[VertexAI] Yielding text:', part.text.substring(0, 50));
                                 }
-                                if (part.functionCall) {
-                                    toolCallsBuffer.push({
-                                        id: `call_${Date.now()}_${toolCallsBuffer.length}`,
-                                        type: 'function',
-                                        function: {
-                                            name: part.functionCall.name,
-                                            arguments: JSON.stringify(part.functionCall.args || {})
-                                        }
-                                    });
-                                }
+                                yield part.text;
+                            }
+                            if (part.functionCall) {
+                                console.log('[VertexAI] Function call:', part.functionCall.name);
+                                toolCallsBuffer.push({
+                                    id: `call_${Date.now()}_${toolCallsBuffer.length}`,
+                                    type: 'function',
+                                    function: {
+                                        name: part.functionCall.name,
+                                        arguments: JSON.stringify(part.functionCall.args || {})
+                                    }
+                                });
                             }
                         }
-                    } catch (parseErr) {
-                        console.log('[VertexAI] JSON parse error:', parseErr.message);
+                    } else if (!content && json.candidates) {
+                        console.log('[VertexAI] Candidate without content:', JSON.stringify(candidate).substring(0, 200));
                     }
+                } catch (parseErr) {
+                    console.log('[VertexAI] JSON parse error for:', jsonData.substring(0, 100), 'Error:', parseErr.message);
                 }
             }
         }
         
-        console.log('[VertexAI] Stream complete, total chunks:', chunkCount);
+        // Process any remaining buffer content
+        if (buffer.trim()) {
+            const trimmedBuffer = buffer.trim();
+            let jsonData = null;
+            if (trimmedBuffer.startsWith('data:')) {
+                jsonData = trimmedBuffer.slice(5).trim();
+            } else if (trimmedBuffer.startsWith('{')) {
+                jsonData = trimmedBuffer;
+            }
+            
+            if (jsonData && jsonData !== '[DONE]') {
+                try {
+                    const json = JSON.parse(jsonData);
+                    const content = json.candidates?.[0]?.content;
+                    if (content?.parts) {
+                        for (const part of content.parts) {
+                            if (part.text) {
+                                yield part.text;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log('[VertexAI] Final buffer parse error:', e.message);
+                }
+            }
+        }
+        
+        console.log('[VertexAI] Stream complete - chunks:', chunkCount, 'text yields:', textYieldedCount);
         
         // Yield accumulated tool calls at the end
         if (toolCallsBuffer.length > 0) {

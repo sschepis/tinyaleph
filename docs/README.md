@@ -82,6 +82,7 @@ So too can concepts be:
 | **Reduction Semantics** | Strong normalization with ⊕ operators |
 | **Lambda Translation** | τ: Terms → λ-expressions |
 | **Enochian Vocabulary** | 21-letter alphabet, prime basis, sedenions |
+| **Observer Architecture** | SMF, PRSC, Temporal, Entanglement, Agency, Boundary, Safety layers |
 
 ---
 
@@ -168,6 +169,59 @@ console.log({
 │     { result, primes, entropy, coherence, collapsed }        │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Observer Architecture
+
+The library includes a modular observer architecture for building autonomous AI systems:
+
+```javascript
+const {
+  SedenionMemoryField,
+  PRSCLayer,
+  TemporalLayer,
+  EntanglementLayer,
+  AgencyLayer,
+  BoundaryLayer,
+  SafetyLayer
+} = require('@aleph-ai/tinyaleph');
+
+// Create observer stack
+const smf = new SedenionMemoryField({ dimension: 16 });
+const prsc = new PRSCLayer();
+const temporal = new TemporalLayer();
+
+// Process input through the stack
+smf.absorb([0.5, 0.3, 0.2]); // Encode semantic input
+prsc.tick(0.01, smf);         // Run oscillator dynamics
+temporal.recordMoment({ smf: smf.state, coherence: prsc.coherence });
+
+console.log('Coherence:', prsc.coherence);
+console.log('Entropy:', smf.entropy());
+```
+
+### Architecture Layers
+
+| Layer | Purpose | Key Classes |
+|-------|---------|-------------|
+| **SMF** | 16D semantic state space | `SedenionMemoryField`, `SMF_AXES`, `SMF_CODEBOOK` |
+| **PRSC** | Prime resonance oscillators | `PRSCLayer`, `PrimeOscillator`, `EntanglementDetector` |
+| **Temporal** | Time-aware pattern storage | `TemporalLayer`, `Moment`, `TemporalPatternDetector` |
+| **Entanglement** | Concept binding | `EntanglementLayer`, `EntangledPair`, `Phrase` |
+| **Agency** | Goal-directed attention | `AgencyLayer`, `AttentionFocus`, `Goal`, `Action` |
+| **Boundary** | Input/output gating | `BoundaryLayer`, `ObjectivityGate`, `SensoryChannel` |
+| **Safety** | Constraint enforcement | `SafetyLayer`, `SafetyConstraint`, `SafetyMonitor` |
+
+### Utility Modules
+
+| Module | Purpose |
+|--------|---------|
+| `core/errors` | Browser-compatible event emitter, structured errors |
+| `core/logger` | Configurable logging with levels |
+| `telemetry/metrics` | Counter, Gauge, Histogram metrics |
+| `transport` | WebSocket, SSE, Polling transports |
+| `profiling` | RingBuffer, Timer, Profiler |
 
 ---
 

@@ -31,6 +31,201 @@ const { firstNPrimes } = require('../../../core/prime');
  * Controls the "condensation pressure" - balance between
  * unitary evolution and dissipative stabilization.
  */
+// ════════════════════════════════════════════════════════════════════
+// TICK-ONLY HQE GATING (from discrete.pdf Section 4.2)
+// Gates expensive holographic operations to tick events only
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Tick Gate for HQE operations
+ *
+ * From discrete.pdf: HQE computation should only occur on valid tick events
+ * to prevent continuous CPU usage and maintain discrete-time semantics.
+ *
+ * Tick conditions:
+ * 1. Minimum time elapsed since last tick
+ * 2. Coherence threshold crossed
+ * 3. External event trigger
+ */
+class TickGate {
+    /**
+     * Create a tick gate
+     * @param {Object} options - Configuration
+     */
+    constructor(options = {}) {
+        // Minimum milliseconds between ticks
+        this.minTickInterval = options.minTickInterval || 16; // ~60fps max
+        
+        // Coherence threshold for triggering tick
+        this.coherenceThreshold = options.coherenceThreshold || 0.7;
+        
+        // Last tick timestamp
+        this.lastTickTime = 0;
+        
+        // Tick counter
+        this.tickCount = 0;
+        
+        // Pending tick flag (set by external events)
+        this.pendingTick = false;
+        
+        // Tick history for analysis
+        this.tickHistory = [];
+        this.maxTickHistory = options.maxTickHistory || 50;
+        
+        // Gating mode
+        // 'strict' - only process on explicit ticks
+        // 'adaptive' - allow through if coherence is high
+        // 'free' - no gating (legacy behavior)
+        this.mode = options.mode || 'adaptive';
+        
+        // Statistics
+        this.gatedCount = 0;    // Number of operations gated (blocked)
+        this.passedCount = 0;   // Number of operations passed
+    }
+    
+    /**
+     * Register an external tick event
+     * Called by PRSC or SMF when coherence spikes
+     */
+    tick() {
+        const now = Date.now();
+        this.pendingTick = true;
+        this.lastTickTime = now;
+        this.tickCount++;
+        
+        this.tickHistory.push({
+            time: now,
+            count: this.tickCount
+        });
+        
+        if (this.tickHistory.length > this.maxTickHistory) {
+            this.tickHistory.shift();
+        }
+    }
+    
+    /**
+     * Check if an operation should proceed (tick gate)
+     *
+     * @param {Object} state - Current system state
+     * @param {number} state.coherence - Current coherence level
+     * @returns {Object} Gate result
+     */
+    shouldProcess(state = {}) {
+        const now = Date.now();
+        const timeSinceLastTick = now - this.lastTickTime;
+        const coherence = state.coherence || 0;
+        
+        let shouldPass = false;
+        let reason = '';
+        
+        switch (this.mode) {
+            case 'free':
+                // No gating - always pass
+                shouldPass = true;
+                reason = 'free_mode';
+                break;
+                
+            case 'strict':
+                // Only pass on explicit pending tick
+                shouldPass = this.pendingTick;
+                reason = shouldPass ? 'pending_tick' : 'no_tick';
+                break;
+                
+            case 'adaptive':
+            default:
+                // Pass if:
+                // 1. Pending tick exists, OR
+                // 2. Coherence exceeds threshold AND minimum interval elapsed
+                if (this.pendingTick) {
+                    shouldPass = true;
+                    reason = 'pending_tick';
+                } else if (coherence >= this.coherenceThreshold &&
+                           timeSinceLastTick >= this.minTickInterval) {
+                    shouldPass = true;
+                    reason = 'coherence_threshold';
+                    // Auto-register this as a tick
+                    this.tick();
+                } else if (timeSinceLastTick >= this.minTickInterval * 10) {
+                    // Fallback: allow through if way too long since last tick
+                    shouldPass = true;
+                    reason = 'timeout_fallback';
+                    this.tick();
+                } else {
+                    reason = 'gated';
+                }
+                break;
+        }
+        
+        // Clear pending tick if we're processing
+        if (shouldPass) {
+            this.pendingTick = false;
+            this.passedCount++;
+        } else {
+            this.gatedCount++;
+        }
+        
+        return {
+            shouldPass,
+            reason,
+            tickCount: this.tickCount,
+            timeSinceLastTick,
+            coherence,
+            mode: this.mode
+        };
+    }
+    
+    /**
+     * Get tick rate (ticks per second)
+     */
+    getTickRate() {
+        if (this.tickHistory.length < 2) return 0;
+        
+        const recent = this.tickHistory.slice(-10);
+        const duration = recent[recent.length - 1].time - recent[0].time;
+        
+        if (duration <= 0) return 0;
+        return ((recent.length - 1) / duration) * 1000;
+    }
+    
+    /**
+     * Get gating statistics
+     */
+    getStats() {
+        const total = this.passedCount + this.gatedCount;
+        return {
+            tickCount: this.tickCount,
+            tickRate: this.getTickRate(),
+            passedCount: this.passedCount,
+            gatedCount: this.gatedCount,
+            gateRatio: total > 0 ? this.gatedCount / total : 0,
+            mode: this.mode,
+            lastTickTime: this.lastTickTime
+        };
+    }
+    
+    /**
+     * Reset gate state
+     */
+    reset() {
+        this.tickCount = 0;
+        this.lastTickTime = 0;
+        this.pendingTick = false;
+        this.tickHistory = [];
+        this.gatedCount = 0;
+        this.passedCount = 0;
+    }
+    
+    /**
+     * Set gating mode
+     * @param {'strict'|'adaptive'|'free'} mode - New mode
+     */
+    setMode(mode) {
+        if (['strict', 'adaptive', 'free'].includes(mode)) {
+            this.mode = mode;
+        }
+    }
+}
+
 class StabilizationController {
     /**
      * Create a stabilization controller
@@ -205,6 +400,9 @@ class HolographicEncoder {
         
         // Stabilization controller for dynamic λ(t) (equation 12)
         this.stabilization = new StabilizationController(options.stabilization || {});
+        
+        // Tick gate for HQE operations (discrete.pdf Section 4.2)
+        this.tickGate = new TickGate(options.tickGate || {});
         
         // Precompute spatial frequencies for each prime
         this.spatialFrequencies = this.computeSpatialFrequencies();
@@ -593,6 +791,22 @@ class HolographicEncoder {
     evolve(state, dt = 0.016) {
         const { coherence, entropy, smfEntropy = 0 } = state;
         
+        // Check tick gate before expensive HQE operations
+        const gateResult = this.tickGate.shouldProcess({ coherence });
+        
+        if (!gateResult.shouldPass) {
+            // Return gated result without processing
+            return {
+                lambda: 0,
+                interpretation: 'gated',
+                totalEnergy: this.totalEnergy(),
+                fieldEntropy: this.fieldEntropy(),
+                gated: true,
+                gateReason: gateResult.reason,
+                tickCount: gateResult.tickCount
+            };
+        }
+        
         // Compute dynamic λ(t) using stabilization controller
         const lambda = this.stabilization.computeLambda(coherence, entropy, smfEntropy);
         
@@ -620,8 +834,32 @@ class HolographicEncoder {
             lambda,
             interpretation: this.stabilization.interpret(lambda),
             totalEnergy: this.totalEnergy(),
-            fieldEntropy: this.fieldEntropy()
+            fieldEntropy: this.fieldEntropy(),
+            gated: false,
+            tickCount: gateResult.tickCount
         };
+    }
+    
+    /**
+     * Register a tick event (from PRSC or SMF coherence spike)
+     */
+    tick() {
+        this.tickGate.tick();
+    }
+    
+    /**
+     * Get tick gate statistics
+     */
+    getTickStats() {
+        return this.tickGate.getStats();
+    }
+    
+    /**
+     * Set tick gate mode
+     * @param {'strict'|'adaptive'|'free'} mode - Gating mode
+     */
+    setTickMode(mode) {
+        this.tickGate.setMode(mode);
     }
     
     /**
@@ -952,6 +1190,7 @@ class HolographicSimilarity {
 }
 
 module.exports = {
+    TickGate,
     StabilizationController,
     HolographicEncoder,
     HolographicMemory,

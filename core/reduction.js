@@ -259,7 +259,13 @@ function isReducible(term) {
 
 /**
  * Compute the size of a term (for termination measure)
- * Definition 3 from ncpsc.pdf
+ * Definition 3 from ncpsc.pdf:
+ * - |N(p)| = 1
+ * - |A(p)| = 1
+ * - |FUSE(p,q,r)| = 1
+ * - |A(p₁)...A(pₖ)N(q)| = k + 1
+ * - |S₁ ∘ S₂| = |S₁| + |S₂|
+ * - |S₁ ⇒ S₂| = |S₁| + |S₂|
  */
 function termSize(term) {
     if (term instanceof NounTerm) return 1;
@@ -270,6 +276,215 @@ function termSize(term) {
     if (term instanceof SeqSentence) return termSize(term.left) + termSize(term.right);
     if (term instanceof ImplSentence) return termSize(term.antecedent) + termSize(term.consequent);
     return 1;
+}
+
+/**
+ * Compute the depth of a term (nesting level)
+ * Used for complexity analysis
+ */
+function termDepth(term) {
+    if (term instanceof NounTerm) return 0;
+    if (term instanceof AdjTerm) return 0;
+    if (term instanceof FusionTerm) return 1;
+    if (term instanceof ChainTerm) return term.operators.length;
+    if (term instanceof NounSentence) return 1 + termDepth(term.expr);
+    if (term instanceof SeqSentence) return 1 + Math.max(termDepth(term.left), termDepth(term.right));
+    if (term instanceof ImplSentence) return 1 + Math.max(termDepth(term.antecedent), termDepth(term.consequent));
+    return 0;
+}
+
+/**
+ * Extract all primes from a term
+ * Used for route analysis
+ */
+function extractPrimes(term) {
+    if (term instanceof NounTerm) return [term.prime];
+    if (term instanceof AdjTerm) return [term.prime];
+    if (term instanceof FusionTerm) return [term.p, term.q, term.r, term.getFusedPrime()];
+    if (term instanceof ChainTerm) {
+        const primes = term.operators.map(op => op.prime);
+        primes.push(term.noun.prime);
+        return primes;
+    }
+    if (term instanceof NounSentence) return extractPrimes(term.expr);
+    if (term instanceof SeqSentence) return [...extractPrimes(term.left), ...extractPrimes(term.right)];
+    if (term instanceof ImplSentence) return [...extractPrimes(term.antecedent), ...extractPrimes(term.consequent)];
+    return [];
+}
+
+// ============================================================================
+// FORMAL PROOF TRACE (from ncpsc.pdf §5)
+// ============================================================================
+
+/**
+ * ProofTrace - Generates formal proofs of normalization
+ * Implements Definition 5 from ncpsc.pdf
+ */
+class ProofTrace {
+    constructor() {
+        this.steps = [];
+        this.initialTerm = null;
+        this.finalTerm = null;
+    }
+    
+    /**
+     * Record a proof step with size measurements
+     */
+    addStep(rule, before, after, justification) {
+        const sizeBefore = termSize(before);
+        const sizeAfter = termSize(after);
+        
+        this.steps.push({
+            index: this.steps.length,
+            rule,
+            before: before.signature ? before.signature() : String(before),
+            after: after.signature ? after.signature() : String(after),
+            sizeBefore,
+            sizeAfter,
+            sizeDecrease: sizeBefore - sizeAfter,
+            justification,
+            timestamp: Date.now()
+        });
+    }
+    
+    /**
+     * Check that all steps satisfy size decrease property
+     * Lemma 1: e → e' implies |e'| < |e|
+     */
+    verifySizeDecrease() {
+        for (const step of this.steps) {
+            if (step.sizeDecrease <= 0) {
+                return {
+                    valid: false,
+                    failedStep: step.index,
+                    reason: `Size did not decrease: |${step.before}| = ${step.sizeBefore}, |${step.after}| = ${step.sizeAfter}`
+                };
+            }
+        }
+        return { valid: true, totalDecrease: this.getTotalSizeDecrease() };
+    }
+    
+    /**
+     * Get total size decrease through reduction
+     */
+    getTotalSizeDecrease() {
+        if (this.steps.length === 0) return 0;
+        return this.steps[0].sizeBefore - this.steps[this.steps.length - 1].sizeAfter;
+    }
+    
+    /**
+     * Generate LaTeX proof
+     */
+    toLatex() {
+        const lines = [];
+        lines.push('\\begin{proof}[Strong Normalization]');
+        lines.push(`\\textbf{Initial term:} $${this.initialTerm}$`);
+        lines.push('');
+        lines.push('\\textbf{Reduction sequence:}');
+        lines.push('\\begin{align*}');
+        
+        for (const step of this.steps) {
+            lines.push(`  & ${step.before} \\xrightarrow{\\text{${step.rule}}} ${step.after} \\quad (|\\cdot| = ${step.sizeBefore} \\to ${step.sizeAfter}) \\\\`);
+        }
+        
+        lines.push('\\end{align*}');
+        lines.push('');
+        lines.push(`\\textbf{Final normal form:} $${this.finalTerm}$`);
+        lines.push('');
+        lines.push('By Lemma 1, each step strictly decreases term size.');
+        lines.push('Since size is a natural number bounded below by 1, reduction must terminate.');
+        lines.push('\\end{proof}');
+        
+        return lines.join('\n');
+    }
+    
+    /**
+     * Generate JSON proof certificate
+     */
+    toCertificate() {
+        const verification = this.verifySizeDecrease();
+        
+        return {
+            version: '1.0',
+            type: 'strong_normalization_proof',
+            initial: this.initialTerm,
+            final: this.finalTerm,
+            steps: this.steps,
+            metrics: {
+                totalSteps: this.steps.length,
+                totalSizeDecrease: this.getTotalSizeDecrease(),
+                initialSize: this.steps.length > 0 ? this.steps[0].sizeBefore : 1,
+                finalSize: this.steps.length > 0 ? this.steps[this.steps.length - 1].sizeAfter : 1
+            },
+            verification,
+            timestamp: Date.now()
+        };
+    }
+}
+
+/**
+ * ProofGenerator - Creates formal proofs during reduction
+ */
+class ProofGenerator {
+    constructor(reducer = null) {
+        this.reducer = reducer || new ReductionSystem();
+    }
+    
+    /**
+     * Generate a formal proof of normalization for a term
+     */
+    generateProof(term) {
+        const proof = new ProofTrace();
+        proof.initialTerm = term.signature ? term.signature() : String(term);
+        
+        let current = term;
+        let steps = 0;
+        const maxSteps = 1000;
+        
+        while (steps < maxSteps) {
+            const reductionStep = this.reducer.step(current);
+            if (!reductionStep) {
+                proof.finalTerm = current.signature ? current.signature() : String(current);
+                break;
+            }
+            
+            proof.addStep(
+                reductionStep.rule,
+                reductionStep.before,
+                reductionStep.after,
+                this.getJustification(reductionStep)
+            );
+            
+            current = reductionStep.after;
+            steps++;
+        }
+        
+        return proof;
+    }
+    
+    /**
+     * Get formal justification for a reduction step
+     */
+    getJustification(step) {
+        switch (step.rule) {
+            case 'FUSE':
+                return `FUSE-Elim: FUSE(${step.details.p}, ${step.details.q}, ${step.details.r}) = N(${step.details.sum})`;
+            case 'APPLY':
+                return `Apply-⊕: A(${step.details.operator}) ⊕ N(${step.details.operand}) = N(${step.details.result}) via ${step.details.opName}`;
+            case 'SENTENCE_INNER':
+                return 'Sentence-Reduce: inner expression reduction';
+            case 'SEQ_LEFT':
+                return 'Seq-Left: reduce left component';
+            case 'SEQ_RIGHT':
+                return 'Seq-Right: reduce right component';
+            case 'IMPL_ANTE':
+                return 'Impl-Ante: reduce antecedent';
+            case 'IMPL_CONS':
+                return 'Impl-Cons: reduce consequent';
+            default:
+                return `Rule: ${step.rule}`;
+        }
+    }
 }
 
 // ============================================================================
@@ -653,6 +868,172 @@ function demonstrateStrongNormalization(term, reducer = null) {
 }
 
 // ============================================================================
+// ROUTE SET STATISTICS (D(P) analysis from ncpsc.pdf §3)
+// ============================================================================
+
+/**
+ * RouteStatistics - Analyzes the set D(P) of valid fusion routes
+ * From ncpsc.pdf Definition 2: D(P) = {{p,q,r} : p,q,r distinct odd primes, p+q+r = P}
+ */
+class RouteStatistics {
+    constructor() {
+        this.routeCache = new Map();
+        this.primeOccurrence = new Map();
+    }
+    
+    /**
+     * Get D(P) - all valid triads for prime P
+     */
+    getRouteSet(P) {
+        if (this.routeCache.has(P)) {
+            return this.routeCache.get(P);
+        }
+        
+        const routes = FusionTerm.findTriads(P);
+        this.routeCache.set(P, routes);
+        return routes;
+    }
+    
+    /**
+     * Compute |D(P)| - number of valid routes for P
+     */
+    routeCount(P) {
+        return this.getRouteSet(P).length;
+    }
+    
+    /**
+     * Analyze core seed coverage
+     * Which small primes appear most frequently in valid triads?
+     */
+    analyzeCoreSeeds(maxPrime = 200) {
+        const occurrence = new Map();
+        const cooccurrence = new Map();
+        
+        // Analyze all fusion-reachable primes
+        for (let P = 11; P <= maxPrime; P++) {
+            if (!isPrime(P)) continue;
+            
+            const routes = this.getRouteSet(P);
+            if (routes.length === 0) continue;
+            
+            for (const { p, q, r } of routes) {
+                // Count single occurrences
+                for (const prime of [p, q, r]) {
+                    occurrence.set(prime, (occurrence.get(prime) || 0) + 1);
+                }
+                
+                // Count co-occurrences (which pairs appear together)
+                const pairs = [[p,q], [p,r], [q,r]];
+                for (const [a, b] of pairs) {
+                    const key = `${Math.min(a,b)},${Math.max(a,b)}`;
+                    cooccurrence.set(key, (cooccurrence.get(key) || 0) + 1);
+                }
+            }
+        }
+        
+        // Sort by occurrence count
+        const sortedOccurrence = Array.from(occurrence.entries())
+            .sort((a, b) => b[1] - a[1]);
+        
+        const sortedCooccurrence = Array.from(cooccurrence.entries())
+            .sort((a, b) => b[1] - a[1]);
+        
+        return {
+            coreSeeds: sortedOccurrence.slice(0, 10).map(([prime, count]) => ({ prime, count })),
+            frequentPairs: sortedCooccurrence.slice(0, 10).map(([pair, count]) => {
+                const [a, b] = pair.split(',').map(Number);
+                return { pair: [a, b], count };
+            }),
+            totalRoutes: Array.from(this.routeCache.values()).reduce((sum, routes) => sum + routes.length, 0),
+            uniquePrimesInRoutes: occurrence.size
+        };
+    }
+    
+    /**
+     * Compute route density - primes with most fusion routes
+     */
+    routeDensityRanking(minPrime = 11, maxPrime = 200) {
+        const density = [];
+        
+        for (let P = minPrime; P <= maxPrime; P++) {
+            if (!isPrime(P)) continue;
+            
+            const count = this.routeCount(P);
+            if (count > 0) {
+                density.push({
+                    prime: P,
+                    routeCount: count,
+                    density: count / Math.log(P)  // Normalize by log for comparison
+                });
+            }
+        }
+        
+        // Sort by density
+        density.sort((a, b) => b.density - a.density);
+        
+        return density;
+    }
+    
+    /**
+     * Find primes with no valid fusion routes
+     * These must be generated only via chain application
+     */
+    findUnfusiblePrimes(minPrime = 11, maxPrime = 200) {
+        const unfusible = [];
+        
+        for (let P = minPrime; P <= maxPrime; P++) {
+            if (!isPrime(P)) continue;
+            
+            if (this.routeCount(P) === 0) {
+                unfusible.push(P);
+            }
+        }
+        
+        return unfusible;
+    }
+    
+    /**
+     * Analyze 108° closure for all routes
+     * From mtspbc.pdf: resonant triads have T(d) ≈ 108k°
+     */
+    analyze108Closure(maxPrime = 200) {
+        const closedTriads = [];
+        const twistAngle = p => 360 / p;
+        
+        for (let P = 11; P <= maxPrime; P++) {
+            if (!isPrime(P)) continue;
+            
+            const routes = this.getRouteSet(P);
+            
+            for (const { p, q, r } of routes) {
+                const T = twistAngle(p) + twistAngle(q) + twistAngle(r);
+                const k = Math.round(T / 108);
+                const delta = Math.abs(T - 108 * k);
+                
+                if (delta < 5) {  // Within 5° of 108k
+                    closedTriads.push({
+                        p, q, r,
+                        target: P,
+                        totalTwist: T,
+                        closestMultiple: k,
+                        delta108: delta
+                    });
+                }
+            }
+        }
+        
+        // Sort by delta (best closures first)
+        closedTriads.sort((a, b) => a.delta108 - b.delta108);
+        
+        return {
+            closedTriads: closedTriads.slice(0, 20),  // Top 20
+            totalClosed: closedTriads.length,
+            perfectClosures: closedTriads.filter(t => t.delta108 < 1).length
+        };
+    }
+}
+
+// ============================================================================
 // CONFLUENCE CHECK (Theorem 2)
 // ============================================================================
 
@@ -728,12 +1109,21 @@ module.exports = {
     isNormalForm,
     isReducible,
     termSize,
+    termDepth,
+    extractPrimes,
     
     // Canonicalization
     FusionCanonicalizer,
     
     // Verification
     NormalFormVerifier,
+    
+    // Formal Proofs (from ncpsc.pdf §5)
+    ProofTrace,
+    ProofGenerator,
+    
+    // Route Statistics (from ncpsc.pdf §3)
+    RouteStatistics,
     
     // Proofs
     demonstrateStrongNormalization,

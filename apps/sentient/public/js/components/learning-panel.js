@@ -439,7 +439,11 @@ export class LearningPanel extends BaseComponent {
             this._state.iterations = 0;
             this._state.queriesMade = 0;
             this._state.contentIngested = 0;
+            this._state.mentalState = 'curious';
+            this.addLogEntry('session', '🎓 Learning session started');
+            this.addLogEntry('curiosity', '🔍 Detecting curiosity signals...');
             this.updateHeader();
+            this.updateLogSection();
         });
         
         this.eventSource.addEventListener('session_end', (e) => {
@@ -665,6 +669,17 @@ export class LearningPanel extends BaseComponent {
             const n = c.classList.contains('topics-section') ? 'topics' : 'log';
             c.classList.toggle('active', n === this._state.activeSection);
         });
+        // Re-render the log section when switching to it to ensure fresh content
+        if (this._state.activeSection === 'log') {
+            this.updateLogSection();
+        }
+    }
+    
+    updateLogSection() {
+        const s = this.$('.log-section');
+        if (s) {
+            s.outerHTML = this.renderLogSection();
+        }
     }
     
     updateTopicsSection() {
@@ -685,8 +700,16 @@ export class LearningPanel extends BaseComponent {
     addLogEntry(type, message) {
         this._state.logEntries.unshift({ type, message, timestamp: Date.now() });
         if (this._state.logEntries.length > 100) this._state.logEntries = this._state.logEntries.slice(0, 100);
+        
+        // Always try to update the log list if visible
         const ll = this.$('#logList');
         if (ll && this._state.activeSection === 'log') {
+            // Clear the empty state message if it exists
+            const emptyState = ll.querySelector('.log-entry[style*="opacity"]');
+            if (emptyState) {
+                ll.innerHTML = '';
+            }
+            
             const e = document.createElement('div');
             e.className = `log-entry ${type}`;
             e.innerHTML = `<span class="log-time">${this.formatTime(Date.now())}</span><span class="log-type">[${type}]</span><span class="log-message">${this.escapeHtml(message)}</span>`;

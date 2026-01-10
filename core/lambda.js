@@ -650,39 +650,170 @@ class Semantics {
 
 // ============================================================================
 // INTERPRETATION (Section 5 - Prime → Concept mapping)
+// Enhanced with PRQS Lexicon from TriadicPrimeFusion paper
 // ============================================================================
 
 /**
+ * PRQS (Prime-Indexed Resonant Quantum Semantics) Lexicon
+ *
+ * From TriadicPrimeFusion paper §4: Core semantic primes form a minimal
+ * basis for expressing complex concepts. Categories emerge from prime
+ * number-theoretic properties:
+ *
+ * - Structural (p ≡ 1 mod 4): Form, pattern, organization
+ * - Dynamic (p ≡ 3 mod 4): Process, change, flow
+ * - Relational (p ≡ 1 mod 6): Connection, interface, boundary
+ * - Foundational (p ≡ 5 mod 6): Ground, identity, essence
+ */
+const PRQS_LEXICON = {
+    // Core Semantic Primes (§4.1)
+    nouns: new Map([
+        // Foundational (first 10 primes)
+        [2, { concept: 'duality', category: 'foundation', role: 'split/pair' }],
+        [3, { concept: 'structure', category: 'foundation', role: 'form/frame' }],
+        [5, { concept: 'change', category: 'dynamic', role: 'motion/flow' }],
+        [7, { concept: 'identity', category: 'foundation', role: 'self/same' }],
+        [11, { concept: 'complexity', category: 'structural', role: 'layers/depth' }],
+        [13, { concept: 'relation', category: 'relational', role: 'link/bond' }],
+        [17, { concept: 'boundary', category: 'relational', role: 'edge/limit' }],
+        [19, { concept: 'observer', category: 'dynamic', role: 'witness/measure' }],
+        [23, { concept: 'time', category: 'dynamic', role: 'sequence/duration' }],
+        [29, { concept: 'space', category: 'structural', role: 'extent/place' }],
+        
+        // Extended Lexicon (§4.2)
+        [31, { concept: 'energy', category: 'dynamic', role: 'force/potential' }],
+        [37, { concept: 'information', category: 'structural', role: 'pattern/signal' }],
+        [41, { concept: 'pattern', category: 'structural', role: 'repeat/form' }],
+        [43, { concept: 'recursion', category: 'dynamic', role: 'self-reference' }],
+        [47, { concept: 'emergence', category: 'relational', role: 'arising/novelty' }],
+        [53, { concept: 'coherence', category: 'relational', role: 'unity/harmony' }],
+        [59, { concept: 'entropy', category: 'dynamic', role: 'disorder/spread' }],
+        [61, { concept: 'symmetry', category: 'structural', role: 'invariance' }],
+        [67, { concept: 'causation', category: 'relational', role: 'origin/effect' }],
+        [71, { concept: 'memory', category: 'structural', role: 'retention/trace' }],
+        [73, { concept: 'intention', category: 'dynamic', role: 'aim/purpose' }],
+        [79, { concept: 'context', category: 'relational', role: 'surround/frame' }],
+        [83, { concept: 'resonance', category: 'dynamic', role: 'vibration/echo' }],
+        [89, { concept: 'transformation', category: 'dynamic', role: 'change-of-form' }],
+        [97, { concept: 'closure', category: 'relational', role: 'complete/whole' }],
+        
+        // Higher concepts (§4.3)
+        [101, { concept: 'consciousness', category: 'dynamic', role: 'awareness' }],
+        [103, { concept: 'meaning', category: 'relational', role: 'significance' }],
+        [107, { concept: 'truth', category: 'foundation', role: 'correspondence' }],
+        [109, { concept: 'beauty', category: 'structural', role: 'harmony/form' }],
+        [113, { concept: 'value', category: 'relational', role: 'worth/good' }]
+    ]),
+    
+    // Adjective/Operator mappings (§4.4)
+    adjectives: new Map([
+        [2, { concept: 'dual', category: 'foundation', intensifies: false }],
+        [3, { concept: 'structured', category: 'structural', intensifies: true }],
+        [5, { concept: 'dynamic', category: 'dynamic', intensifies: true }],
+        [7, { concept: 'essential', category: 'foundation', intensifies: false }],
+        [11, { concept: 'complex', category: 'structural', intensifies: true }],
+        [13, { concept: 'relational', category: 'relational', intensifies: false }],
+        [17, { concept: 'bounded', category: 'relational', intensifies: false }],
+        [19, { concept: 'observed', category: 'dynamic', intensifies: true }],
+        [23, { concept: 'temporal', category: 'dynamic', intensifies: false }],
+        [29, { concept: 'spatial', category: 'structural', intensifies: false }],
+        [31, { concept: 'energetic', category: 'dynamic', intensifies: true }],
+        [37, { concept: 'informational', category: 'structural', intensifies: true }],
+        [41, { concept: 'patterned', category: 'structural', intensifies: true }],
+        [43, { concept: 'recursive', category: 'dynamic', intensifies: true }],
+        [47, { concept: 'emergent', category: 'relational', intensifies: true }],
+        [53, { concept: 'coherent', category: 'relational', intensifies: true }],
+        [59, { concept: 'entropic', category: 'dynamic', intensifies: false }],
+        [61, { concept: 'symmetric', category: 'structural', intensifies: true }],
+        [67, { concept: 'causal', category: 'relational', intensifies: true }],
+        [71, { concept: 'remembered', category: 'structural', intensifies: false }],
+        [73, { concept: 'intentional', category: 'dynamic', intensifies: true }],
+        [79, { concept: 'contextual', category: 'relational', intensifies: false }],
+        [83, { concept: 'resonant', category: 'dynamic', intensifies: true }],
+        [89, { concept: 'transformative', category: 'dynamic', intensifies: true }],
+        [97, { concept: 'closed', category: 'relational', intensifies: false }]
+    ])
+};
+
+/**
+ * Semantic category classification based on prime properties
+ * From PRQS paper: categories emerge from quadratic residue character
+ */
+function classifyPrime(p) {
+    const mod4 = p % 4;
+    const mod6 = p % 6;
+    
+    // Primary classification
+    let primary;
+    if (mod4 === 1) {
+        primary = 'structural';  // Can be expressed as sum of two squares
+    } else if (mod4 === 3) {
+        primary = 'dynamic';     // Cannot be expressed as sum of two squares
+    } else {
+        primary = 'foundation';  // p = 2
+    }
+    
+    // Secondary classification
+    let secondary;
+    if (mod6 === 1) {
+        secondary = 'relational';  // Closer to 6k+1 form
+    } else if (mod6 === 5) {
+        secondary = 'foundational'; // Closer to 6k-1 form
+    } else {
+        secondary = 'neutral';  // p = 2 or p = 3
+    }
+    
+    return { primary, secondary, mod4, mod6 };
+}
+
+/**
  * ConceptInterpreter - Maps primes to semantic concepts
+ * Enhanced with PRQS Lexicon for richer semantic interpretation
  */
 class ConceptInterpreter {
-    constructor() {
-        // Default concept mappings (can be customized)
-        this.nounConcepts = new Map([
-            [2, 'existence'],
-            [3, 'unity'],
-            [5, 'life'],
-            [7, 'truth'],
-            [11, 'consciousness'],
-            [13, 'knowledge'],
-            [17, 'wisdom'],
-            [19, 'love'],
-            [23, 'creation'],
-            [29, 'infinity']
-        ]);
+    constructor(lexicon = PRQS_LEXICON) {
+        // Use PRQS lexicon by default
+        this.nounConcepts = new Map();
+        this.adjConcepts = new Map();
+        this.nounMetadata = new Map();
+        this.adjMetadata = new Map();
         
-        this.adjConcepts = new Map([
-            [2, 'dual'],
-            [3, 'triple'],
-            [5, 'vital'],
-            [7, 'true'],
-            [11, 'conscious'],
-            [13, 'knowing'],
-            [17, 'wise'],
-            [19, 'loving'],
-            [23, 'creative'],
-            [29, 'infinite']
-        ]);
+        // Load from lexicon
+        for (const [prime, data] of lexicon.nouns) {
+            this.nounConcepts.set(prime, data.concept);
+            this.nounMetadata.set(prime, data);
+        }
+        
+        for (const [prime, data] of lexicon.adjectives) {
+            this.adjConcepts.set(prime, data.concept);
+            this.adjMetadata.set(prime, data);
+        }
+    }
+    
+    /**
+     * Get semantic category for a prime
+     */
+    getCategory(prime) {
+        // Check if we have metadata
+        if (this.nounMetadata.has(prime)) {
+            return this.nounMetadata.get(prime).category;
+        }
+        if (this.adjMetadata.has(prime)) {
+            return this.adjMetadata.get(prime).category;
+        }
+        
+        // Derive from number-theoretic properties
+        return classifyPrime(prime).primary;
+    }
+    
+    /**
+     * Get semantic role for a prime (if known)
+     */
+    getRole(prime) {
+        if (this.nounMetadata.has(prime)) {
+            return this.nounMetadata.get(prime).role;
+        }
+        return null;
     }
     
     /**
@@ -698,8 +829,33 @@ class ConceptInterpreter {
             return this.nounConcepts.get(p);
         }
         
-        // Generate description for unknown primes
-        return `concept_${p}`;
+        // Generate description based on prime properties
+        const category = classifyPrime(p);
+        return `${category.primary}_concept_${p}`;
+    }
+    
+    /**
+     * Interpret a noun term with full metadata
+     */
+    interpretNounFull(term) {
+        if (!(term instanceof NounTerm)) {
+            throw new Error('Expected NounTerm');
+        }
+        
+        const p = term.prime;
+        const concept = this.interpretNoun(term);
+        const category = this.getCategory(p);
+        const role = this.getRole(p);
+        const classification = classifyPrime(p);
+        
+        return {
+            prime: p,
+            concept,
+            category,
+            role,
+            classification,
+            isCore: this.nounMetadata.has(p)
+        };
     }
     
     /**
@@ -715,7 +871,20 @@ class ConceptInterpreter {
             return this.adjConcepts.get(p);
         }
         
-        return `modifier_${p}`;
+        // Generate based on category
+        const category = classifyPrime(p);
+        return `${category.primary}_modifier_${p}`;
+    }
+    
+    /**
+     * Check if an adjective intensifies meaning
+     */
+    isIntensifier(prime) {
+        if (this.adjMetadata.has(prime)) {
+            return this.adjMetadata.get(prime).intensifies;
+        }
+        // Default: structural adjectives intensify
+        return classifyPrime(prime).primary === 'structural';
     }
     
     /**
@@ -765,12 +934,90 @@ class ConceptInterpreter {
     /**
      * Add custom concept mappings
      */
-    addNounConcept(prime, concept) {
+    addNounConcept(prime, concept, metadata = {}) {
         this.nounConcepts.set(prime, concept);
+        if (Object.keys(metadata).length > 0) {
+            this.nounMetadata.set(prime, { concept, ...metadata });
+        }
     }
     
-    addAdjConcept(prime, concept) {
+    addAdjConcept(prime, concept, metadata = {}) {
         this.adjConcepts.set(prime, concept);
+        if (Object.keys(metadata).length > 0) {
+            this.adjMetadata.set(prime, { concept, ...metadata });
+        }
+    }
+    
+    /**
+     * Get all core semantic primes (those with explicit mappings)
+     */
+    getCorePrimes() {
+        const nouns = Array.from(this.nounConcepts.keys());
+        const adjs = Array.from(this.adjConcepts.keys());
+        return { nouns, adjs, all: [...new Set([...nouns, ...adjs])] };
+    }
+    
+    /**
+     * Analyze semantic compatibility between two primes
+     * From PRQS: compatible primes have complementary categories
+     */
+    analyzeCompatibility(p1, p2) {
+        const cat1 = classifyPrime(p1);
+        const cat2 = classifyPrime(p2);
+        
+        // Complementary categories have higher compatibility
+        const complementary = (cat1.primary !== cat2.primary);
+        const sameSecondary = (cat1.secondary === cat2.secondary);
+        
+        // Compute compatibility score
+        let score = 0.5;  // Base score
+        if (complementary) score += 0.25;  // Different primary = good
+        if (sameSecondary) score += 0.15;  // Same secondary = good
+        if ((p1 + p2) % 4 === 0) score += 0.1;  // Sum divisible by 4
+        
+        return {
+            p1, p2,
+            cat1, cat2,
+            complementary,
+            sameSecondary,
+            score,
+            interpretation: score > 0.7 ? 'highly_compatible' :
+                          score > 0.5 ? 'compatible' : 'weakly_compatible'
+        };
+    }
+    
+    /**
+     * Generate semantic blend for a fusion
+     * From PRQS: fusion creates emergent meaning
+     */
+    interpretFusionSemantic(p, q, r) {
+        const concepts = [p, q, r].map(prime =>
+            this.nounConcepts.get(prime) || `concept_${prime}`
+        );
+        
+        const categories = [p, q, r].map(classifyPrime);
+        
+        // Count category types
+        const catCounts = { structural: 0, dynamic: 0, relational: 0, foundation: 0 };
+        for (const cat of categories) {
+            catCounts[cat.primary] = (catCounts[cat.primary] || 0) + 1;
+        }
+        
+        // Dominant category
+        const dominant = Object.entries(catCounts)
+            .sort((a, b) => b[1] - a[1])[0][0];
+        
+        // Emergent meaning description
+        const emergent = `${dominant}_fusion(${concepts.join('+')})`;
+        
+        return {
+            components: concepts,
+            categories,
+            dominant,
+            fusedPrime: p + q + r,
+            emergent,
+            description: `Emergent ${dominant} concept from ${concepts.join(', ')}`
+        };
     }
 }
 
@@ -841,5 +1088,9 @@ module.exports = {
     
     // Semantics
     Semantics,
-    ConceptInterpreter
+    ConceptInterpreter,
+    
+    // PRQS Lexicon (from TriadicPrimeFusion paper)
+    PRQS_LEXICON,
+    classifyPrime
 };

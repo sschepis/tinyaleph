@@ -4,6 +4,26 @@
 
 const { Hypercomplex } = require('./hypercomplex');
 
+// CRT-Homology Module (Chinese Remainder Theorem + Birkhoff Attention + Homology Loss)
+const {
+  extendedGCD,
+  modInverse,
+  areCoprime,
+  softmax,
+  ResidueEncoder,
+  CRTReconstructor,
+  BirkhoffProjector,
+  HomologyLoss,
+  CRTModularLayer,
+  CRTFusedAttention,
+  CoprimeSelector,
+  createCRTLayer,
+  createFusedAttention,
+  DEFAULT_PRIMES_SMALL,
+  DEFAULT_PRIMES_MEDIUM,
+  DEFAULT_PRIMES_SEMANTIC
+} = require('./crt-homology');
+
 // Formal Type System (mtspbc.pdf implementation)
 const {
   NounType, AdjType, SentenceType,
@@ -30,6 +50,11 @@ const {
   Translator, TypeDirectedTranslator,
   LambdaEvaluator, Semantics, ConceptInterpreter
 } = require('./lambda');
+
+// Enochian Packet Layer (Section 7.4)
+const enochian = require('./enochian');
+const enochianVocabulary = require('./enochian-vocabulary');
+
 const {
   FANO_LINES,
   octonionMultiplyIndex,
@@ -143,6 +168,14 @@ const {
   ResoFormerBlock,
   ResoFormer
 } = require('./rformer-layers');
+
+// CRT-enhanced ResoFormer layers
+const {
+  CRTResonantAttention,
+  HomologyRegularizedBlock,
+  CRTResoFormer,
+  createCRTResoFormer
+} = require('./rformer-crt');
 
 // Prime Entanglement Graph
 const {
@@ -351,5 +384,57 @@ module.exports = {
   TypeDirectedTranslator,
   LambdaEvaluator,
   Semantics,
-  ConceptInterpreter
+  ConceptInterpreter,
+  
+  // Enochian Packet Layer (Section 7.4 - twist-based validation)
+  enochian,
+  enochianVocabulary,
+  ENOCHIAN_PRIMES: enochian.ENOCHIAN_PRIMES,
+  ENOCHIAN_MODES: enochian.MODES,
+  twistAngle: enochian.twistAngle,
+  totalTwist: enochian.totalTwist,
+  isTwistClosed: enochian.isTwistClosed,
+  findClosedSequences: enochian.findClosedSequences,
+  EnochianSymbol: enochian.EnochianSymbol,
+  EnochianPacket: enochian.EnochianPacket,
+  EnochianEncoder: enochian.EnochianEncoder,
+  EnochianDecoder: enochian.EnochianDecoder,
+  EnochianPacketBuilder: enochian.EnochianPacketBuilder,
+  EnhancedEnochianEncoder: enochian.EnhancedEnochianEncoder,
+  EnhancedEnochianDecoder: enochian.EnhancedEnochianDecoder,
+  // Enochian Vocabulary
+  ENOCHIAN_ALPHABET: enochianVocabulary.ENOCHIAN_ALPHABET,
+  PRIME_BASIS: enochianVocabulary.PRIME_BASIS,
+  CORE_VOCABULARY: enochianVocabulary.CORE_VOCABULARY,
+  THE_NINETEEN_CALLS: enochianVocabulary.THE_NINETEEN_CALLS,
+  EnochianWord: enochianVocabulary.EnochianWord,
+  EnochianCall: enochianVocabulary.EnochianCall,
+  EnochianEngine: enochianVocabulary.EnochianEngine,
+  SedenionElement: enochianVocabulary.SedenionElement,
+  TwistOperator: enochianVocabulary.TwistOperator,
+  validateTwistClosure: enochianVocabulary.validateTwistClosure,
+  
+  // CRT-Homology Module (Coprime Modular Algebra + Birkhoff Polytope + Homology Loss)
+  extendedGCD,
+  modInverse,
+  areCoprime,
+  softmax,
+  ResidueEncoder,
+  CRTReconstructor,
+  BirkhoffProjector,
+  HomologyLoss,
+  CRTModularLayer,
+  CRTFusedAttention,
+  CoprimeSelector,
+  createCRTLayer,
+  createFusedAttention,
+  DEFAULT_PRIMES_SMALL,
+  DEFAULT_PRIMES_MEDIUM,
+  DEFAULT_PRIMES_SEMANTIC,
+  
+  // CRT-enhanced ResoFormer (Birkhoff attention + Homology regularization)
+  CRTResonantAttention,
+  HomologyRegularizedBlock,
+  CRTResoFormer,
+  createCRTResoFormer
 };
