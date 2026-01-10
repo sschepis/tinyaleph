@@ -27,12 +27,163 @@ const { SedenionMemoryField } = require('./smf');
 const { PrimeCalculusVerifier, SemanticObject } = require('./prime-calculus');
 const { EnochianEncoder, EnochianDecoder, isTwistClosed } = require('./enochian');
 
+// Try to load telemetry for metrics
+let telemetry = null;
+try {
+    telemetry = require('./telemetry');
+} catch (e) {
+    // Telemetry not available
+}
+
 // Try to load resolang for WASM-accelerated operations
 let resolang = null;
 try {
     resolang = require('@sschepis/resolang');
 } catch (e) {
     // Will use JS fallback
+}
+
+// ============================================================================
+// NETWORK METRICS (OpenTelemetry/Prometheus Integration)
+// ============================================================================
+
+/**
+ * NetworkMetrics
+ *
+ * Collects and exposes metrics for the Distributed Sentience Network.
+ * Integrates with the global telemetry registry for Prometheus/OpenTelemetry export.
+ */
+class NetworkMetrics {
+    constructor(options = {}) {
+        this.enabled = options.enabled !== false && telemetry !== null;
+        this.prefix = options.prefix || 'dsn_';
+        
+        if (!this.enabled) {
+            this._createNoOpMetrics();
+            return;
+        }
+        
+        this.registry = options.registry || telemetry.globalRegistry;
+        this._createMetrics();
+    }
+    
+    _createMetrics() {
+        this.peersConnected = this.registry.gauge(`${this.prefix}peers_connected`, {
+            help: 'Number of currently connected peers'
+        });
+        this.peersTotal = this.registry.counter(`${this.prefix}peers_total`, {
+            help: 'Total peer connections', labels: ['action']
+        });
+        this.messagesTotal = this.registry.counter(`${this.prefix}messages_total`, {
+            help: 'Total messages', labels: ['direction', 'type']
+        });
+        this.messageBytes = this.registry.counter(`${this.prefix}message_bytes_total`, {
+            help: 'Total message bytes', labels: ['direction']
+        });
+        this.messageLatency = this.registry.histogram(`${this.prefix}message_latency_seconds`, {
+            help: 'Message latency', buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5]
+        });
+        this.proposalsTotal = this.registry.counter(`${this.prefix}proposals_total`, {
+            help: 'Total proposals', labels: ['status']
+        });
+        this.proposalVotes = this.registry.counter(`${this.prefix}proposal_votes_total`, {
+            help: 'Total votes', labels: ['vote']
+        });
+        this.proposalRedundancy = this.registry.histogram(`${this.prefix}proposal_redundancy`, {
+            help: 'Proposal redundancy scores', buckets: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        });
+        this.gmfObjects = this.registry.gauge(`${this.prefix}gmf_objects`, {
+            help: 'Objects in Global Memory Field'
+        });
+        this.gmfInserts = this.registry.counter(`${this.prefix}gmf_inserts_total`, {
+            help: 'Total GMF inserts'
+        });
+        this.channelHandshakes = this.registry.counter(`${this.prefix}channel_handshakes_total`, {
+            help: 'Channel handshakes', labels: ['status']
+        });
+        this.channelBroadcasts = this.registry.counter(`${this.prefix}channel_broadcasts_total`, {
+            help: 'Total broadcasts'
+        });
+        this.syncOperations = this.registry.counter(`${this.prefix}sync_operations_total`, {
+            help: 'Sync operations', labels: ['type']
+        });
+        this.networkOnline = this.registry.gauge(`${this.prefix}network_online`, {
+            help: 'Network online status (1=online, 0=offline)'
+        });
+    }
+    
+    _createNoOpMetrics() {
+        const noOp = { inc: () => {}, dec: () => {}, set: () => {}, observe: () => {}, get: () => 0 };
+        this.peersConnected = noOp;
+        this.peersTotal = noOp;
+        this.messagesTotal = noOp;
+        this.messageBytes = noOp;
+        this.messageLatency = noOp;
+        this.proposalsTotal = noOp;
+        this.proposalVotes = noOp;
+        this.proposalRedundancy = noOp;
+        this.gmfObjects = noOp;
+        this.gmfInserts = noOp;
+        this.channelHandshakes = noOp;
+        this.channelBroadcasts = noOp;
+        this.syncOperations = noOp;
+        this.networkOnline = noOp;
+    }
+    
+    recordPeerConnection(action) {
+        this.peersTotal.inc(1, { action });
+        if (action === 'connect') this.peersConnected.inc();
+        else if (action === 'disconnect') this.peersConnected.dec();
+    }
+    
+    setPeerCount(count) { this.peersConnected.set(count); }
+    
+    recordMessage(direction, type, bytes = 0) {
+        this.messagesTotal.inc(1, { direction, type });
+        if (bytes > 0) this.messageBytes.inc(bytes, { direction });
+    }
+    
+    recordMessageLatency(latencyMs) { this.messageLatency.observe(latencyMs / 1000); }
+    
+    recordProposalSubmitted() { this.proposalsTotal.inc(1, { status: 'submitted' }); }
+    
+    recordProposalAccepted(redundancy = 0) {
+        this.proposalsTotal.inc(1, { status: 'accepted' });
+        if (redundancy > 0) this.proposalRedundancy.observe(redundancy);
+    }
+    
+    recordProposalRejected() { this.proposalsTotal.inc(1, { status: 'rejected' }); }
+    
+    recordProposalVote(agree) { this.proposalVotes.inc(1, { vote: agree ? 'agree' : 'disagree' }); }
+    
+    recordGMFInsert() { this.gmfInserts.inc(); }
+    
+    setGMFObjectCount(count) { this.gmfObjects.set(count); }
+    
+    recordChannelHandshake(success) { this.channelHandshakes.inc(1, { status: success ? 'success' : 'failed' }); }
+    
+    recordChannelBroadcast() { this.channelBroadcasts.inc(); }
+    
+    recordSyncOperation(type) { this.syncOperations.inc(1, { type }); }
+    
+    setNetworkOnline(online) { this.networkOnline.set(online ? 1 : 0); }
+    
+    getSnapshot() {
+        return {
+            enabled: this.enabled,
+            peersConnected: this.peersConnected.get ? this.peersConnected.get() : 0
+        };
+    }
+}
+
+// Global network metrics instance
+let globalNetworkMetrics = null;
+
+function getNetworkMetrics(options = {}) {
+    if (!globalNetworkMetrics) {
+        globalNetworkMetrics = new NetworkMetrics(options);
+    }
+    return globalNetworkMetrics;
 }
 
 // ============================================================================
@@ -1643,6 +1794,10 @@ module.exports = {
     
     // Node
     DSNNode,
+    
+    // Metrics
+    NetworkMetrics,
+    getNetworkMetrics,
     
     // Utilities
     generateNodeId

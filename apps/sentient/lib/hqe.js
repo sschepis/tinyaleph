@@ -11,10 +11,15 @@
  * - Similarity metrics between holographic patterns
  * - Distributed, non-local semantic representation
  * - Dynamic λ(t) stabilization control (equation 12)
+ * - Binary checkpoint management with rollback policy
  */
 
 const { Complex, PrimeState } = require('../../../core/hilbert');
 const { firstNPrimes } = require('../../../core/prime');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
 /**
  * Holographic Quantum Encoding system
@@ -1189,10 +1194,555 @@ class HolographicSimilarity {
     }
 }
 
+// ════════════════════════════════════════════════════════════════════
+// CHECKPOINT MANAGER WITH ROLLBACK POLICY
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * CheckpointManager
+ *
+ * Manages binary checkpoints with SHA-256 checksum verification and
+ * automatic rollback policy. Keeps the last known good checkpoint
+ * and restores it if the current checkpoint fails validation.
+ *
+ * Features:
+ * - Binary protobuf-like checkpoints (checkpoint-{timestamp}.bin)
+ * - SHA-256 checksum verification
+ * - Automatic rollback to last good checkpoint on failure
+ * - Configurable retention policy
+ */
+class CheckpointManager {
+    /**
+     * Create a CheckpointManager
+     * @param {Object} options - Configuration
+     */
+    constructor(options = {}) {
+        this.checkpointDir = options.checkpointDir || path.join(os.homedir(), '.sentient', 'hqe', 'checkpoints');
+        this.maxCheckpoints = options.maxCheckpoints || 5;
+        this.autoRollback = options.autoRollback ?? true;
+        
+        // Track checkpoint state
+        this.lastGoodCheckpoint = null;
+        this.currentCheckpoint = null;
+        this.checkpointHistory = [];
+        
+        // Statistics
+        this.stats = {
+            totalCheckpoints: 0,
+            successfulLoads: 0,
+            failedLoads: 0,
+            rollbacks: 0,
+            checksumFailures: 0
+        };
+        
+        // Ensure checkpoint directory exists
+        this._ensureDir();
+        
+        // Load metadata if exists
+        this._loadMetadata();
+    }
+    
+    /**
+     * Ensure checkpoint directory exists
+     * @private
+     */
+    _ensureDir() {
+        try {
+            if (!fs.existsSync(this.checkpointDir)) {
+                fs.mkdirSync(this.checkpointDir, { recursive: true });
+            }
+        } catch (e) {
+            console.error('[CheckpointManager] Failed to create checkpoint directory:', e.message);
+        }
+    }
+    
+    /**
+     * Compute SHA-256 hash of data
+     * @param {Buffer} data - Data to hash
+     * @returns {string} Hex-encoded hash
+     */
+    computeHash(data) {
+        return crypto.createHash('sha256').update(data).digest('hex');
+    }
+    
+    /**
+     * Save a checkpoint
+     * @param {Object} state - State to checkpoint
+     * @param {Object} options - Save options
+     * @returns {Object} Checkpoint info
+     */
+    save(state, options = {}) {
+        const timestamp = Date.now();
+        const filename = `checkpoint-${timestamp}.bin`;
+        const filepath = path.join(this.checkpointDir, filename);
+        const metapath = path.join(this.checkpointDir, `${filename}.meta`);
+        
+        try {
+            // Serialize state to JSON then to buffer
+            const jsonStr = JSON.stringify(state);
+            const buffer = Buffer.from(jsonStr, 'utf-8');
+            
+            // Compute checksum
+            const checksum = this.computeHash(buffer);
+            
+            // Write checkpoint
+            fs.writeFileSync(filepath, buffer);
+            
+            // Write metadata
+            const metadata = {
+                version: 1,
+                timestamp,
+                filename,
+                size: buffer.length,
+                checksum,
+                algorithm: 'sha256',
+                sections: Object.keys(state),
+                created: new Date().toISOString()
+            };
+            fs.writeFileSync(metapath, JSON.stringify(metadata, null, 2));
+            
+            // Update tracking
+            const checkpointInfo = {
+                filepath,
+                filename,
+                timestamp,
+                checksum,
+                size: buffer.length,
+                valid: true
+            };
+            
+            this.checkpointHistory.push(checkpointInfo);
+            this.currentCheckpoint = checkpointInfo;
+            this.lastGoodCheckpoint = checkpointInfo;
+            this.stats.totalCheckpoints++;
+            
+            // Prune old checkpoints
+            this._pruneOldCheckpoints();
+            
+            // Update global metadata
+            this._saveMetadata();
+            
+            return {
+                success: true,
+                checkpoint: checkpointInfo
+            };
+            
+        } catch (e) {
+            return {
+                success: false,
+                error: e.message
+            };
+        }
+    }
+    
+    /**
+     * Load a checkpoint with verification
+     * @param {string} filepath - Path to checkpoint (or null for latest)
+     * @returns {Object} Loaded state or rollback result
+     */
+    load(filepath = null) {
+        // Use latest if not specified
+        if (!filepath) {
+            filepath = this._getLatestCheckpointPath();
+            if (!filepath) {
+                return {
+                    success: false,
+                    error: 'No checkpoints found'
+                };
+            }
+        }
+        
+        const metapath = filepath + '.meta';
+        
+        try {
+            // Read checkpoint
+            const buffer = fs.readFileSync(filepath);
+            
+            // Read and verify metadata
+            let metadata = null;
+            if (fs.existsSync(metapath)) {
+                metadata = JSON.parse(fs.readFileSync(metapath, 'utf-8'));
+            }
+            
+            // Compute checksum
+            const computedChecksum = this.computeHash(buffer);
+            
+            // Verify checksum if metadata exists
+            if (metadata && metadata.checksum) {
+                if (computedChecksum !== metadata.checksum) {
+                    this.stats.checksumFailures++;
+                    this.stats.failedLoads++;
+                    
+                    // Checksum mismatch - attempt rollback
+                    if (this.autoRollback && this.lastGoodCheckpoint) {
+                        console.warn('[CheckpointManager] Checksum mismatch, rolling back to last good checkpoint');
+                        return this._rollback();
+                    }
+                    
+                    return {
+                        success: false,
+                        error: 'Checksum verification failed',
+                        expected: metadata.checksum,
+                        computed: computedChecksum
+                    };
+                }
+            }
+            
+            // Parse state
+            const state = JSON.parse(buffer.toString('utf-8'));
+            
+            // Update tracking
+            this.currentCheckpoint = {
+                filepath,
+                filename: path.basename(filepath),
+                timestamp: metadata?.timestamp || Date.now(),
+                checksum: computedChecksum,
+                size: buffer.length,
+                valid: true
+            };
+            this.lastGoodCheckpoint = this.currentCheckpoint;
+            this.stats.successfulLoads++;
+            
+            return {
+                success: true,
+                state,
+                checkpoint: this.currentCheckpoint,
+                metadata
+            };
+            
+        } catch (e) {
+            this.stats.failedLoads++;
+            
+            // Attempt rollback on any error
+            if (this.autoRollback && this.lastGoodCheckpoint &&
+                this.lastGoodCheckpoint.filepath !== filepath) {
+                console.warn('[CheckpointManager] Load failed, rolling back:', e.message);
+                return this._rollback();
+            }
+            
+            return {
+                success: false,
+                error: e.message
+            };
+        }
+    }
+    
+    /**
+     * Verify a checkpoint without loading
+     * @param {string} filepath - Path to checkpoint
+     * @returns {Object} Verification result
+     */
+    verify(filepath) {
+        const metapath = filepath + '.meta';
+        
+        try {
+            if (!fs.existsSync(filepath)) {
+                return { valid: false, error: 'Checkpoint file not found' };
+            }
+            
+            const buffer = fs.readFileSync(filepath);
+            const computedChecksum = this.computeHash(buffer);
+            
+            // Check metadata if exists
+            if (fs.existsSync(metapath)) {
+                const metadata = JSON.parse(fs.readFileSync(metapath, 'utf-8'));
+                
+                if (metadata.checksum !== computedChecksum) {
+                    return {
+                        valid: false,
+                        error: 'Checksum mismatch',
+                        expected: metadata.checksum,
+                        computed: computedChecksum
+                    };
+                }
+                
+                // Verify size
+                if (metadata.size !== buffer.length) {
+                    return {
+                        valid: false,
+                        error: 'Size mismatch',
+                        expected: metadata.size,
+                        actual: buffer.length
+                    };
+                }
+            }
+            
+            // Try to parse JSON to verify integrity
+            JSON.parse(buffer.toString('utf-8'));
+            
+            return {
+                valid: true,
+                checksum: computedChecksum,
+                size: buffer.length
+            };
+            
+        } catch (e) {
+            return {
+                valid: false,
+                error: e.message
+            };
+        }
+    }
+    
+    /**
+     * Rollback to last known good checkpoint
+     * @private
+     * @returns {Object} Rollback result
+     */
+    _rollback() {
+        if (!this.lastGoodCheckpoint || !this.lastGoodCheckpoint.filepath) {
+            return {
+                success: false,
+                error: 'No good checkpoint available for rollback'
+            };
+        }
+        
+        this.stats.rollbacks++;
+        
+        try {
+            const filepath = this.lastGoodCheckpoint.filepath;
+            
+            if (!fs.existsSync(filepath)) {
+                return {
+                    success: false,
+                    error: 'Rollback checkpoint file not found'
+                };
+            }
+            
+            const buffer = fs.readFileSync(filepath);
+            const computedChecksum = this.computeHash(buffer);
+            
+            // Verify the rollback checkpoint
+            if (computedChecksum !== this.lastGoodCheckpoint.checksum) {
+                return {
+                    success: false,
+                    error: 'Rollback checkpoint also corrupted'
+                };
+            }
+            
+            const state = JSON.parse(buffer.toString('utf-8'));
+            
+            return {
+                success: true,
+                state,
+                checkpoint: this.lastGoodCheckpoint,
+                rolledBack: true
+            };
+            
+        } catch (e) {
+            return {
+                success: false,
+                error: `Rollback failed: ${e.message}`
+            };
+        }
+    }
+    
+    /**
+     * Get path to latest checkpoint
+     * @private
+     * @returns {string|null}
+     */
+    _getLatestCheckpointPath() {
+        try {
+            const files = fs.readdirSync(this.checkpointDir)
+                .filter(f => f.startsWith('checkpoint-') && f.endsWith('.bin'))
+                .sort()
+                .reverse();
+            
+            if (files.length === 0) return null;
+            
+            return path.join(this.checkpointDir, files[0]);
+        } catch {
+            return null;
+        }
+    }
+    
+    /**
+     * Prune old checkpoints beyond retention limit
+     * @private
+     */
+    _pruneOldCheckpoints() {
+        try {
+            const files = fs.readdirSync(this.checkpointDir)
+                .filter(f => f.startsWith('checkpoint-') && f.endsWith('.bin'))
+                .sort()
+                .reverse();
+            
+            // Keep only maxCheckpoints
+            if (files.length > this.maxCheckpoints) {
+                const toDelete = files.slice(this.maxCheckpoints);
+                
+                for (const file of toDelete) {
+                    const filepath = path.join(this.checkpointDir, file);
+                    const metapath = filepath + '.meta';
+                    
+                    // Don't delete the last good checkpoint
+                    if (this.lastGoodCheckpoint &&
+                        this.lastGoodCheckpoint.filepath === filepath) {
+                        continue;
+                    }
+                    
+                    try {
+                        fs.unlinkSync(filepath);
+                        if (fs.existsSync(metapath)) {
+                            fs.unlinkSync(metapath);
+                        }
+                    } catch {
+                        // Ignore deletion errors
+                    }
+                }
+            }
+        } catch {
+            // Ignore pruning errors
+        }
+    }
+    
+    /**
+     * Save global metadata
+     * @private
+     */
+    _saveMetadata() {
+        try {
+            const metapath = path.join(this.checkpointDir, 'checkpoint.meta.json');
+            const metadata = {
+                version: 1,
+                lastGoodCheckpoint: this.lastGoodCheckpoint ? {
+                    filepath: this.lastGoodCheckpoint.filepath,
+                    filename: this.lastGoodCheckpoint.filename,
+                    checksum: this.lastGoodCheckpoint.checksum,
+                    timestamp: this.lastGoodCheckpoint.timestamp
+                } : null,
+                stats: this.stats,
+                lastUpdated: new Date().toISOString()
+            };
+            fs.writeFileSync(metapath, JSON.stringify(metadata, null, 2));
+        } catch {
+            // Ignore metadata save errors
+        }
+    }
+    
+    /**
+     * Load global metadata
+     * @private
+     */
+    _loadMetadata() {
+        try {
+            const metapath = path.join(this.checkpointDir, 'checkpoint.meta.json');
+            if (fs.existsSync(metapath)) {
+                const metadata = JSON.parse(fs.readFileSync(metapath, 'utf-8'));
+                
+                if (metadata.lastGoodCheckpoint) {
+                    this.lastGoodCheckpoint = metadata.lastGoodCheckpoint;
+                }
+                if (metadata.stats) {
+                    this.stats = { ...this.stats, ...metadata.stats };
+                }
+            }
+        } catch {
+            // Ignore metadata load errors
+        }
+    }
+    
+    /**
+     * List all checkpoints
+     * @returns {Array} Checkpoint info array
+     */
+    listCheckpoints() {
+        try {
+            const files = fs.readdirSync(this.checkpointDir)
+                .filter(f => f.startsWith('checkpoint-') && f.endsWith('.bin'))
+                .sort()
+                .reverse();
+            
+            return files.map(filename => {
+                const filepath = path.join(this.checkpointDir, filename);
+                const metapath = filepath + '.meta';
+                const stats = fs.statSync(filepath);
+                
+                let metadata = null;
+                if (fs.existsSync(metapath)) {
+                    try {
+                        metadata = JSON.parse(fs.readFileSync(metapath, 'utf-8'));
+                    } catch {
+                        // Ignore metadata read errors
+                    }
+                }
+                
+                // Extract timestamp from filename
+                const match = filename.match(/checkpoint-(\d+)\.bin/);
+                const timestamp = match ? parseInt(match[1]) : stats.mtimeMs;
+                
+                return {
+                    filepath,
+                    filename,
+                    timestamp,
+                    size: stats.size,
+                    checksum: metadata?.checksum || null,
+                    isLastGood: this.lastGoodCheckpoint?.filepath === filepath
+                };
+            });
+        } catch {
+            return [];
+        }
+    }
+    
+    /**
+     * Get statistics
+     * @returns {Object}
+     */
+    getStats() {
+        return {
+            ...this.stats,
+            checkpointCount: this.listCheckpoints().length,
+            lastGoodCheckpoint: this.lastGoodCheckpoint ? {
+                filename: this.lastGoodCheckpoint.filename,
+                timestamp: this.lastGoodCheckpoint.timestamp,
+                checksum: this.lastGoodCheckpoint.checksum?.slice(0, 16) + '...'
+            } : null,
+            checkpointDir: this.checkpointDir
+        };
+    }
+    
+    /**
+     * Force rollback to a specific checkpoint
+     * @param {string} filepath - Path to checkpoint
+     * @returns {Object} Rollback result
+     */
+    rollbackTo(filepath) {
+        // First verify the checkpoint
+        const verification = this.verify(filepath);
+        if (!verification.valid) {
+            return {
+                success: false,
+                error: `Cannot rollback to invalid checkpoint: ${verification.error}`
+            };
+        }
+        
+        // Load the checkpoint
+        const loadResult = this.load(filepath);
+        if (!loadResult.success) {
+            return {
+                success: false,
+                error: `Failed to load rollback checkpoint: ${loadResult.error}`
+            };
+        }
+        
+        this.stats.rollbacks++;
+        
+        return {
+            success: true,
+            state: loadResult.state,
+            checkpoint: loadResult.checkpoint,
+            forcedRollback: true
+        };
+    }
+}
+
 module.exports = {
     TickGate,
     StabilizationController,
     HolographicEncoder,
     HolographicMemory,
-    HolographicSimilarity
+    HolographicSimilarity,
+    CheckpointManager
 };

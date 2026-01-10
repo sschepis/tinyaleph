@@ -89,6 +89,292 @@ function cleanControlTokens(text) {
     return cleaned.trim();
 }
 
+// ════════════════════════════════════════════════════════════════════
+// RATE LIMIT BACKOFF HANDLER (for 429 responses)
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * RateLimitBackoff
+ *
+ * Implements exponential backoff with jitter for 429 rate limit responses.
+ * Tracks per-endpoint rate limits and provides automatic retry logic.
+ */
+class RateLimitBackoff {
+    /**
+     * Create a RateLimitBackoff handler
+     * @param {Object} options - Configuration
+     */
+    constructor(options = {}) {
+        // Backoff configuration
+        this.initialDelayMs = options.initialDelayMs || 1000;
+        this.maxDelayMs = options.maxDelayMs || 60000;
+        this.maxRetries = options.maxRetries || 5;
+        this.jitterFactor = options.jitterFactor || 0.2;
+        
+        // Track rate limits per endpoint
+        this.endpointState = new Map();
+        
+        // Global rate limit state
+        this.globalBackoff = {
+            inBackoff: false,
+            until: 0,
+            attempts: 0
+        };
+        
+        // Statistics
+        this.stats = {
+            totalRetries: 0,
+            successfulRetries: 0,
+            failedRetries: 0,
+            rateLimitHits: 0,
+            currentBackoffs: 0
+        };
+    }
+    
+    /**
+     * Calculate delay with exponential backoff and jitter
+     * @param {number} attempt - Current attempt number (0-indexed)
+     * @returns {number} Delay in milliseconds
+     */
+    calculateDelay(attempt) {
+        // Exponential backoff: delay = initial * 2^attempt
+        const exponentialDelay = this.initialDelayMs * Math.pow(2, attempt);
+        
+        // Cap at maximum
+        const cappedDelay = Math.min(exponentialDelay, this.maxDelayMs);
+        
+        // Add jitter: ±jitterFactor * delay
+        const jitter = cappedDelay * this.jitterFactor * (Math.random() * 2 - 1);
+        
+        return Math.floor(cappedDelay + jitter);
+    }
+    
+    /**
+     * Record a rate limit hit (429 response)
+     * @param {string} endpoint - The endpoint that was rate limited
+     * @param {Object} response - Response info (may contain Retry-After header)
+     */
+    recordRateLimit(endpoint, response = {}) {
+        this.stats.rateLimitHits++;
+        
+        let state = this.endpointState.get(endpoint);
+        if (!state) {
+            state = {
+                attempts: 0,
+                until: 0,
+                lastHit: 0
+            };
+            this.endpointState.set(endpoint, state);
+        }
+        
+        state.attempts++;
+        state.lastHit = Date.now();
+        
+        // Check for Retry-After header
+        let retryAfter = 0;
+        if (response.retryAfter) {
+            // Retry-After can be seconds or a date
+            if (typeof response.retryAfter === 'number') {
+                retryAfter = response.retryAfter * 1000;
+            } else if (typeof response.retryAfter === 'string') {
+                // Try parsing as seconds first
+                const seconds = parseInt(response.retryAfter);
+                if (!isNaN(seconds)) {
+                    retryAfter = seconds * 1000;
+                } else {
+                    // Try parsing as date
+                    const date = new Date(response.retryAfter);
+                    if (!isNaN(date.getTime())) {
+                        retryAfter = date.getTime() - Date.now();
+                    }
+                }
+            }
+        }
+        
+        // Use Retry-After if provided, otherwise calculate backoff
+        const delay = retryAfter > 0
+            ? Math.min(retryAfter, this.maxDelayMs)
+            : this.calculateDelay(state.attempts - 1);
+        
+        state.until = Date.now() + delay;
+        this.stats.currentBackoffs++;
+        
+        return {
+            delay,
+            until: state.until,
+            attempt: state.attempts,
+            endpoint
+        };
+    }
+    
+    /**
+     * Check if an endpoint is currently in backoff
+     * @param {string} endpoint - The endpoint to check
+     * @returns {Object} Backoff state
+     */
+    isInBackoff(endpoint) {
+        const state = this.endpointState.get(endpoint);
+        if (!state) {
+            return { inBackoff: false };
+        }
+        
+        const now = Date.now();
+        if (now >= state.until) {
+            // Backoff expired
+            return { inBackoff: false };
+        }
+        
+        return {
+            inBackoff: true,
+            remainingMs: state.until - now,
+            until: state.until,
+            attempts: state.attempts
+        };
+    }
+    
+    /**
+     * Wait for backoff to expire (for use with async/await)
+     * @param {string} endpoint - The endpoint to wait for
+     * @returns {Promise<void>}
+     */
+    async waitForBackoff(endpoint) {
+        const state = this.isInBackoff(endpoint);
+        if (!state.inBackoff) {
+            return;
+        }
+        
+        return new Promise(resolve => setTimeout(resolve, state.remainingMs));
+    }
+    
+    /**
+     * Record a successful request after rate limiting
+     * @param {string} endpoint - The endpoint
+     */
+    recordSuccess(endpoint) {
+        const state = this.endpointState.get(endpoint);
+        if (state) {
+            // Reset attempts on success
+            state.attempts = 0;
+            state.until = 0;
+            this.stats.successfulRetries++;
+            this.stats.currentBackoffs = Math.max(0, this.stats.currentBackoffs - 1);
+        }
+    }
+    
+    /**
+     * Check if max retries exceeded
+     * @param {string} endpoint - The endpoint
+     * @returns {boolean}
+     */
+    isMaxRetriesExceeded(endpoint) {
+        const state = this.endpointState.get(endpoint);
+        if (!state) return false;
+        return state.attempts >= this.maxRetries;
+    }
+    
+    /**
+     * Reset state for an endpoint
+     * @param {string} endpoint - The endpoint
+     */
+    reset(endpoint) {
+        this.endpointState.delete(endpoint);
+    }
+    
+    /**
+     * Reset all state
+     */
+    resetAll() {
+        this.endpointState.clear();
+        this.globalBackoff = {
+            inBackoff: false,
+            until: 0,
+            attempts: 0
+        };
+        this.stats.currentBackoffs = 0;
+    }
+    
+    /**
+     * Execute a function with automatic retry on rate limit
+     * @param {string} endpoint - The endpoint identifier
+     * @param {Function} fn - Async function to execute
+     * @param {Object} options - Options
+     * @returns {Promise<*>} Result of fn
+     */
+    async executeWithRetry(endpoint, fn, options = {}) {
+        const maxRetries = options.maxRetries || this.maxRetries;
+        
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            // Check if in backoff
+            const backoffState = this.isInBackoff(endpoint);
+            if (backoffState.inBackoff) {
+                await this.waitForBackoff(endpoint);
+            }
+            
+            try {
+                const result = await fn();
+                
+                // Check if result indicates rate limit
+                if (result && result.rateLimited) {
+                    const backoff = this.recordRateLimit(endpoint, result);
+                    this.stats.totalRetries++;
+                    
+                    if (this.isMaxRetriesExceeded(endpoint)) {
+                        this.stats.failedRetries++;
+                        throw new Error(`Rate limit exceeded after ${maxRetries} retries for ${endpoint}`);
+                    }
+                    
+                    // Wait and retry
+                    await new Promise(resolve => setTimeout(resolve, backoff.delay));
+                    continue;
+                }
+                
+                // Success
+                this.recordSuccess(endpoint);
+                return result;
+                
+            } catch (error) {
+                // Check if error is a rate limit
+                if (error.status === 429 || error.code === 'RATE_LIMITED') {
+                    const backoff = this.recordRateLimit(endpoint, {
+                        retryAfter: error.retryAfter
+                    });
+                    this.stats.totalRetries++;
+                    
+                    if (this.isMaxRetriesExceeded(endpoint)) {
+                        this.stats.failedRetries++;
+                        throw new Error(`Rate limit exceeded after ${maxRetries} retries: ${error.message}`);
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, backoff.delay));
+                    continue;
+                }
+                
+                // Non-rate-limit error, rethrow
+                throw error;
+            }
+        }
+        
+        this.stats.failedRetries++;
+        throw new Error(`Max retries (${maxRetries}) exceeded for ${endpoint}`);
+    }
+    
+    /**
+     * Get statistics
+     * @returns {Object}
+     */
+    getStats() {
+        return {
+            ...this.stats,
+            endpoints: Array.from(this.endpointState.entries()).map(([endpoint, state]) => ({
+                endpoint,
+                attempts: state.attempts,
+                inBackoff: Date.now() < state.until,
+                lastHit: state.lastHit
+            }))
+        };
+    }
+}
+
 class ChaperoneAPI {
     /**
      * Create a new ChaperoneAPI
@@ -126,6 +412,14 @@ class ChaperoneAPI {
         
         // Request tracking
         this.requestTimes = [];
+        
+        // Rate limit backoff handler for 429 responses
+        this.rateLimitBackoff = new RateLimitBackoff({
+            initialDelayMs: chaperoneConfig.backoffInitialMs || 1000,
+            maxDelayMs: chaperoneConfig.backoffMaxMs || 60000,
+            maxRetries: chaperoneConfig.backoffMaxRetries || 5,
+            jitterFactor: 0.2
+        });
         
         log('Chaperone API initialized, LLM:', chaperoneConfig.llmUrl);
     }
@@ -227,7 +521,7 @@ class ChaperoneAPI {
         log('Handling question:', question.slice(0, 100));
         
         // Build the prompt
-        const systemPrompt = `You are a knowledgeable research assistant helping an AI agent learn. 
+        const systemPrompt = `You are a knowledgeable research assistant helping an AI agent learn.
 Provide accurate, concise answers to questions. If you're uncertain, say so.
 Focus on facts and explain concepts clearly.`;
         
@@ -237,12 +531,27 @@ Focus on facts and explain concepts clearly.`;
         }
         
         try {
-            const response = await this.llmClient.chat([
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: fullPrompt }
-            ], {
-                maxTokens: this.maxAnswerTokens,
-                temperature: 0.7
+            // Use rate limit backoff for LLM requests
+            const response = await this.rateLimitBackoff.executeWithRetry('llm_chat', async () => {
+                try {
+                    const result = await this.llmClient.chat([
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: fullPrompt }
+                    ], {
+                        maxTokens: this.maxAnswerTokens,
+                        temperature: 0.7
+                    });
+                    return result;
+                } catch (error) {
+                    // Check for 429 status
+                    if (error.status === 429 || error.message?.includes('429') ||
+                        error.message?.includes('rate limit')) {
+                        error.status = 429;
+                        error.retryAfter = error.retryAfter ||
+                            parseInt(error.headers?.['retry-after']) || null;
+                    }
+                    throw error;
+                }
             });
             
             // Clean control tokens from response
@@ -268,9 +577,20 @@ Focus on facts and explain concepts clearly.`;
             
         } catch (error) {
             log.error('LLM question error:', error.message);
-            return { 
-                success: false, 
-                error: `LLM error: ${error.message}` 
+            
+            // Check if this was a rate limit exhaustion
+            if (error.message?.includes('Rate limit exceeded')) {
+                return {
+                    success: false,
+                    error: error.message,
+                    rateLimited: true,
+                    retryAfter: this.rateLimitBackoff.isInBackoff('llm_chat').remainingMs
+                };
+            }
+            
+            return {
+                success: false,
+                error: `LLM error: ${error.message}`
             };
         }
     }
@@ -431,7 +751,7 @@ Focus on facts and explain concepts clearly.`;
         
         const systemPrompt = 'You are a skilled summarizer. Create clear, accurate summaries that capture the key points.';
         
-        const prompt = `Summarize the following content${focus ? ` focusing on ${focus}` : ''}. 
+        const prompt = `Summarize the following content${focus ? ` focusing on ${focus}` : ''}.
 Keep the summary under ${maxLength || 200} words.
 
 Content:
@@ -440,12 +760,23 @@ ${content.slice(0, 4000)}
 Summary:`;
         
         try {
-            const response = await this.llmClient.chat([
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: prompt }
-            ], {
-                maxTokens: this.maxSummaryTokens,
-                temperature: 0.5
+            // Use rate limit backoff for LLM requests
+            const response = await this.rateLimitBackoff.executeWithRetry('llm_summarize', async () => {
+                try {
+                    const result = await this.llmClient.chat([
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: prompt }
+                    ], {
+                        maxTokens: this.maxSummaryTokens,
+                        temperature: 0.5
+                    });
+                    return result;
+                } catch (error) {
+                    if (error.status === 429 || error.message?.includes('429')) {
+                        error.status = 429;
+                    }
+                    throw error;
+                }
             });
             
             // Clean control tokens from summary
@@ -497,12 +828,23 @@ Return a JSON array of suggested URLs (maximum 3) that would be most relevant fo
 Only suggest URLs, no explanations.`;
         
         try {
-            const response = await this.llmClient.chat([
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: `Query: ${query}` }
-            ], {
-                maxTokens: 200,
-                temperature: 0.3
+            // Use rate limit backoff for LLM requests
+            const response = await this.rateLimitBackoff.executeWithRetry('llm_search', async () => {
+                try {
+                    const result = await this.llmClient.chat([
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: `Query: ${query}` }
+                    ], {
+                        maxTokens: 200,
+                        temperature: 0.3
+                    });
+                    return result;
+                } catch (error) {
+                    if (error.status === 429 || error.message?.includes('429')) {
+                        error.status = 429;
+                    }
+                    throw error;
+                }
             });
             
             // Try to parse URLs from response
@@ -727,6 +1069,21 @@ Only suggest URLs, no explanations.`;
             return false;
         }
     }
+    
+    /**
+     * Get rate limit backoff statistics
+     * @returns {Object}
+     */
+    getRateLimitStats() {
+        return this.rateLimitBackoff.getStats();
+    }
+    
+    /**
+     * Reset rate limit state
+     */
+    resetRateLimits() {
+        this.rateLimitBackoff.resetAll();
+    }
 }
 
-module.exports = { ChaperoneAPI };
+module.exports = { ChaperoneAPI, RateLimitBackoff };

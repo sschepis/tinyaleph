@@ -652,6 +652,7 @@ export class SentientApp extends BaseComponent {
         this.chat = this.$('#chat');
         this.modal = this.$('#introspectionModal');
         this.fieldPanel = this.$('#fieldPanel');
+        this.smfPanel = this.$('#smfPanel'); // Right panel SMF tab
         this.mainArtifact = this.$('#mainArtifact');
         this.mainCamera = this.$('#mainCamera');
         this.leftSidebar = this.$('#leftSidebar');
@@ -807,18 +808,16 @@ export class SentientApp extends BaseComponent {
     }
     
     connectStreams() {
-        // Status stream
+        // Status stream - uses named 'status' event type
         this.statusStream = new EventSource('/stream/status');
-        this.statusStream.onmessage = (e) => {
+        this.statusStream.addEventListener('status', (e) => {
             try {
                 const data = JSON.parse(e.data);
-                if (data.type === 'status') {
-                    this.handleStatusUpdate(data.data);
-                }
+                this.handleStatusUpdate(data);
             } catch (err) {
                 console.error('Status stream error:', err);
             }
-        };
+        });
         
         this.statusStream.onopen = () => {
             this._state.connected = true;
@@ -830,15 +829,34 @@ export class SentientApp extends BaseComponent {
             this.updateConnectionStatus();
             setTimeout(() => this.connectStreams(), 3000);
         };
-        // Field stream
+        
+        // Field stream - uses named 'field' event type
         this.fieldStream = new EventSource('/stream/field');
-        this.fieldStream.onmessage = (e) => {
+        this.fieldStream.addEventListener('field', (e) => {
             try {
                 const data = JSON.parse(e.data);
                 this.handleFieldUpdate(data);
             } catch (err) {
                 console.error('Field stream error:', err);
             }
+        });
+        
+        this.fieldStream.onerror = () => {
+            console.warn('Field stream error, reconnecting...');
+            setTimeout(() => {
+                if (this.fieldStream) {
+                    this.fieldStream.close();
+                }
+                this.fieldStream = new EventSource('/stream/field');
+                this.fieldStream.addEventListener('field', (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        this.handleFieldUpdate(data);
+                    } catch (err) {
+                        console.error('Field stream error:', err);
+                    }
+                });
+            }, 3000);
         };
     }
     
@@ -882,10 +900,16 @@ export class SentientApp extends BaseComponent {
             this.fieldHistory.shift();
         }
         
-        // Update field panel
+        // Update main field panel (center view)
         if (data.smf && this.fieldPanel) {
             this.fieldPanel.setData(data.smf);
             this.fieldPanel.setFieldHistory(this.fieldHistory);
+        }
+        
+        // Update SMF panel in right sidebar (SMF tab)
+        if (data.smf && this.smfPanel) {
+            this.smfPanel.setData(data.smf);
+            this.smfPanel.setFieldHistory(this.fieldHistory);
         }
         
         // Update lambda metric
