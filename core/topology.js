@@ -15,8 +15,6 @@
  * - Fine structure constant: α⁻¹ = 108 + 29 = 137
  */
 
-const { TWIST_108, factorize, isPrime } = require('./prime');
-
 // ============================================================================
 // KNOT INVARIANTS
 // ============================================================================
@@ -24,6 +22,8 @@ const { TWIST_108, factorize, isPrime } = require('./prime');
 /**
  * Knot class representing a mathematical knot with topological invariants
  */
+import { TWIST_108, factorize, isPrime } from './prime.js';
+
 class Knot {
     /**
      * Create a knot with specified invariants
@@ -627,29 +627,18 @@ class FreeEnergyDynamics {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Knot classes
+export {
     Knot,
-    
-    // Standard knots
     UNKNOT,
     TREFOIL,
     FIGURE_EIGHT,
     CINQUEFOIL,
     THREE_TWIST,
     STANDARD_KNOTS,
-    
-    // Physical constants
     PhysicalConstants,
-    
-    // Observer hierarchy
     OBSERVER_HIERARCHY,
     getObserverLevel,
     observerCapacity,
-    
-    // Gauge symmetry
     GaugeSymmetry,
-    
-    // Free energy dynamics
     FreeEnergyDynamics
 };

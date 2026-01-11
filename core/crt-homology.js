@@ -21,10 +21,6 @@
 
 'use strict';
 
-const { firstNPrimes, isPrime, factorize } = require('./prime');
-const { Complex, PrimeState } = require('./hilbert');
-const { SparsePrimeState, resonanceScore, Quaternion } = require('./rformer');
-
 // ============================================================================
 // MODULAR ARITHMETIC UTILITIES
 // ============================================================================
@@ -36,6 +32,10 @@ const { SparsePrimeState, resonanceScore, Quaternion } = require('./rformer');
  * @param {number} b - Second number
  * @returns {Object} { gcd, x, y }
  */
+import { firstNPrimes, isPrime, factorize } from './prime.js';
+import { Complex, PrimeState } from './hilbert.js';
+import { SparsePrimeState, resonanceScore, Quaternion } from './rformer.js';
+
 function extendedGCD(a, b) {
     if (b === 0) {
         return { gcd: a, x: 1, y: 0 };
@@ -974,7 +974,7 @@ class CoprimeSelector {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export default {
     // Modular arithmetic utilities
     extendedGCD,
     modInverse,

@@ -13,8 +13,6 @@
  * - Full typing judgments Γ ⊢ e : T
  */
 
-const { isPrime, firstNPrimes } = require('./prime');
-
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
@@ -22,6 +20,8 @@ const { isPrime, firstNPrimes } = require('./prime');
 /**
  * Type constants for the type system
  */
+import { isPrime, firstNPrimes } from './prime.js';
+
 const Types = {
     NOUN: 'N',
     ADJECTIVE: 'A',
@@ -878,31 +878,20 @@ function IMPL(s1, s2) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Type constants
+export {
     Types,
-    
-    // Base class
     Term,
-    
-    // Term classes
     NounTerm,
     AdjTerm,
     ChainTerm,
     FusionTerm,
-    
-    // Sentence classes
     SentenceTerm,
     NounSentence,
     SeqSentence,
     ImplSentence,
-    
-    // Typing system
     TypingContext,
     TypingJudgment,
     TypeChecker,
-    
-    // Builders
     N,
     A,
     FUSE,

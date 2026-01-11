@@ -295,8 +295,8 @@ class SymbolDatabase {
   }
 }
 
-module.exports = {
-  SymbolDatabase,
-  SymbolCategory,
-  PrimeGenerator
+export {
+    SymbolDatabase,
+    SymbolCategory,
+    PrimeGenerator
 };

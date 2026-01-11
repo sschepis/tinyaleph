@@ -7,14 +7,14 @@
  * In prime space: T(2) → U(5) substitution
  */
 
-const { NUCLEOTIDE_PRIMES, PRIME_COMPLEMENTS, PRIME_TO_NUCLEOTIDE } = require('./encoding');
-
 /**
  * TranscriptionOperator
  * 
  * Transforms DNA prime sequences to RNA prime sequences.
  * Models the biological process of transcription.
  */
+import { NUCLEOTIDE_PRIMES, PRIME_COMPLEMENTS, PRIME_TO_NUCLEOTIDE } from './encoding.js';
+
 class TranscriptionOperator {
   constructor(options = {}) {
     this.options = {
@@ -218,4 +218,6 @@ class TranscriptionOperator {
   }
 }
 
-module.exports = { TranscriptionOperator };
+export {
+    TranscriptionOperator
+};

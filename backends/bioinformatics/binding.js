@@ -1,64 +1,56 @@
 /**
  * Molecular Binding - Protein-Ligand and Protein-Protein Interactions
- * 
+ *
  * Models molecular binding using prime resonance:
  * - Binding affinity correlates with golden ratio resonance
  * - Docking uses multi-system Kuramoto coupling
  * - Affinity scoring combines electrostatic, hydrophobic, and resonance terms
  */
 
-const { 
-  AMINO_ACID_PRIMES, 
-  getChargeFromPrime, 
-  getHydrophobicityFromPrime 
-} = require('./encoding');
+import { AMINO_ACID_PRIMES,
+  getChargeFromPrime,
+  getHydrophobicityFromPrime } from './encoding.js';
 
-// Import core modules with fallback
-let calculateResonance, findGoldenPairs, resonanceSignature, primeToFrequency, KuramotoModel;
+// Golden ratio constant
+const PHI = 1.618033988749895;
 
-try {
-  const core = require('../../core');
-  const physics = require('../../physics');
-  
-  calculateResonance = core.calculateResonance;
-  findGoldenPairs = core.findGoldenPairs;
-  resonanceSignature = core.resonanceSignature;
-  primeToFrequency = core.primeToFrequency;
-  KuramotoModel = physics.KuramotoModel;
-} catch (e) {
-  // Fallback implementations
-  const PHI = 1.618033988749895;
-  
-  calculateResonance = (p1, p2) => {
-    const ratio = Math.max(p1, p2) / Math.min(p1, p2);
-    return 1 / (1 + Math.abs(ratio - PHI));
-  };
-  
-  findGoldenPairs = (primes) => {
-    const pairs = [];
-    for (let i = 0; i < primes.length; i++) {
-      for (let j = i + 1; j < primes.length; j++) {
-        if (calculateResonance(primes[i], primes[j]) > 0.8) {
-          pairs.push([primes[i], primes[j]]);
-        }
+// Fallback implementations (used if core modules don't provide these)
+const fallbackCalculateResonance = (p1, p2) => {
+  const ratio = Math.max(p1, p2) / Math.min(p1, p2);
+  return 1 / (1 + Math.abs(ratio - PHI));
+};
+
+const fallbackFindGoldenPairs = (primes) => {
+  const pairs = [];
+  for (let i = 0; i < primes.length; i++) {
+    for (let j = i + 1; j < primes.length; j++) {
+      if (fallbackCalculateResonance(primes[i], primes[j]) > 0.8) {
+        pairs.push([primes[i], primes[j]]);
       }
     }
-    return pairs;
-  };
-  
-  resonanceSignature = (primes) => {
-    let sum = 0, count = 0;
-    for (let i = 0; i < primes.length; i++) {
-      for (let j = i + 1; j < primes.length; j++) {
-        sum += calculateResonance(primes[i], primes[j]);
-        count++;
-      }
+  }
+  return pairs;
+};
+
+const fallbackResonanceSignature = (primes) => {
+  let sum = 0, count = 0;
+  for (let i = 0; i < primes.length; i++) {
+    for (let j = i + 1; j < primes.length; j++) {
+      sum += fallbackCalculateResonance(primes[i], primes[j]);
+      count++;
     }
-    return { mean: sum / Math.max(count, 1), count };
-  };
-  
-  primeToFrequency = (p, base = 1, logScale = 10) => base + Math.log(p) / logScale;
-}
+  }
+  return { mean: sum / Math.max(count, 1), count };
+};
+
+const fallbackPrimeToFrequency = (p, base = 1, logScale = 10) => base + Math.log(p) / logScale;
+
+// Export calculation functions - fallbacks are used directly
+// Core module integration can be done by consumers if needed
+const calculateResonance = fallbackCalculateResonance;
+const findGoldenPairs = fallbackFindGoldenPairs;
+const resonanceSignature = fallbackResonanceSignature;
+const primeToFrequency = fallbackPrimeToFrequency;
 
 /**
  * BindingAffinityCalculator
@@ -496,8 +488,8 @@ class ProteinProteinDocker extends MolecularDocker {
   }
 }
 
-module.exports = {
-  BindingAffinityCalculator,
-  MolecularDocker,
-  ProteinProteinDocker
+export {
+    BindingAffinityCalculator,
+    MolecularDocker,
+    ProteinProteinDocker
 };

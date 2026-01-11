@@ -11,7 +11,7 @@
  * - Multiple backends (semantic, cryptographic, scientific)
  * 
  * @example
- * const { createEngine } = require('@aleph-ai/tinyaleph');
+ * import {  createEngine  } from '@aleph-ai/tinyaleph';
  * 
  * const engine = createEngine('semantic', config);
  * const result = engine.run('What is wisdom?');
@@ -20,4 +20,5 @@
  * @module @aleph-ai/tinyaleph
  */
 
-module.exports = require('./modular');
+export * from './modular.js';
+export { default } from './modular.js';

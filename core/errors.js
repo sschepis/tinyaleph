@@ -13,6 +13,7 @@
  */
 
 // Simple EventEmitter that works in both browser and Node.js
+
 class SimpleEventEmitter {
     constructor() {
         this._events = new Map();
@@ -561,26 +562,17 @@ function withTimeout(promise, timeout, operation = 'operation') {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Levels and categories
+export {
     LogLevel,
     LogLevelNames,
     ErrorCategory,
-    
-    // Error classes
     AlephError,
     NetworkError,
     LLMError,
     ValidationError,
     TimeoutError,
-    
-    // Event emitter (browser-compatible)
     SimpleEventEmitter,
-    
-    // Error handler
     ErrorHandler,
-    
-    // Utilities
     withErrorHandling,
     errorBoundary,
     withTimeout

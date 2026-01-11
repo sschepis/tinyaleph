@@ -2,13 +2,14 @@
  * Backends - exports all domain backends
  */
 
-const { Backend } = require('./interface');
-const { SemanticBackend } = require('./semantic');
-const { CryptographicBackend } = require('./cryptographic');
-const { ScientificBackend } = require('./scientific');
-const bioinformatics = require('./bioinformatics');
+import { Backend } from './interface.js';
+import SemanticBackend from './semantic/index.js';
+import CryptographicBackend from './cryptographic/index.js';
+import ScientificBackend from './scientific/index.js';
 
-module.exports = {
+import bioinformatics from './bioinformatics/index.js';
+
+export default {
   Backend,
   SemanticBackend,
   CryptographicBackend,

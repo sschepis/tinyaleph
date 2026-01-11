@@ -13,13 +13,14 @@
  * Enhanced with resonance attention from tinyaleph's rformer.
  */
 
-const { symbolDatabase, SymbolCategory } = require('./symbols');
-const { SparsePrimeState, resonanceScore, resonantAttention } = require('./rformer');
-const { ResonanceCalculator } = require('./resonance');
-
 // ═══════════════════════════════════════════════════════════════════
 // Inference Result Types
 // ═══════════════════════════════════════════════════════════════════
+
+import { Complex } from './hilbert.js';
+import { symbolDatabase, SymbolCategory } from './symbols.js';
+import { SparsePrimeState, resonanceScore, resonantAttention } from './rformer.js';
+import { ResonanceCalculator } from './resonance.js';
 
 const InferenceMethod = {
   DIRECT: 'direct',           // Exact match in database
@@ -315,7 +316,6 @@ class SemanticInference {
    * Convert a symbol to SparsePrimeState for resonance calculations
    */
   symbolToState(symbol) {
-    const { Complex } = require('./hilbert');
     const state = new SparsePrimeState(4096, 8);
     
     // Primary prime activation
@@ -584,7 +584,7 @@ class EntityExtractor {
 const defaultInference = new SemanticInference();
 const defaultExtractor = new EntityExtractor();
 
-module.exports = {
+export default {
   SemanticInference,
   EntityExtractor,
   InferenceMethod,

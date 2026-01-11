@@ -3,6 +3,7 @@
  */
 
 // Standard Fano plane lines (7 lines of 3 points each)
+
 const FANO_LINES = [
   [1, 2, 3],
   [1, 4, 5],
@@ -118,10 +119,10 @@ function buildMultiplicationTable(dim) {
   return table;
 }
 
-module.exports = { 
-  FANO_LINES, 
-  octonionMultiplyIndex, 
-  sedenionMultiplyIndex, 
-  multiplyIndices,
-  buildMultiplicationTable
+export {
+    FANO_LINES,
+    octonionMultiplyIndex,
+    sedenionMultiplyIndex,
+    multiplyIndices,
+    buildMultiplicationTable
 };

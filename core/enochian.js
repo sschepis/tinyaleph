@@ -21,7 +21,8 @@
  */
 
 // Import the comprehensive Enochian vocabulary system
-const EnochianVocabulary = require('./enochian-vocabulary');
+
+import EnochianVocabulary from './enochian-vocabulary.js';
 
 /**
  * Enochian prime alphabet (Section 7.4)
@@ -703,7 +704,7 @@ class EnhancedEnochianDecoder extends EnochianDecoder {
     }
 }
 
-module.exports = {
+export default {
     // Constants
     ENOCHIAN_PRIMES,
     MODES,

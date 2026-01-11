@@ -15,8 +15,6 @@
  * for robust symbolic packets with geometric validity gates.
  */
 
-const { isPrime, nthPrime, firstNPrimes } = require('./prime');
-
 // ============================================================================
 // ENOCHIAN ALPHABET (21 Letters)
 // ============================================================================
@@ -25,6 +23,8 @@ const { isPrime, nthPrime, firstNPrimes } = require('./prime');
  * The Enochian alphabet consists of 21 letters, each mapped to a prime number.
  * The mapping follows the original Dee/Kelley system with prime assignments.
  */
+import { isPrime, nthPrime, firstNPrimes } from './prime.js';
+
 const ENOCHIAN_ALPHABET = [
     { letter: 'A', name: 'Un', prime: 2, meaning: 'Beginning', phonetic: 'ah' },
     { letter: 'B', name: 'Pa', prime: 3, meaning: 'Father', phonetic: 'beh' },
@@ -874,37 +874,25 @@ class EnochianEngine {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Alphabet
+export {
     ENOCHIAN_ALPHABET,
     letterToPrime,
     primeToLetter,
     letterToData,
-    
-    // Prime Basis
     PRIME_BASIS,
     BASIS_MEANINGS,
-    
-    // Twist Operations
     TWIST_MODES,
     twistAngle,
     twistRadians,
     TwistOperator,
     validateTwistClosure,
-    
-    // Words
     EnochianWord,
     CORE_VOCABULARY,
     wordLookup,
-    
-    // Calls
     EnochianCall,
     THE_NINETEEN_CALLS,
-    
-    // Sedenions
     SedenionElement,
     sedenionMultTable,
-    
-    // Engine
     EnochianEngine
 };
+export default { ENOCHIAN_ALPHABET, letterToPrime, primeToLetter, letterToData, PRIME_BASIS, BASIS_MEANINGS, TWIST_MODES, twistAngle, twistRadians, TwistOperator, validateTwistClosure, EnochianWord, CORE_VOCABULARY, wordLookup, EnochianCall, THE_NINETEEN_CALLS, SedenionElement, sedenionMultTable, EnochianEngine };

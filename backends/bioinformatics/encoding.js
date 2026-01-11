@@ -20,6 +20,7 @@
  * - Pyrimidines (T, C): smaller primes (2, 3)
  * - Watson-Crick pairs have symmetric products: A-T=14, G-C=33
  */
+
 const NUCLEOTIDE_PRIMES = {
   'A': 7,   // Adenine (purine)
   'T': 2,   // Thymine (pyrimidine) - pairs with A
@@ -306,34 +307,25 @@ function getHydrophobicityFromPrime(prime) {
   return AMINO_ACID_PROPERTIES[aa]?.hydrophobicity || 0;
 }
 
-module.exports = {
-  // Nucleotide mappings
-  NUCLEOTIDE_PRIMES,
-  PRIME_TO_NUCLEOTIDE,
-  DNA_COMPLEMENTS,
-  PRIME_COMPLEMENTS,
-  
-  // Amino acid mappings
-  AMINO_ACID_PRIMES,
-  PRIME_TO_AMINO_ACID,
-  AMINO_ACID_PROPERTIES,
-  
-  // Codon functions
-  encodeCodon,
-  decodeCodon,
-  
-  // Sequence encoding/decoding
-  encodeDNA,
-  decodeDNA,
-  encodeRNA,
-  decodeRNA,
-  encodeProtein,
-  decodeProtein,
-  
-  // Utilities
-  detectSequenceType,
-  parseFASTA,
-  getAminoAcidProperties,
-  getChargeFromPrime,
-  getHydrophobicityFromPrime,
+export {
+    NUCLEOTIDE_PRIMES,
+    PRIME_TO_NUCLEOTIDE,
+    DNA_COMPLEMENTS,
+    PRIME_COMPLEMENTS,
+    AMINO_ACID_PRIMES,
+    PRIME_TO_AMINO_ACID,
+    AMINO_ACID_PROPERTIES,
+    encodeCodon,
+    decodeCodon,
+    encodeDNA,
+    decodeDNA,
+    encodeRNA,
+    decodeRNA,
+    encodeProtein,
+    decodeProtein,
+    detectSequenceType,
+    parseFASTA,
+    getAminoAcidProperties,
+    getChargeFromPrime,
+    getHydrophobicityFromPrime
 };

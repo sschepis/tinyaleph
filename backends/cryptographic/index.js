@@ -6,10 +6,11 @@
  * - Holographic Key Distribution
  * - Entropy-Sensitive Encryption
  */
-const { Backend } = require('../interface');
-const { Hypercomplex } = require('../../core/hypercomplex');
-const { GaussianInteger, primeToFrequency, isPrime, firstNPrimes, factorize } = require('../../core/prime');
-const { Complex, PrimeState } = require('../../core/hilbert');
+
+import { Backend } from '../interface.js';
+import { Hypercomplex } from '../../core/hypercomplex.js';
+import { GaussianInteger, primeToFrequency, isPrime, firstNPrimes, factorize } from '../../core/prime.js';
+import { Complex, PrimeState } from '../../core/hilbert.js';
 
 class CryptographicBackend extends Backend {
   constructor(config) {
@@ -641,9 +642,9 @@ class HolographicKeyDistributor {
   }
 }
 
-module.exports = {
-  CryptographicBackend,
-  PrimeStateKeyGenerator,
-  EntropySensitiveEncryptor,
-  HolographicKeyDistributor
+export {
+    CryptographicBackend,
+    PrimeStateKeyGenerator,
+    EntropySensitiveEncryptor,
+    HolographicKeyDistributor
 };

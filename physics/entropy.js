@@ -77,12 +77,12 @@ function oscillatorEntropy(bank) {
   return shannonEntropy(probs);
 }
 
-module.exports = { 
-  shannonEntropy, 
-  stateEntropy, 
-  coherence, 
-  mutualInformation,
-  relativeEntropy,
-  jointEntropy,
-  oscillatorEntropy
+export {
+    shannonEntropy,
+    stateEntropy,
+    coherence,
+    mutualInformation,
+    relativeEntropy,
+    jointEntropy,
+    oscillatorEntropy
 };

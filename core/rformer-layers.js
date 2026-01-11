@@ -14,17 +14,15 @@
 
 'use strict';
 
-const {
-  Quaternion,
+import { Complex, PrimeState } from './hilbert.js';
+import { firstNPrimes, nthPrime, isPrime } from './prime.js';
+
+import {  Quaternion,
   SparsePrimeState,
   resonanceScore,
   resonantAttention,
   hamiltonCompose,
-  computeCoherence
-} = require('./rformer');
-
-const { Complex, PrimeState } = require('./hilbert');
-const { firstNPrimes, nthPrime, isPrime } = require('./prime');
+  computeCoherence  } from './rformer.js';
 
 /**
  * ResonantMultiHeadAttention
@@ -801,11 +799,11 @@ class ResoFormer {
   }
 }
 
-module.exports = {
-  ResonantMultiHeadAttention,
-  PrimeFFN,
-  PrimeLayerNorm,
-  PositionalPrimeEncoding,
-  ResoFormerBlock,
-  ResoFormer
+export {
+    ResonantMultiHeadAttention,
+    PrimeFFN,
+    PrimeLayerNorm,
+    PositionalPrimeEncoding,
+    ResoFormerBlock,
+    ResoFormer
 };

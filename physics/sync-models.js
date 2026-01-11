@@ -9,9 +9,6 @@
  * - MultiSystemCoupling: Cross-system synchronization
  */
 
-const { KuramotoModel } = require('./kuramoto');
-const { OscillatorBank } = require('./oscillator');
-
 /**
  * NetworkKuramoto - Topology-Aware Coupling
  * 
@@ -20,6 +17,9 @@ const { OscillatorBank } = require('./oscillator');
  * 
  * Enables modular synchronization respecting semantic neighborhoods.
  */
+import { KuramotoModel } from './kuramoto.js';
+import { OscillatorBank } from './oscillator.js';
+
 class NetworkKuramoto extends KuramotoModel {
   /**
    * @param {number[]} frequencies - Natural frequencies
@@ -756,15 +756,12 @@ function createPeerCoupling(frequencies, numPeers = 3, strength = 0.15) {
   return new MultiSystemCoupling(systems, G);
 }
 
-module.exports = {
-  // Core extended models
-  NetworkKuramoto,
-  AdaptiveKuramoto,
-  SakaguchiKuramoto,
-  SmallWorldKuramoto,
-  MultiSystemCoupling,
-  
-  // Factory functions
-  createHierarchicalCoupling,
-  createPeerCoupling
+export {
+    NetworkKuramoto,
+    AdaptiveKuramoto,
+    SakaguchiKuramoto,
+    SmallWorldKuramoto,
+    MultiSystemCoupling,
+    createHierarchicalCoupling,
+    createPeerCoupling
 };

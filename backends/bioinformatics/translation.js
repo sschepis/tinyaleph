@@ -8,15 +8,15 @@
  * (64 codons → 21 amino acids = significant information compression)
  */
 
-const { NUCLEOTIDE_PRIMES, AMINO_ACID_PRIMES, PRIME_TO_NUCLEOTIDE } = require('./encoding');
-const { STANDARD_GENETIC_CODE, isStartCodon, isStopCodon, translateCodon } = require('./genetic-code');
-
 /**
  * TranslationOperator
  * 
  * Transforms RNA prime sequences to protein prime sequences.
  * Models ribosome-mediated translation.
  */
+import { NUCLEOTIDE_PRIMES, AMINO_ACID_PRIMES, PRIME_TO_NUCLEOTIDE } from './encoding.js';
+import { STANDARD_GENETIC_CODE, isStartCodon, isStopCodon, translateCodon } from './genetic-code.js';
+
 class TranslationOperator {
   constructor(geneticCode = STANDARD_GENETIC_CODE) {
     this.geneticCode = geneticCode;
@@ -261,4 +261,6 @@ class TranslationOperator {
   }
 }
 
-module.exports = { TranslationOperator };
+export {
+    TranslationOperator
+};

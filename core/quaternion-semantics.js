@@ -16,8 +16,6 @@
  * not from predetermined labels.
  */
 
-const { isPrime, twistAngle, nthPrime } = require('./prime');
-
 // ============================================================================
 // AXIS MAPPING STRATEGIES
 // ============================================================================
@@ -25,6 +23,8 @@ const { isPrime, twistAngle, nthPrime } = require('./prime');
 /**
  * Golden ratio for axis distribution
  */
+import { isPrime, twistAngle, nthPrime } from './prime.js';
+
 const PHI = (1 + Math.sqrt(5)) / 2;
 
 /**
@@ -589,7 +589,7 @@ function analyzePrimeFamily(primes) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export default {
     // Axis mapping strategies
     AxisMapper,
     ModularAxisMapper,

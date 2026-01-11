@@ -10,7 +10,7 @@
  * Fallback emoji equivalents are provided where possible.
  */
 
-const { SymbolCategory } = require('./base');
+import { SymbolCategory } from './base.js';
 
 const egyptianHieroglyphs = [
   // ═══════════════════════════════════════════════════════════════════
@@ -298,6 +298,6 @@ const egyptianHieroglyphs = [
   }
 ];
 
-module.exports = {
-  egyptianHieroglyphs
+export {
+    egyptianHieroglyphs
 };

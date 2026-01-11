@@ -13,12 +13,12 @@
 
 'use strict';
 
-const { KuramotoModel } = require('./kuramoto');
-
 /**
  * Box-Muller transform for Gaussian random numbers
  * @returns {number} Standard normal random variable
  */
+import { KuramotoModel } from './kuramoto.js';
+
 function gaussianRandom() {
   const u1 = Math.random();
   const u2 = Math.random();
@@ -558,9 +558,9 @@ class ThermalKuramoto extends StochasticKuramoto {
   }
 }
 
-module.exports = {
-  StochasticKuramoto,
-  ColoredNoiseKuramoto,
-  ThermalKuramoto,
-  gaussianRandom
+export {
+    StochasticKuramoto,
+    ColoredNoiseKuramoto,
+    ThermalKuramoto,
+    gaussianRandom
 };

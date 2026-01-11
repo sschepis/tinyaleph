@@ -14,9 +14,6 @@
  * - Prime Resonant Graph Database
  */
 
-const { firstNPrimes, isPrime, factorize } = require('./prime');
-const { Complex, PrimeState } = require('./hilbert');
-
 // ============================================================================
 // QUATERNION ALGEBRA
 // ============================================================================
@@ -25,6 +22,9 @@ const { Complex, PrimeState } = require('./hilbert');
  * Full Quaternion class for H_Q representation
  * q = w + xi + yj + zk (Hamilton quaternion)
  */
+import { firstNPrimes, isPrime, factorize } from './prime.js';
+import { Complex, PrimeState } from './hilbert.js';
+
 class Quaternion {
   constructor(w = 1, x = 0, y = 0, z = 0) {
     this.w = w;  // scalar part
@@ -774,33 +774,18 @@ function applyResonanceOperator(state, n) {
   return result;
 }
 
-module.exports = {
-  // Quaternion
-  Quaternion,
-  
-  // Sparse Prime State
-  SparsePrimeState,
-  
-  // Attention
-  resonanceScore,
-  resonantAttention,
-  
-  // Composition
-  hamiltonCompose,
-  measureNonCommutativity,
-  
-  // Halting
-  computeCoherence,
-  haltingDecision,
-  coherenceGatedCompute,
-  
-  // Collapse
-  EntropyCollapseHead,
-  generateAttractorCodebook,
-  
-  // Memory
-  PRGraphMemory,
-  
-  // Operators
-  applyResonanceOperator
+export {
+    Quaternion,
+    SparsePrimeState,
+    resonanceScore,
+    resonantAttention,
+    hamiltonCompose,
+    measureNonCommutativity,
+    computeCoherence,
+    haltingDecision,
+    coherenceGatedCompute,
+    EntropyCollapseHead,
+    generateAttractorCodebook,
+    PRGraphMemory,
+    applyResonanceOperator
 };

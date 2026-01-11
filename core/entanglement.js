@@ -18,11 +18,12 @@
 
 'use strict';
 
-const { isPrime, firstNPrimes } = require('./prime');
-
 /**
  * Edge data for entanglement between two primes
  */
+import { NetworkKuramoto } from '../physics/sync-models.js';
+import { isPrime, firstNPrimes } from './prime.js';
+
 class EntanglementEdge {
   constructor(source, target) {
     this.source = source;
@@ -506,7 +507,6 @@ class PrimeEntanglementGraph {
    */
   toNetworkKuramoto(frequencies, coupling = 0.3) {
     // Import dynamically to avoid circular dependency
-    const { NetworkKuramoto } = require('../physics/sync-models');
     
     const primeOrder = Array.from(this.primes).sort((a, b) => a - b);
     const adjacency = this.toAdjacencyMatrix(primeOrder);
@@ -705,8 +705,8 @@ function createEntanglementGraph(config = {}) {
   });
 }
 
-module.exports = {
-  EntanglementEdge,
-  PrimeEntanglementGraph,
-  createEntanglementGraph
+export {
+    EntanglementEdge,
+    PrimeEntanglementGraph,
+    createEntanglementGraph
 };

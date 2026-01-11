@@ -18,35 +18,29 @@
 
 'use strict';
 
-const {
-  Quaternion,
+import { Complex, PrimeState } from './hilbert.js';
+import { firstNPrimes, isPrime } from './prime.js';
+
+import {  Quaternion,
   SparsePrimeState,
   resonanceScore,
   resonantAttention,
   hamiltonCompose,
-  computeCoherence
-} = require('./rformer');
+  computeCoherence  } from './rformer.js';
 
-const {
-  ResonantMultiHeadAttention,
+import {  ResonantMultiHeadAttention,
   PrimeFFN,
   PrimeLayerNorm,
   PositionalPrimeEncoding,
-  ResoFormerBlock
-} = require('./rformer-layers');
+  ResoFormerBlock  } from './rformer-layers.js';
 
-const {
-  CRTReconstructor,
+import {  CRTReconstructor,
   BirkhoffProjector,
   HomologyLoss,
   CRTModularLayer,
   CRTFusedAttention,
   CoprimeSelector,
-  ResidueEncoder
-} = require('./crt-homology');
-
-const { Complex, PrimeState } = require('./hilbert');
-const { firstNPrimes, isPrime } = require('./prime');
+  ResidueEncoder  } from './crt-homology.js';
 
 /**
  * CRTResonantAttention - Multi-head attention with CRT-fused modular structure
@@ -876,17 +870,9 @@ function createCRTResoFormer(config = {}) {
   });
 }
 
-module.exports = {
-  // CRT-enhanced attention
-  CRTResonantAttention,
-  
-  // Homology-regularized block
-  HomologyRegularizedBlock,
-  
-  // Complete model
-  CRTResoFormer,
-  
-  // Factory function
-  createCRTResoFormer
+export {
+    CRTResonantAttention,
+    HomologyRegularizedBlock,
+    CRTResoFormer,
+    createCRTResoFormer
 };
-    

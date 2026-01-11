@@ -12,6 +12,7 @@
  */
 
 // Golden ratio constant
+
 const PHI = 1.618033988749895;
 const PHI_THRESHOLD = 0.1;  // How close to φ counts as "golden"
 const PHI_BONUS = 0.3;      // Bonus for golden ratio relationships
@@ -309,7 +310,7 @@ function findFibonacciSequences(primes, minLength = 3) {
 // Singleton instance for convenience
 const defaultCalculator = new ResonanceCalculator();
 
-module.exports = {
+export default {
   ResonanceCalculator,
   resonanceSignature,
   findFibonacciSequences,

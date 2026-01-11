@@ -15,12 +15,10 @@
  * - Qian & Winfree (2011) - Seesaw gates
  */
 
-const { 
-  NUCLEOTIDE_PRIMES, 
+import {  NUCLEOTIDE_PRIMES, 
   PRIME_COMPLEMENTS, 
   encodeDNA, 
-  decodeDNA 
-} = require('./encoding');
+  decodeDNA  } from './encoding.js';
 
 // ============================================================================
 // DNA Strand Representation
@@ -642,23 +640,16 @@ class SeesawGate {
   }
 }
 
-module.exports = {
-  // Strand classes
-  DNAStrand,
-  DNADuplex,
-  
-  // Logic gates
-  ANDGate,
-  ORGate,
-  NOTGate,
-  NANDGate,
-  SeesawGate,
-  
-  // Reactions
-  StrandDisplacementReaction,
-  
-  // Circuits
-  DNACircuit,
-  createHalfAdder,
-  createFullAdder,
+export {
+    DNAStrand,
+    DNADuplex,
+    ANDGate,
+    ORGate,
+    NOTGate,
+    NANDGate,
+    SeesawGate,
+    StrandDisplacementReaction,
+    DNACircuit,
+    createHalfAdder,
+    createFullAdder
 };

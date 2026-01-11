@@ -14,9 +14,6 @@
  * Ported from symprime's CompoundBuilder system.
  */
 
-const { symbolDatabase, SymbolCategory } = require('./symbols');
-const { ResonanceCalculator } = require('./resonance');
-
 // ═══════════════════════════════════════════════════════════════════
 // Compound Symbol Type
 // ═══════════════════════════════════════════════════════════════════
@@ -25,6 +22,9 @@ const { ResonanceCalculator } = require('./resonance');
  * A compound symbol is a combination of multiple base symbols
  * with a unified meaning and cultural context.
  */
+import { symbolDatabase, SymbolCategory } from './symbols.js';
+import { ResonanceCalculator } from './resonance.js';
+
 class CompoundSymbol {
   constructor(id, components, meaning, culturalTags = []) {
     this.id = id;
@@ -514,7 +514,7 @@ class CompoundBuilder {
 // Singleton instance
 const defaultBuilder = new CompoundBuilder();
 
-module.exports = {
+export default {
   CompoundBuilder,
   CompoundSymbol,
   SymbolSequence,

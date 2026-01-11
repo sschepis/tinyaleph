@@ -2,146 +2,114 @@
  * Physics engine - exports all physics modules
  */
 
-const { Oscillator, OscillatorBank } = require('./oscillator');
-const { KuramotoModel } = require('./kuramoto');
-const {
-  shannonEntropy,
+import { Oscillator, OscillatorBank } from './oscillator.js';
+import { KuramotoModel } from './kuramoto.js';
+
+import {  shannonEntropy,
   stateEntropy,
   coherence,
   mutualInformation,
   relativeEntropy,
   jointEntropy,
-  oscillatorEntropy
-} = require('./entropy');
-const {
-  estimateLyapunov,
+  oscillatorEntropy  } from './entropy.js';
+import {  estimateLyapunov,
   classifyStability,
   adaptiveCoupling,
   localLyapunov,
   delayEmbedding,
-  stabilityMargin
-} = require('./lyapunov');
-const {
-  collapseProbability,
+  stabilityMargin  } from './lyapunov.js';
+import {  collapseProbability,
   shouldCollapse,
   measureState,
   collapseToIndex,
   bornMeasurement,
   partialCollapse,
-  applyDecoherence
-} = require('./collapse');
+  applyDecoherence  } from './collapse.js';
 
 // Extended synchronization models
-const {
-  NetworkKuramoto,
+import {  NetworkKuramoto,
   AdaptiveKuramoto,
   SakaguchiKuramoto,
   SmallWorldKuramoto,
   MultiSystemCoupling,
   createHierarchicalCoupling,
-  createPeerCoupling
-} = require('./sync-models');
+  createPeerCoupling  } from './sync-models.js';
 
 // Stochastic Kuramoto models
-const {
-  StochasticKuramoto,
+import {  StochasticKuramoto,
   ColoredNoiseKuramoto,
   ThermalKuramoto,
-  gaussianRandom
-} = require('./stochastic-kuramoto');
+  gaussianRandom  } from './stochastic-kuramoto.js';
 
 // Primeon Z-Ladder with canonical U evolution
-const {
-  PrimeonZLadderU,
+import {  PrimeonZLadderU,
   createPrimeonLadder,
   shannonEntropyNats,
   probsOf,
-  normalize: normalizeComplex,
-  C: Complex
-} = require('./primeon_z_ladder_u');
+  normalize as normalizeComplex,
+  C as Complex  } from './primeon_z_ladder_u.js';
 
 // Multi-channel Primeon Z-Ladder
-const {
-  ZChannel,
+import {  ZChannel,
   PrimeonZLadderMulti,
   createMultiChannelLadder,
-  createAdiabaticSchedule
-} = require('./primeon_z_ladder_multi');
+  createAdiabaticSchedule  } from './primeon_z_ladder_multi.js';
 
 // Kuramoto-coupled ladder (hybrid quantum + oscillator dynamics)
-const {
-  KuramotoCoupledLadder,
+import {  KuramotoCoupledLadder,
   createKuramotoLadder,
   runCollapsePressureExperiment,
   kuramotoOrderParameter,
-  getPhase
-} = require('./kuramoto-coupled-ladder');
+  getPhase  } from './kuramoto-coupled-ladder.js';
 
-module.exports = {
-  // Oscillators
-  Oscillator,
-  OscillatorBank,
-  KuramotoModel,
-  
-  // Extended synchronization models
-  NetworkKuramoto,
-  AdaptiveKuramoto,
-  SakaguchiKuramoto,
-  SmallWorldKuramoto,
-  MultiSystemCoupling,
-  createHierarchicalCoupling,
-  createPeerCoupling,
-  
-  // Stochastic Kuramoto models
-  StochasticKuramoto,
-  ColoredNoiseKuramoto,
-  ThermalKuramoto,
-  gaussianRandom,
-  
-  // Primeon Z-Ladder (canonical U evolution)
-  PrimeonZLadderU,
-  createPrimeonLadder,
-  shannonEntropyNats,
-  probsOf,
-  normalizeComplex,
-  Complex,
-  
-  // Multi-channel Primeon Z-Ladder
-  ZChannel,
-  PrimeonZLadderMulti,
-  createMultiChannelLadder,
-  createAdiabaticSchedule,
-  
-  // Kuramoto-coupled ladder (hybrid model)
-  KuramotoCoupledLadder,
-  createKuramotoLadder,
-  runCollapsePressureExperiment,
-  kuramotoOrderParameter,
-  getPhase,
-  
-  // Entropy & Information
-  shannonEntropy,
-  stateEntropy,
-  coherence,
-  mutualInformation,
-  relativeEntropy,
-  jointEntropy,
-  oscillatorEntropy,
-  
-  // Lyapunov stability
-  estimateLyapunov,
-  classifyStability,
-  adaptiveCoupling,
-  localLyapunov,
-  delayEmbedding,
-  stabilityMargin,
-  
-  // State collapse
-  collapseProbability,
-  shouldCollapse,
-  measureState,
-  collapseToIndex,
-  bornMeasurement,
-  partialCollapse,
-  applyDecoherence
+export {
+    Oscillator,
+    OscillatorBank,
+    KuramotoModel,
+    NetworkKuramoto,
+    AdaptiveKuramoto,
+    SakaguchiKuramoto,
+    SmallWorldKuramoto,
+    MultiSystemCoupling,
+    createHierarchicalCoupling,
+    createPeerCoupling,
+    StochasticKuramoto,
+    ColoredNoiseKuramoto,
+    ThermalKuramoto,
+    gaussianRandom,
+    PrimeonZLadderU,
+    createPrimeonLadder,
+    shannonEntropyNats,
+    probsOf,
+    normalizeComplex,
+    Complex,
+    ZChannel,
+    PrimeonZLadderMulti,
+    createMultiChannelLadder,
+    createAdiabaticSchedule,
+    KuramotoCoupledLadder,
+    createKuramotoLadder,
+    runCollapsePressureExperiment,
+    kuramotoOrderParameter,
+    getPhase,
+    shannonEntropy,
+    stateEntropy,
+    coherence,
+    mutualInformation,
+    relativeEntropy,
+    jointEntropy,
+    oscillatorEntropy,
+    estimateLyapunov,
+    classifyStability,
+    adaptiveCoupling,
+    localLyapunov,
+    delayEmbedding,
+    stabilityMargin,
+    collapseProbability,
+    shouldCollapse,
+    measureState,
+    collapseToIndex,
+    bornMeasurement,
+    partialCollapse,
+    applyDecoherence
 };

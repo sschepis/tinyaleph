@@ -13,6 +13,7 @@
  * Standard (universal) genetic code
  * Maps RNA codons to single-letter amino acid codes
  */
+
 const STANDARD_GENETIC_CODE = {
   // UUX codons
   'UUU': 'F', 'UUC': 'F',  // Phenylalanine
@@ -245,25 +246,20 @@ function classifyMutation(originalCodon, mutatedCodon, geneticCode = STANDARD_GE
   return 'missense';
 }
 
-module.exports = {
-  // Genetic codes
-  STANDARD_GENETIC_CODE,
-  VERTEBRATE_MITOCHONDRIAL_CODE,
-  YEAST_MITOCHONDRIAL_CODE,
-  
-  // Codon lists
-  START_CODONS,
-  STOP_CODONS,
-  CODON_USAGE_ECOLI,
-  
-  // Functions
-  translateCodon,
-  getCodonsForAminoAcid,
-  getCodonDegeneracy,
-  isStartCodon,
-  isStopCodon,
-  calculateGCContent,
-  calculateCAI,
-  getSynonymousCodons,
-  classifyMutation,
+export {
+    STANDARD_GENETIC_CODE,
+    VERTEBRATE_MITOCHONDRIAL_CODE,
+    YEAST_MITOCHONDRIAL_CODE,
+    START_CODONS,
+    STOP_CODONS,
+    CODON_USAGE_ECOLI,
+    translateCodon,
+    getCodonsForAminoAcid,
+    getCodonDegeneracy,
+    isStartCodon,
+    isStopCodon,
+    calculateGCContent,
+    calculateCAI,
+    getSynonymousCodons,
+    classifyMutation
 };

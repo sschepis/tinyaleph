@@ -12,18 +12,18 @@
  * - DNA computing (logic gates, strand displacement)
  */
 
-const { Backend } = require('../interface');
-const { Hypercomplex } = require('../../core/hypercomplex');
-const { primeToFrequency } = require('../../core/prime');
-
 // Import all submodules
-const encoding = require('./encoding');
-const geneticCode = require('./genetic-code');
-const { TranscriptionOperator } = require('./transcription');
-const { TranslationOperator } = require('./translation');
-const { FoldingTransform } = require('./folding');
-const dnaComputing = require('./dna-computing');
-const binding = require('./binding');
+import { Backend } from '../interface.js';
+import { Hypercomplex } from '../../core/hypercomplex.js';
+import { primeToFrequency } from '../../core/prime.js';
+import { TranscriptionOperator } from './transcription.js';
+import { TranslationOperator } from './translation.js';
+import { FoldingTransform } from './folding.js';
+
+import encoding from './encoding.js';
+import geneticCode from './genetic-code.js';
+import dnaComputing from './dna-computing.js';
+import binding from './binding.js';
 
 /**
  * BioinformaticsBackend
@@ -487,7 +487,7 @@ class BioinformaticsBackend extends Backend {
 }
 
 // Export everything
-module.exports = {
+export default {
   // Main backend
   BioinformaticsBackend,
   

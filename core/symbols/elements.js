@@ -7,7 +7,7 @@
  * human symbolic expression.
  */
 
-const { SymbolCategory } = require('./base');
+import { SymbolCategory } from './base.js';
 
 const elementSymbols = [
   // ═══════════════════════════════════════════════════════════════════
@@ -478,7 +478,7 @@ const abstractSymbols = [
   }
 ];
 
-module.exports = {
+export default {
   elementSymbols,
   placeSymbols,
   objectSymbols,

@@ -13,19 +13,21 @@
  * State space: H_Q = H_P ⊗ ℍ (Prime Hilbert space ⊗ Quaternions)
  */
 
-let tf;
-try {
-  tf = require('@tensorflow/tfjs-node');
-} catch (e) {
-  try {
-    tf = require('@tensorflow/tfjs');
-  } catch (e2) {
-    console.warn('TensorFlow.js not available. Install with: npm install @tensorflow/tfjs-node');
-    tf = null;
-  }
-}
+import { firstNPrimes } from './prime.js';
 
-const { firstNPrimes } = require('./prime');
+let tf = null;
+try {
+    const mod = await import('@tensorflow/tfjs-node');
+    tf = mod.default || mod;
+} catch (e) {
+    try {
+        const mod = await import('@tensorflow/tfjs');
+        tf = mod.default || mod;
+    } catch (e2) {
+        console.warn('tf not available');
+        tf = null;
+    }
+}
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -1050,37 +1052,26 @@ async function trainStep(model, optimizer, xBatch, yBatch) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-  // Utility functions
-  getPrimeLookup,
-  getPrimeLogFrequencies,
-  
-  // Quaternion operations
-  quaternionMul,
-  quaternionConj,
-  quaternionNorm2,
-  quaternionNormalize,
-  
-  // Custom layers
-  QuaternionDense,
-  SparsePrimeEmbedding,
-  ResonantAttention,
-  HamiltonCompose,
-  CoherenceGating,
-  EntropyCollapse,
-  ResonanceOperator,
-  ResoFormerBlock,
-  
-  // Model builders
-  createResoFormerModel,
-  createResoFormerClassifier,
-  createResoFormerEmbedder,
-  
-  // Training utilities
-  resoFormerLoss,
-  createOptimizer,
-  trainStep,
-  
-  // TensorFlow reference (for users who need it)
-  tf
+export {
+    getPrimeLookup,
+    getPrimeLogFrequencies,
+    quaternionMul,
+    quaternionConj,
+    quaternionNorm2,
+    quaternionNormalize,
+    QuaternionDense,
+    SparsePrimeEmbedding,
+    ResonantAttention,
+    HamiltonCompose,
+    CoherenceGating,
+    EntropyCollapse,
+    ResonanceOperator,
+    ResoFormerBlock,
+    createResoFormerModel,
+    createResoFormerClassifier,
+    createResoFormerEmbedder,
+    resoFormerLoss,
+    createOptimizer,
+    trainStep,
+    tf
 };

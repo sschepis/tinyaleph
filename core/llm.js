@@ -129,4 +129,4 @@ async function ping() {
  */
 const getConfig = () => ({ baseUrl: _baseUrl, model: _model });
 
-module.exports = { chat, complete, ask, configure, ping, getConfig };
+export default { chat, complete, ask, configure, ping, getConfig };

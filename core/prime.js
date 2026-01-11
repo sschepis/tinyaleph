@@ -3,6 +3,7 @@
  */
 
 // Prime generation
+
 function* primeGenerator(start = 2) {
   let n = start;
   while (true) {
@@ -304,7 +305,31 @@ function findClosingPrimes(currentPrimes, epsilon = 1.0) {
     return candidates.sort((a, b) => a.error - b.error);
 }
 
-module.exports = {
+// Named exports for ESM
+export {
+  primeGenerator,
+  nthPrime,
+  primesUpTo,
+  isPrime,
+  factorize,
+  primeSignature,
+  firstNPrimes,
+  GaussianInteger,
+  EisensteinInteger,
+  primeToFrequency,
+  primeToAngle,
+  sumOfTwoSquares,
+  DEFAULT_PRIMES,
+  // 108 Invariant exports
+  TWIST_108,
+  twistAngle,
+  totalTwist,
+  isTwistClosed,
+  findClosingPrimes
+};
+
+// Default export for backwards compatibility
+export default {
   primeGenerator, nthPrime, primesUpTo, isPrime,
   factorize, primeSignature, firstNPrimes,
   GaussianInteger, EisensteinInteger,

@@ -9,7 +9,7 @@
  * Dimension 32: Pathions (further structure loss)
  */
 
-const { multiplyIndices } = require('./fano');
+import { multiplyIndices } from './fano.js';
 
 class Hypercomplex {
   constructor(dim, components = null) {
@@ -638,4 +638,6 @@ class Hypercomplex {
   }
 }
 
-module.exports = { Hypercomplex };
+export {
+    Hypercomplex
+};

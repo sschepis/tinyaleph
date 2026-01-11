@@ -6,7 +6,7 @@
  * symbolic meaning from Kabbalistic, astrological, and esoteric traditions.
  */
 
-const { SymbolCategory } = require('./base');
+import { SymbolCategory } from './base.js';
 
 const tarotMajorArcana = [
   // ═══════════════════════════════════════════════════════════════════
@@ -204,7 +204,7 @@ const tarotMinorSuits = [
   }
 ];
 
-module.exports = {
+export default {
   tarotMajorArcana,
   tarotMinorSuits,
   tarotSymbols: [...tarotMajorArcana, ...tarotMinorSuits]

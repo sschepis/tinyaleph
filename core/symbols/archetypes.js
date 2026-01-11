@@ -7,7 +7,7 @@
  * cultural, and symbolic meanings.
  */
 
-const { SymbolCategory } = require('./base');
+import { SymbolCategory } from './base.js';
 
 const archetypeSymbols = [
   // ═══════════════════════════════════════════════════════════════════
@@ -473,6 +473,6 @@ const archetypeSymbols = [
   }
 ];
 
-module.exports = {
-  archetypeSymbols
+export {
+    archetypeSymbols
 };

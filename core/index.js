@@ -2,11 +2,10 @@
  * Core mathematical foundation - exports all core modules
  */
 
-const { Hypercomplex } = require('./hypercomplex');
-
 // CRT-Homology Module (Chinese Remainder Theorem + Birkhoff Attention + Homology Loss)
-const {
-  extendedGCD,
+import { Hypercomplex } from './hypercomplex.js';
+
+import {  extendedGCD,
   modInverse,
   areCoprime,
   softmax,
@@ -21,59 +20,47 @@ const {
   createFusedAttention,
   DEFAULT_PRIMES_SMALL,
   DEFAULT_PRIMES_MEDIUM,
-  DEFAULT_PRIMES_SEMANTIC
-} = require('./crt-homology');
+  DEFAULT_PRIMES_SEMANTIC  } from './crt-homology.js';
 
 // Formal Type System (mtspbc.pdf implementation)
-const {
-  NounType, AdjType, SentenceType,
+import {  NounType, AdjType, SentenceType,
   NounTerm, AdjTerm, ChainTerm, FusionTerm,
   NounSentence, SeqSentence, ImplSentence,
   TypingContext, TypingJudgment, TypeChecker,
-  N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL
-} = require('./types');
+  N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL  } from './types.js';
 
 // Reduction Semantics (ncpsc.pdf implementation)
-const {
-  PrimeOperator, NextPrimeOperator, ModularPrimeOperator,
+import {  PrimeOperator, NextPrimeOperator, ModularPrimeOperator,
   ResonancePrimeOperator, IdentityPrimeOperator, DEFAULT_OPERATOR,
   ReductionStep, ReductionTrace, ReductionSystem,
   isNormalForm, isReducible, termSize,
   FusionCanonicalizer, NormalFormVerifier,
-  demonstrateStrongNormalization, testLocalConfluence
-} = require('./reduction');
+  demonstrateStrongNormalization, testLocalConfluence  } from './reduction.js';
 
 // Lambda Calculus Translation (Section 4 from mtspbc.pdf)
-const {
-  LambdaExpr, VarExpr, ConstExpr, LamExpr, AppExpr,
+import {  LambdaExpr, VarExpr, ConstExpr, LamExpr, AppExpr,
   PairExpr, ImplExpr, PrimOpExpr,
   Translator, TypeDirectedTranslator,
-  LambdaEvaluator, Semantics, ConceptInterpreter
-} = require('./lambda');
+  LambdaEvaluator, Semantics, ConceptInterpreter  } from './lambda.js';
 
 // Enochian Packet Layer (Section 7.4)
-const enochian = require('./enochian');
-const enochianVocabulary = require('./enochian-vocabulary');
+import enochian from './enochian.js';
+import enochianVocabulary from './enochian-vocabulary.js';
 
-const {
-  FANO_LINES,
+import {  FANO_LINES,
   octonionMultiplyIndex,
   sedenionMultiplyIndex,
   multiplyIndices,
-  buildMultiplicationTable
-} = require('./fano');
-const {
-  primeGenerator, nthPrime, primesUpTo, isPrime,
+  buildMultiplicationTable  } from './fano.js';
+import {  primeGenerator, nthPrime, primesUpTo, isPrime,
   factorize, primeSignature, firstNPrimes,
   GaussianInteger, EisensteinInteger,
   primeToFrequency, primeToAngle, sumOfTwoSquares,
-  DEFAULT_PRIMES
-} = require('./prime');
-const LLM = require('./llm');
+  DEFAULT_PRIMES  } from './prime.js';
+import LLM from './llm.js';
 
 // Prime Hilbert Space (complex amplitudes, quantum-like)
-const {
-  Complex,
+import {  Complex,
   PrimeState,
   ResonanceOperators,
   EntropyDrivenEvolution,
@@ -85,12 +72,10 @@ const {
   HolographicField,
   EntangledNode,
   ResonantFragment,
-  DELTA_S
-} = require('./hilbert');
+  DELTA_S  } from './hilbert.js';
 
 // Golden Ratio Resonance (from symprime symbolic AI)
-const {
-  ResonanceCalculator,
+import {  ResonanceCalculator,
   resonanceSignature,
   findFibonacciSequences,
   PHI,
@@ -98,25 +83,21 @@ const {
   PHI_BONUS,
   calculateResonance,
   findGoldenPairs,
-  findMostResonant
-} = require('./resonance');
+  findMostResonant  } from './resonance.js';
 
 // Symbol Database (200+ emoji symbols from symprime)
-const {
-  SymbolDatabase,
+import {  SymbolDatabase,
   SymbolCategory,
   PrimeGenerator,
   symbolDatabase,
   getSymbol,
   getSymbolByPrime,
-  search: searchSymbols,
-  encode: encodeSymbols,
-  decode: decodeSymbols
-} = require('./symbols');
+  search as searchSymbols,
+  encode as encodeSymbols,
+  decode as decodeSymbols  } from './symbols/index.js';
 
 // Semantic Inference Engine (from symprime)
-const {
-  SemanticInference,
+import {  SemanticInference,
   EntityExtractor,
   InferenceMethod,
   semanticInference,
@@ -126,12 +107,10 @@ const {
   extractEntities,
   extractAndInfer,
   inferWithResonance,
-  inferMostResonant
-} = require('./inference');
+  inferMostResonant  } from './inference.js';
 
 // Compound Builder (multi-symbol concepts from symprime)
-const {
-  CompoundBuilder,
+import {  CompoundBuilder,
   CompoundSymbol,
   SymbolSequence,
   compoundBuilder,
@@ -139,12 +118,10 @@ const {
   getCompound,
   createSequence,
   getSequence,
-  findCompoundsContaining
-} = require('./compound');
+  findCompoundsContaining  } from './compound.js';
 
 // ResoFormer ML primitives
-const {
-  Quaternion,
+import {  Quaternion,
   SparsePrimeState,
   resonanceScore,
   resonantAttention,
@@ -156,52 +133,40 @@ const {
   EntropyCollapseHead,
   generateAttractorCodebook,
   PRGraphMemory,
-  applyResonanceOperator
-} = require('./rformer');
+  applyResonanceOperator  } from './rformer.js';
 
 // ResoFormer complete layers
-const {
-  ResonantMultiHeadAttention,
+import {  ResonantMultiHeadAttention,
   PrimeFFN,
   PrimeLayerNorm,
   PositionalPrimeEncoding,
   ResoFormerBlock,
-  ResoFormer
-} = require('./rformer-layers');
+  ResoFormer  } from './rformer-layers.js';
 
 // CRT-enhanced ResoFormer layers
-const {
-  CRTResonantAttention,
+import {  CRTResonantAttention,
   HomologyRegularizedBlock,
   CRTResoFormer,
-  createCRTResoFormer
-} = require('./rformer-crt');
+  createCRTResoFormer  } from './rformer-crt.js';
 
 // Prime Entanglement Graph
-const {
-  EntanglementEdge,
+import {  EntanglementEdge,
   PrimeEntanglementGraph,
-  createEntanglementGraph
-} = require('./entanglement');
+  createEntanglementGraph  } from './entanglement.js';
 
 // Event system and streaming
-const {
-  AlephEventEmitter,
+import {  AlephEventEmitter,
   AlephMonitor,
   EvolutionStream,
   createEvolutionStream,
-  createMonitor
-} = require('./events');
+  createMonitor  } from './events.js';
 
 // TensorFlow.js layers (lazy load - may not be available)
 let rformerTF = null;
-try {
-  rformerTF = require('./rformer-tf');
-} catch (e) {
-  // TensorFlow.js not available, skip
-}
+// Dynamic import for optional TensorFlow.js support
+// Use: const tf = await import('./rformer-tf.js') when needed
 
-module.exports = {
+export default {
   // Hypercomplex algebra
   Hypercomplex,
   
@@ -327,9 +292,6 @@ module.exports = {
   EvolutionStream,
   createEvolutionStream,
   createMonitor,
-  
-  // TensorFlow.js ResoFormer layers (if available)
-  ...(rformerTF || {}),
   
   // Formal Type System (mtspbc.pdf)
   NounType,

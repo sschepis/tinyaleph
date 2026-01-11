@@ -1,6 +1,7 @@
 /**
  * Common interface for all domain backends
  */
+
 class Backend {
   constructor(config) {
     this.config = config;
@@ -86,4 +87,6 @@ class Backend {
   }
 }
 
-module.exports = { Backend };
+export {
+    Backend
+};

@@ -24,28 +24,26 @@
  */
 
 // Core mathematical foundation
-const core = require('./core');
+import core from './core/index.js';
 
 // Enochian Packet Layer (Section 7.4 of whitepaper)
-const enochian = require('./core/enochian');
-const enochianVocabulary = require('./core/enochian-vocabulary');
+import enochian from './core/enochian.js';
+import enochianVocabulary from './core/enochian-vocabulary.js';
 
 // Browser-compatible utilities (extracted from apps/sentient)
-const errors = require('./core/errors');
-const logger = require('./core/logger');
-const metrics = require('./telemetry/metrics');
-const transport = require('./transport');
-const profiling = require('./profiling/primitives');
+import errors from './core/errors.js';
+import logger from './core/logger.js';
+import metrics from './telemetry/metrics.js';
 
 // Observer architecture (Sentient Observer core modules)
-const smf = require('./observer/smf');
-const prsc = require('./observer/prsc');
-const temporal = require('./observer/temporal');
-const entanglement = require('./observer/entanglement');
-const agency = require('./observer/agency');
-const boundary = require('./observer/boundary');
-const safety = require('./observer/safety');
-const hqe = require('./observer/hqe');
+import smf from './observer/smf.js';
+import prsc from './observer/prsc.js';
+import temporal from './observer/temporal.js';
+import entanglement from './observer/entanglement.js';
+import agency from './observer/agency.js';
+import boundary from './observer/boundary.js';
+import safety from './observer/safety.js';
+import hqe from './observer/hqe.js';
 const {
   Hypercomplex,
   FANO_LINES,
@@ -101,7 +99,7 @@ const {
 } = core;
 
 // Physics engine
-const physics = require('./physics');
+import physics from './physics/index.js';
 const {
   Oscillator,
   OscillatorBank,
@@ -160,7 +158,7 @@ const {
 } = physics;
 
 // Domain backends
-const backends = require('./backends');
+import backends from './backends/index.js';
 const {
   Backend,
   SemanticBackend,
@@ -180,7 +178,7 @@ const {
 } = backends;
 
 // Unified engine
-const engine = require('./engine');
+import engine from './engine/index.js';
 const { AlephEngine } = engine;
 
 /**
@@ -231,7 +229,7 @@ function deriveKey(password, salt, length = 32, iterations = 10000) {
   return backend.deriveKey(password, salt, length, iterations);
 }
 
-module.exports = {
+export default {
   // Main engine
   AlephEngine,
   createEngine,
@@ -412,27 +410,6 @@ module.exports = {
   Summary: metrics.Summary,
   MetricRegistry: metrics.MetricRegistry,
   MetricType: metrics.MetricType,
-  
-  // Transport
-  transport,
-  Transport: transport.Transport,
-  WebSocketTransport: transport.WebSocketTransport,
-  SSETransport: transport.SSETransport,
-  MemoryTransport: transport.MemoryTransport,
-  PollingTransport: transport.PollingTransport,
-  TransportManager: transport.TransportManager,
-  TransportState: transport.TransportState,
-  
-  // Profiling primitives
-  profiling,
-  RingBuffer: profiling.RingBuffer,
-  Timer: profiling.Timer,
-  Sampler: profiling.Sampler,
-  RateCalculator: profiling.RateCalculator,
-  MovingAverage: profiling.MovingAverage,
-  Profiler: profiling.Profiler,
-  hrtime: profiling.hrtime,
-  hrtimeNs: profiling.hrtimeNs,
   
   // Observer Architecture (Sentient Observer core)
   // SMF - Sedenion Memory Field

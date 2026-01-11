@@ -16,21 +16,17 @@
  * - S₁ ⇒ S₂ → τ(S₁) → τ(S₂)
  */
 
-const { 
-    NounTerm, 
+import {  NounTerm, 
     AdjTerm, 
     ChainTerm, 
     FusionTerm,
     NounSentence,
     SeqSentence,
     ImplSentence,
-    N, A, FUSE, CHAIN
-} = require('./types');
+    N, A, FUSE, CHAIN  } from './types.js';
 
-const { 
-    ReductionSystem, 
-    DEFAULT_OPERATOR 
-} = require('./reduction');
+import {  ReductionSystem, 
+    DEFAULT_OPERATOR  } from './reduction.js';
 
 // ============================================================================
 // λ-EXPRESSION AST
@@ -1068,8 +1064,7 @@ class TypeDirectedTranslator extends Translator {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Lambda expressions
+export {
     LambdaExpr,
     VarExpr,
     ConstExpr,
@@ -1078,19 +1073,11 @@ module.exports = {
     PairExpr,
     ImplExpr,
     PrimOpExpr,
-    
-    // Translator
     Translator,
     TypeDirectedTranslator,
-    
-    // Evaluator
     LambdaEvaluator,
-    
-    // Semantics
     Semantics,
     ConceptInterpreter,
-    
-    // PRQS Lexicon (from TriadicPrimeFusion paper)
     PRQS_LEXICON,
     classifyPrime
 };

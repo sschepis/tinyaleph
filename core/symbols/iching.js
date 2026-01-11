@@ -9,7 +9,7 @@
  * Unicode range: U+4DC0 to U+4DFF (Yijing Hexagram Symbols)
  */
 
-const { SymbolCategory } = require('./base');
+import { SymbolCategory } from './base.js';
 
 const ichingHexagrams = [
   // ═══════════════════════════════════════════════════════════════════
@@ -466,6 +466,6 @@ const ichingHexagrams = [
   }
 ];
 
-module.exports = {
-  ichingHexagrams
+export {
+    ichingHexagrams
 };

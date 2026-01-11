@@ -12,8 +12,6 @@
  * Extracted from apps/sentient/lib/error-handler.js for library reuse.
  */
 
-const { LogLevel, LogLevelNames, SimpleEventEmitter } = require('./errors');
-
 // ============================================================================
 // LOGGER
 // ============================================================================
@@ -21,6 +19,8 @@ const { LogLevel, LogLevelNames, SimpleEventEmitter } = require('./errors');
 /**
  * Structured Logger
  */
+import { LogLevel, LogLevelNames, SimpleEventEmitter } from './errors.js';
+
 class Logger extends SimpleEventEmitter {
     constructor(options = {}) {
         super();
@@ -341,10 +341,9 @@ function createLogger(namespace, options = {}) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     Logger,
     createLogger,
-    // Re-export LogLevel for convenience
     LogLevel,
     LogLevelNames
 };

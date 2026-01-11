@@ -12,8 +12,8 @@
  *   - Handles context-dependent vocabulary
  */
 
-const { SemanticBackend } = require('./index');
-const { Surface, SurfaceManager, BiasEngine } = require('./surface');
+import { SemanticBackend } from './index.js';
+import { Surface, SurfaceManager, BiasEngine } from './surface.js';
 
 class TwoLayerEngine {
   constructor(config = {}) {
@@ -372,4 +372,6 @@ class TwoLayerEngine {
   }
 }
 
-module.exports = { TwoLayerEngine };
+export {
+    TwoLayerEngine
+};

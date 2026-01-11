@@ -13,6 +13,7 @@
 /**
  * Minimal Complex number helpers (intentionally tiny for predictable perf).
  */
+
 class C {
   constructor(re = 0, im = 0) {
     this.re = re;
@@ -481,13 +482,11 @@ function createPrimeonLadder(primes, opts = {}) {
   return ladder;
 }
 
-module.exports = {
-  PrimeonZLadderU,
-  createPrimeonLadder,
-  // Export helpers for potential reuse in entropy tooling
-  shannonEntropyNats,
-  probsOf,
-  normalize,
-  // Export Complex class for advanced usage
-  C
+export {
+    PrimeonZLadderU,
+    createPrimeonLadder,
+    shannonEntropyNats,
+    probsOf,
+    normalize,
+    C
 };

@@ -10,9 +10,10 @@
  * - Reading frames: 6 frames (3 forward + 3 reverse offsets)
  * - Sense/Antisense: Dual representations via conjugation
  */
-const { Backend } = require('../interface');
-const { Hypercomplex } = require('../../core/hypercomplex');
-const { primeToFrequency, primeToAngle, DEFAULT_PRIMES, nthPrime } = require('../../core/prime');
+
+import { Backend } from '../interface.js';
+import { Hypercomplex } from '../../core/hypercomplex.js';
+import { primeToFrequency, primeToAngle, DEFAULT_PRIMES, nthPrime } from '../../core/prime.js';
 
 class SemanticBackend extends Backend {
   constructor(config) {
@@ -524,4 +525,6 @@ class SemanticBackend extends Backend {
   }
 }
 
-module.exports = { SemanticBackend };
+export {
+    SemanticBackend
+};

@@ -10,7 +10,7 @@
  * Browser-compatible: No Node.js dependencies.
  * 
  * @example
- * const { MetricRegistry, Counter, Gauge } = require('@aleph-ai/tinyaleph/telemetry');
+ * import {  MetricRegistry, Counter, Gauge  } from '@aleph-ai/tinyaleph/telemetry';
  * 
  * const registry = new MetricRegistry({ prefix: 'myapp_' });
  * const requests = registry.counter('requests_total', { help: 'Total requests' });

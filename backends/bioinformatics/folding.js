@@ -1,45 +1,35 @@
 /**
  * Protein Folding via Kuramoto Oscillator Dynamics
- * 
+ *
  * Models protein folding as entropy minimization through coupled oscillator synchronization.
  * Each amino acid residue is an oscillator with:
  * - Natural frequency derived from its prime value
  * - Coupling strength from contact propensity (hydrophobic, electrostatic, resonance)
- * 
+ *
  * Folded state = synchronized oscillators = low entropy configuration
  */
 
-const { AMINO_ACID_PRIMES, AMINO_ACID_PROPERTIES, getChargeFromPrime, getHydrophobicityFromPrime } = require('./encoding');
+// Import encoding module
+import { AMINO_ACID_PRIMES, AMINO_ACID_PROPERTIES, getChargeFromPrime, getHydrophobicityFromPrime } from './encoding.js';
 
-// Import physics modules - with fallback for standalone testing
-let KuramotoModel, NetworkKuramoto, AdaptiveKuramoto, shannonEntropy, primeToFrequency, calculateResonance;
+// Golden ratio constant
+const PHI = 1.618033988749895;
 
-try {
-  const physics = require('../../physics');
-  const core = require('../../core');
-  
-  KuramotoModel = physics.KuramotoModel;
-  NetworkKuramoto = physics.NetworkKuramoto || physics.KuramotoModel;
-  AdaptiveKuramoto = physics.AdaptiveKuramoto || physics.KuramotoModel;
-  shannonEntropy = physics.shannonEntropy;
-  primeToFrequency = core.primeToFrequency;
-  calculateResonance = core.calculateResonance;
-} catch (e) {
-  // Fallback implementations for standalone testing
-  primeToFrequency = (p, base = 1, logScale = 10) => base + Math.log(p) / logScale;
-  calculateResonance = (p1, p2) => {
-    const ratio = Math.max(p1, p2) / Math.min(p1, p2);
-    const PHI = 1.618033988749895;
-    return 1 / (1 + Math.abs(ratio - PHI));
-  };
-  shannonEntropy = (probs) => {
-    let H = 0;
-    for (const p of probs) {
-      if (p > 1e-10) H -= p * Math.log2(p);
-    }
-    return H;
-  };
-}
+// Fallback implementations for standalone operation
+const primeToFrequency = (p, base = 1, logScale = 10) => base + Math.log(p) / logScale;
+
+const calculateResonance = (p1, p2) => {
+  const ratio = Math.max(p1, p2) / Math.min(p1, p2);
+  return 1 / (1 + Math.abs(ratio - PHI));
+};
+
+const shannonEntropy = (probs) => {
+  let H = 0;
+  for (const p of probs) {
+    if (p > 1e-10) H -= p * Math.log2(p);
+  }
+  return H;
+};
 
 /**
  * FoldingTransform
@@ -451,4 +441,6 @@ class FoldingTransform {
   }
 }
 
-module.exports = { FoldingTransform };
+export {
+    FoldingTransform
+};

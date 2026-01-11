@@ -16,13 +16,11 @@
 
 'use strict';
 
-const {
-  PrimeonZLadderU,
+import {  PrimeonZLadderU,
   C,
   shannonEntropyNats,
   probsOf,
-  normalize
-} = require('./primeon_z_ladder_u');
+  normalize  } from './primeon_z_ladder_u.js';
 
 /**
  * Z Channel configuration
@@ -661,9 +659,9 @@ function createAdiabaticSchedule(J0, J1, T, schedule = 'linear') {
   }
 }
 
-module.exports = {
-  ZChannel,
-  PrimeonZLadderMulti,
-  createMultiChannelLadder,
-  createAdiabaticSchedule
+export {
+    ZChannel,
+    PrimeonZLadderMulti,
+    createMultiChannelLadder,
+    createAdiabaticSchedule
 };

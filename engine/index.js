@@ -2,6 +2,8 @@
  * Engine - exports unified AlephEngine
  */
 
-const { AlephEngine } = require('./aleph');
+import { AlephEngine } from './aleph.js';
 
-module.exports = { AlephEngine };
+export {
+    AlephEngine
+};

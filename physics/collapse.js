@@ -2,6 +2,8 @@
  * Quantum-inspired state collapse mechanics
  */
 
+import { Hypercomplex } from '../core/hypercomplex.js';
+
 function collapseProbability(entropyIntegral, lyapunovFactor = 1) {
   const factor = lyapunovFactor < 0 ? 1.5 : 0.5;
   return (1 - Math.exp(-entropyIntegral)) * factor;
@@ -28,7 +30,6 @@ function measureState(hypercomplex, basis = null) {
  * Collapse state to a specific basis vector
  */
 function collapseToIndex(hypercomplex, index) {
-  const { Hypercomplex } = require('../core/hypercomplex');
   const collapsed = Hypercomplex.zero(hypercomplex.dim);
   collapsed.c[index] = hypercomplex.c[index] >= 0 ? 1 : -1;
   return collapsed;
@@ -58,7 +59,6 @@ function bornMeasurement(hypercomplex) {
  * Partial collapse: mix between current state and collapsed state
  */
 function partialCollapse(hypercomplex, targetIndex, strength = 0.5) {
-  const { Hypercomplex } = require('../core/hypercomplex');
   const collapsed = Hypercomplex.zero(hypercomplex.dim);
   const sign = hypercomplex.c[targetIndex] >= 0 ? 1 : -1;
   collapsed.c[targetIndex] = sign;
@@ -75,7 +75,6 @@ function partialCollapse(hypercomplex, targetIndex, strength = 0.5) {
  * Decoherence: gradual loss of quantum coherence
  */
 function applyDecoherence(hypercomplex, rate = 0.1) {
-  const { Hypercomplex } = require('../core/hypercomplex');
   const result = Hypercomplex.zero(hypercomplex.dim);
   for (let i = 0; i < hypercomplex.dim; i++) {
     // Add small random noise proportional to rate
@@ -84,12 +83,12 @@ function applyDecoherence(hypercomplex, rate = 0.1) {
   return result.normalize();
 }
 
-module.exports = { 
-  collapseProbability, 
-  shouldCollapse, 
-  measureState,
-  collapseToIndex,
-  bornMeasurement,
-  partialCollapse,
-  applyDecoherence
+export {
+    collapseProbability,
+    shouldCollapse,
+    measureState,
+    collapseToIndex,
+    bornMeasurement,
+    partialCollapse,
+    applyDecoherence
 };

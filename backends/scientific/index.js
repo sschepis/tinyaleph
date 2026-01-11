@@ -1,9 +1,10 @@
 /**
  * Scientific Backend - Quantum simulation, particle physics, molecular dynamics
  */
-const { Backend } = require('../interface');
-const { Hypercomplex } = require('../../core/hypercomplex');
-const { primeToFrequency, factorize, firstNPrimes, DEFAULT_PRIMES } = require('../../core/prime');
+
+import { Backend } from '../interface.js';
+import { Hypercomplex } from '../../core/hypercomplex.js';
+import { primeToFrequency, factorize, firstNPrimes, DEFAULT_PRIMES } from '../../core/prime.js';
 
 class ScientificBackend extends Backend {
   constructor(config) {
@@ -269,4 +270,6 @@ class ScientificBackend extends Backend {
   }
 }
 
-module.exports = { ScientificBackend };
+export {
+    ScientificBackend
+};

@@ -1,8 +1,10 @@
 {
   "name": "@aleph-ai/tinyaleph",
-  "version": "1.4.4",
+  "version": "1.5.1",
   "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, and entropy-minimizing reasoning",
+  "type": "module",
   "main": "index.js",
+  "module": "index.js",
   "types": "types/index.d.ts",
   "exports": {
     ".": {
@@ -78,7 +80,7 @@
   },
   "homepage": "https://github.com/aleph-ai/tinyaleph#readme",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "files": [
     "index.js",

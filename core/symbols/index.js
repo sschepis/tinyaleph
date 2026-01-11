@@ -6,18 +6,18 @@
  * by simply creating new files and importing them here.
  */
 
-const { SymbolDatabase, SymbolCategory, PrimeGenerator } = require('./base');
-
 // Import all symbol definition files
-const { archetypeSymbols } = require('./archetypes');
-const { tarotSymbols } = require('./tarot');
-const { ichingHexagrams } = require('./iching');
-const { egyptianHieroglyphs } = require('./hieroglyphs');
-const { allElementSymbols } = require('./elements');
 
 // ═══════════════════════════════════════════════════════════════════
 // Create and populate the singleton database
 // ═══════════════════════════════════════════════════════════════════
+
+import { SymbolDatabase, SymbolCategory, PrimeGenerator } from './base.js';
+import { archetypeSymbols } from './archetypes.js';
+import { tarotSymbols } from './tarot.js';
+import { ichingHexagrams } from './iching.js';
+import { egyptianHieroglyphs } from './hieroglyphs.js';
+import { allElementSymbols } from './elements.js';
 
 let symbolDatabaseInstance = null;
 
@@ -50,7 +50,18 @@ const symbolDatabase = createSymbolDatabase();
 // Convenience exports
 // ═══════════════════════════════════════════════════════════════════
 
-module.exports = {
+// Convenience functions
+const getSymbol = (id) => symbolDatabase.getSymbol(id);
+const getSymbolByPrime = (prime) => symbolDatabase.getSymbolByPrime(prime);
+const getSymbolsByCategory = (category) => symbolDatabase.getSymbolsByCategory(category);
+const getSymbolsByTag = (tag) => symbolDatabase.getSymbolsByTag(tag);
+const search = (query) => symbolDatabase.search(query);
+const encode = (ids) => symbolDatabase.encode(ids);
+const decode = (sig) => symbolDatabase.decode(sig);
+const getAllSymbols = () => symbolDatabase.getAllSymbols();
+const getStats = () => symbolDatabase.getStats();
+
+export {
   // Database instance and class
   symbolDatabase,
   SymbolDatabase,
@@ -65,13 +76,16 @@ module.exports = {
   allElementSymbols,
   
   // Convenience functions
-  getSymbol: (id) => symbolDatabase.getSymbol(id),
-  getSymbolByPrime: (prime) => symbolDatabase.getSymbolByPrime(prime),
-  getSymbolsByCategory: (category) => symbolDatabase.getSymbolsByCategory(category),
-  getSymbolsByTag: (tag) => symbolDatabase.getSymbolsByTag(tag),
-  search: (query) => symbolDatabase.search(query),
-  encode: (ids) => symbolDatabase.encode(ids),
-  decode: (sig) => symbolDatabase.decode(sig),
-  getAllSymbols: () => symbolDatabase.getAllSymbols(),
-  getStats: () => symbolDatabase.getStats()
+  getSymbol,
+  getSymbolByPrime,
+  getSymbolsByCategory,
+  getSymbolsByTag,
+  search,
+  encode,
+  decode,
+  getAllSymbols,
+  getStats
 };
+
+// Default export for backward compatibility
+export default symbolDatabase;

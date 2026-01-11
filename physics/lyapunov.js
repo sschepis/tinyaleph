@@ -70,11 +70,11 @@ function stabilityMargin(lyapunovExponent, threshold = 0.1) {
   return threshold - lyapunovExponent;
 }
 
-module.exports = { 
-  estimateLyapunov, 
-  classifyStability, 
-  adaptiveCoupling,
-  localLyapunov,
-  delayEmbedding,
-  stabilityMargin
+export {
+    estimateLyapunov,
+    classifyStability,
+    adaptiveCoupling,
+    localLyapunov,
+    delayEmbedding,
+    stabilityMargin
 };

@@ -12,11 +12,11 @@
  * Extracted from apps/sentient/lib/telemetry.js for library reuse.
  */
 
-const { SimpleEventEmitter } = require('../core/errors');
-
 // ============================================================================
 // METRIC TYPES
 // ============================================================================
+
+import { SimpleEventEmitter } from '../core/errors.js';
 
 const MetricType = {
     COUNTER: 'counter',
@@ -692,17 +692,12 @@ class MetricRegistry extends SimpleEventEmitter {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Metric types
+export {
     MetricType,
-    
-    // Metric classes
     Metric,
     Counter,
     Gauge,
     Histogram,
     Summary,
-    
-    // Registry
     MetricRegistry
 };

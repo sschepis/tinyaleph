@@ -13,11 +13,11 @@
  * - Resonance operators (P̂, F̂, R̂, Ĉ)
  */
 
-const { isPrime, firstNPrimes, factorize } = require('./prime');
-
 /**
  * Complex number class for amplitudes
  */
+import { factorize, isPrime, firstNPrimes } from './prime.js';
+
 class Complex {
   constructor(re = 0, im = 0) {
     this.re = re;
@@ -995,26 +995,7 @@ class ResonantFragment {
   }
 }
 
-module.exports = {
-  Complex,
-  PrimeState,
-  ResonanceOperators,
-  EntropyDrivenEvolution,
-  encodeMemory,
-  symbolicCompute,
-  
-  // New classes
-  QuaternionPrime,
-  PrimeResonanceIdentity,
-  PhaseLockedRing,
-  HolographicField,
-  EntangledNode,
-  ResonantFragment,
-  
-  // Constants
-  PHI,
-  DELTA_S
-};
+// Legacy CommonJS export removed - ESM exports at end of file
 
 // ============================================================================
 // P-ADIC COHERENCE (from Quantum_Semantics paper)
@@ -1132,7 +1113,6 @@ function pAdicCoherence(state1, state2, primes = [2, 3, 5]) {
 function mobiusFunction(n) {
   if (n === 1) return 1;
   
-  const { factorize } = require('./prime');
   const factors = factorize(n);
   
   // Check for squared factors
@@ -1157,7 +1137,6 @@ function mobiusFunction(n) {
 function eulerTotient(n) {
   if (n === 1) return 1;
   
-  const { factorize } = require('./prime');
   const factors = factorize(n);
   
   let result = n;
@@ -1655,13 +1634,40 @@ class SemanticPatternDetector {
   }
 }
 
-// Export new classes and functions
-module.exports.pAdicNorm = pAdicNorm;
-module.exports.pAdicValuation = pAdicValuation;
-module.exports.pAdicCoherence = pAdicCoherence;
-module.exports.mobiusFunction = mobiusFunction;
-module.exports.eulerTotient = eulerTotient;
-module.exports.ExtendedOperators = ExtendedOperators;
-module.exports.KnowledgeResonanceCalculator = KnowledgeResonanceCalculator;
-module.exports.FibonacciWaveletBank = FibonacciWaveletBank;
-module.exports.SemanticPatternDetector = SemanticPatternDetector;
+// Export all classes and functions
+export {
+  // Core classes
+  Complex,
+  PrimeState,
+  ResonanceOperators,
+  EntropyDrivenEvolution,
+  encodeMemory,
+  symbolicCompute,
+  
+  // Extended classes
+  QuaternionPrime,
+  PrimeResonanceIdentity,
+  PhaseLockedRing,
+  HolographicField,
+  EntangledNode,
+  ResonantFragment,
+  
+  // Constants
+  PHI,
+  DELTA_S,
+  
+  // P-adic functions
+  pAdicNorm,
+  pAdicValuation,
+  pAdicCoherence,
+  
+  // Number theory functions
+  mobiusFunction,
+  eulerTotient,
+  
+  // Extended operators and calculators
+  ExtendedOperators,
+  KnowledgeResonanceCalculator,
+  FibonacciWaveletBank,
+  SemanticPatternDetector
+};

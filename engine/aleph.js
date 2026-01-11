@@ -6,11 +6,11 @@
  * We excite the field, evolve it, and sample at coherent emission moments.
  */
 
-const { Hypercomplex } = require('../core/hypercomplex');
-const { KuramotoModel } = require('../physics/kuramoto');
-const { stateEntropy, coherence } = require('../physics/entropy');
-const { estimateLyapunov, adaptiveCoupling, classifyStability } = require('../physics/lyapunov');
-const { collapseProbability, shouldCollapse, bornMeasurement } = require('../physics/collapse');
+import { Hypercomplex } from '../core/hypercomplex.js';
+import { KuramotoModel } from '../physics/kuramoto.js';
+import { stateEntropy, coherence } from '../physics/entropy.js';
+import { estimateLyapunov, adaptiveCoupling, classifyStability } from '../physics/lyapunov.js';
+import { collapseProbability, shouldCollapse, bornMeasurement } from '../physics/collapse.js';
 
 class AlephEngine {
   constructor(backend, options = {}) {
@@ -415,4 +415,6 @@ class AlephEngine {
   }
 }
 
-module.exports = { AlephEngine };
+export {
+    AlephEngine
+};

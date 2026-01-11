@@ -21,19 +21,15 @@
 
 'use strict';
 
-const {
-  PrimeonZLadderMulti,
+import {  PrimeonZLadderMulti,
   ZChannel,
   createMultiChannelLadder,
-  createAdiabaticSchedule
-} = require('./primeon_z_ladder_multi');
+  createAdiabaticSchedule  } from './primeon_z_ladder_multi.js';
 
-const {
-  C,
+import {  C,
   shannonEntropyNats,
   probsOf,
-  normalize
-} = require('./primeon_z_ladder_u');
+  normalize  } from './primeon_z_ladder_u.js';
 
 /**
  * Extract phase from complex number
@@ -594,10 +590,10 @@ function runCollapsePressureExperiment(opts = {}) {
   return results;
 }
 
-module.exports = {
-  KuramotoCoupledLadder,
-  createKuramotoLadder,
-  runCollapsePressureExperiment,
-  kuramotoOrderParameter,
-  getPhase
+export {
+    KuramotoCoupledLadder,
+    createKuramotoLadder,
+    runCollapsePressureExperiment,
+    kuramotoOrderParameter,
+    getPhase
 };

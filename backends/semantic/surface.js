@@ -11,6 +11,7 @@
  * A Surface represents a specific vocabulary/style mapping
  * Multiple words can map to the same prime signature with different biases
  */
+
 class Surface {
   constructor(config = {}) {
     this.name = config.name || 'default';
@@ -390,4 +391,4 @@ class BiasEngine {
   }
 }
 
-module.exports = { Surface, SurfaceManager, BiasEngine };
+export default { Surface, SurfaceManager, BiasEngine };

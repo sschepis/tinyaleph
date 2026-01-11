@@ -5,6 +5,7 @@
  * by input to become active. This ensures the field response
  * reflects the input, not a default full-amplitude state.
  */
+
 class Oscillator {
   constructor(frequency, phase = 0, amplitude = 0) {  // Start quiescent!
     this.freq = frequency;
@@ -92,4 +93,4 @@ class OscillatorBank {
   }
 }
 
-module.exports = { Oscillator, OscillatorBank };
+export default { Oscillator, OscillatorBank };

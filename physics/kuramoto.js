@@ -1,7 +1,8 @@
 /**
  * Kuramoto synchronization dynamics
  */
-const { OscillatorBank } = require('./oscillator');
+
+import { OscillatorBank } from './oscillator.js';
 
 class KuramotoModel extends OscillatorBank {
   constructor(frequencies, couplingStrength = 0.3) {
@@ -88,4 +89,6 @@ class KuramotoModel extends OscillatorBank {
   }
 }
 
-module.exports = { KuramotoModel };
+export {
+    KuramotoModel
+};

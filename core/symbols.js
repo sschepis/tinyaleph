@@ -19,4 +19,5 @@
  */
 
 // Re-export everything from the modular structure
+
 module.exports = require('./symbols/index');

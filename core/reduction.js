@@ -10,17 +10,16 @@
  * - Prime-preserving ⊕ operator
  */
 
-const { isPrime, nthPrime, firstNPrimes } = require('./prime');
-const { 
-    NounTerm, 
+import { isPrime, nthPrime, firstNPrimes } from './prime.js';
+
+import {  NounTerm, 
     AdjTerm, 
     ChainTerm, 
     FusionTerm,
     NounSentence,
     SeqSentence,
     ImplSentence,
-    N, A, FUSE, CHAIN
-} = require('./types');
+    N, A, FUSE, CHAIN  } from './types.js';
 
 // ============================================================================
 // PRIME-PRESERVING OPERATORS (⊕)
@@ -1091,41 +1090,26 @@ function testLocalConfluence(reducer = null) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Operators
+export {
     PrimeOperator,
     NextPrimeOperator,
     ModularPrimeOperator,
     ResonancePrimeOperator,
     IdentityPrimeOperator,
     DEFAULT_OPERATOR,
-    
-    // Reduction
     ReductionStep,
     ReductionTrace,
     ReductionSystem,
-    
-    // Utilities
     isNormalForm,
     isReducible,
     termSize,
     termDepth,
     extractPrimes,
-    
-    // Canonicalization
     FusionCanonicalizer,
-    
-    // Verification
     NormalFormVerifier,
-    
-    // Formal Proofs (from ncpsc.pdf §5)
     ProofTrace,
     ProofGenerator,
-    
-    // Route Statistics (from ncpsc.pdf §3)
     RouteStatistics,
-    
-    // Proofs
     demonstrateStrongNormalization,
     testLocalConfluence
 };

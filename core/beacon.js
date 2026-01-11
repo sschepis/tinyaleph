@@ -13,9 +13,10 @@
  * - Hilbert space mapping
  */
 
-const crypto = require('crypto');
-const { isPrime, primesUpTo, factorize } = require('./prime');
-const { Complex, PrimeState } = require('./hilbert');
+import { isPrime, primesUpTo, factorize } from './prime.js';
+import { Complex, PrimeState } from './hilbert.js';
+
+import crypto from 'crypto';
 
 /**
  * Resonant Fragment
@@ -726,10 +727,10 @@ class DataSummoner {
   }
 }
 
-module.exports = {
-  ResonantFragment,
-  Beacon,
-  BeaconCache,
-  CRTReconstructor,
-  DataSummoner
+export {
+    ResonantFragment,
+    Beacon,
+    BeaconCache,
+    CRTReconstructor,
+    DataSummoner
 };

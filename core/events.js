@@ -26,6 +26,7 @@
  * 
  * Compatible with Node.js EventEmitter pattern but standalone.
  */
+
 class AlephEventEmitter {
   constructor(options = {}) {
     this._listeners = new Map();
@@ -898,10 +899,10 @@ function createMonitor(engine, options = {}) {
   return new AlephMonitor(engine, options);
 }
 
-module.exports = {
-  AlephEventEmitter,
-  AlephMonitor,
-  EvolutionStream,
-  createEvolutionStream,
-  createMonitor
+export {
+    AlephEventEmitter,
+    AlephMonitor,
+    EvolutionStream,
+    createEvolutionStream,
+    createMonitor
 };
