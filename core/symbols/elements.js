@@ -478,10 +478,13 @@ const abstractSymbols = [
   }
 ];
 
+// Named export for allElementSymbols (used by index.js)
+export const allElementSymbols = [...elementSymbols, ...placeSymbols, ...objectSymbols, ...abstractSymbols];
+
 export default {
   elementSymbols,
   placeSymbols,
   objectSymbols,
   abstractSymbols,
-  allElementSymbols: [...elementSymbols, ...placeSymbols, ...objectSymbols, ...abstractSymbols]
+  allElementSymbols
 };

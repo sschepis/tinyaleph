@@ -93,4 +93,7 @@ class OscillatorBank {
   }
 }
 
+// Named exports for ESM compatibility
+export { Oscillator, OscillatorBank };
+
 export default { Oscillator, OscillatorBank };

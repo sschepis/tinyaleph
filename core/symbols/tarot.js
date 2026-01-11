@@ -204,8 +204,11 @@ const tarotMinorSuits = [
   }
 ];
 
+// Named export for tarotSymbols (used by index.js)
+export const tarotSymbols = [...tarotMajorArcana, ...tarotMinorSuits];
+
 export default {
   tarotMajorArcana,
   tarotMinorSuits,
-  tarotSymbols: [...tarotMajorArcana, ...tarotMinorSuits]
+  tarotSymbols
 };

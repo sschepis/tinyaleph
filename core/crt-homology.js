@@ -974,6 +974,36 @@ class CoprimeSelector {
 // EXPORTS
 // ============================================================================
 
+// Named exports for ESM compatibility
+export {
+    // Modular arithmetic utilities
+    extendedGCD,
+    modInverse,
+    areCoprime,
+    softmax,
+    
+    // Core classes
+    ResidueEncoder,
+    CRTReconstructor,
+    BirkhoffProjector,
+    HomologyLoss,
+    CRTModularLayer,
+    CRTFusedAttention,
+    CoprimeSelector
+};
+
+// Factory functions as named exports
+export const createCRTLayer = (primes, hiddenDim, options = {}) =>
+    new CRTModularLayer(primes, hiddenDim, options);
+
+export const createFusedAttention = (primes, hiddenDim, headDim, options = {}) =>
+    new CRTFusedAttention(primes, hiddenDim, headDim, options);
+
+// Default configurations
+export const DEFAULT_PRIMES_SMALL = [2, 3, 5, 7];
+export const DEFAULT_PRIMES_MEDIUM = [5, 7, 11, 13];
+export const DEFAULT_PRIMES_SEMANTIC = [2, 3, 5, 7, 11];
+
 export default {
     // Modular arithmetic utilities
     extendedGCD,
@@ -991,14 +1021,11 @@ export default {
     CoprimeSelector,
     
     // Factory functions
-    createCRTLayer: (primes, hiddenDim, options = {}) =>
-        new CRTModularLayer(primes, hiddenDim, options),
-    
-    createFusedAttention: (primes, hiddenDim, headDim, options = {}) =>
-        new CRTFusedAttention(primes, hiddenDim, headDim, options),
+    createCRTLayer,
+    createFusedAttention,
     
     // Default configurations
-    DEFAULT_PRIMES_SMALL: [2, 3, 5, 7],
-    DEFAULT_PRIMES_MEDIUM: [5, 7, 11, 13],
-    DEFAULT_PRIMES_SEMANTIC: [2, 3, 5, 7, 11]
+    DEFAULT_PRIMES_SMALL,
+    DEFAULT_PRIMES_MEDIUM,
+    DEFAULT_PRIMES_SEMANTIC
 };

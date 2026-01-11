@@ -310,6 +310,21 @@ function findFibonacciSequences(primes, minLength = 3) {
 // Singleton instance for convenience
 const defaultCalculator = new ResonanceCalculator();
 
+// Named exports for ESM compatibility
+export {
+  ResonanceCalculator,
+  resonanceSignature,
+  findFibonacciSequences,
+  PHI,
+  PHI_THRESHOLD,
+  PHI_BONUS
+};
+
+// Convenience functions using default calculator
+export const calculateResonance = (p1, p2) => defaultCalculator.calculateResonance(p1, p2);
+export const findGoldenPairs = (primes) => defaultCalculator.findGoldenPairs(primes);
+export const findMostResonant = (target, candidates) => defaultCalculator.findMostResonant(target, candidates);
+
 export default {
   ResonanceCalculator,
   resonanceSignature,
@@ -317,9 +332,7 @@ export default {
   PHI,
   PHI_THRESHOLD,
   PHI_BONUS,
-  
-  // Convenience functions using default calculator
-  calculateResonance: (p1, p2) => defaultCalculator.calculateResonance(p1, p2),
-  findGoldenPairs: (primes) => defaultCalculator.findGoldenPairs(primes),
-  findMostResonant: (target, candidates) => defaultCalculator.findMostResonant(target, candidates)
+  calculateResonance,
+  findGoldenPairs,
+  findMostResonant
 };
