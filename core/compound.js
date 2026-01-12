@@ -514,19 +514,37 @@ class CompoundBuilder {
 // Singleton instance
 const defaultBuilder = new CompoundBuilder();
 
+// Named exports for ESM compatibility
+const compoundBuilder = defaultBuilder;
+const createCompound = (id, components, meaning, tags) =>
+    defaultBuilder.createCompound(id, components, meaning, tags);
+const getCompound = (id) => defaultBuilder.getCompound(id);
+const createSequence = (id, symbols, type, desc) =>
+    defaultBuilder.createSequence(id, symbols, type, desc);
+const getSequence = (id) => defaultBuilder.getSequence(id);
+const findCompoundsContaining = (symbolId) =>
+    defaultBuilder.findCompoundsContaining(symbolId);
+
+export {
+  CompoundBuilder,
+  CompoundSymbol,
+  SymbolSequence,
+  compoundBuilder,
+  createCompound,
+  getCompound,
+  createSequence,
+  getSequence,
+  findCompoundsContaining
+};
+
 export default {
   CompoundBuilder,
   CompoundSymbol,
   SymbolSequence,
-  compoundBuilder: defaultBuilder,
-  
-  // Convenience functions
-  createCompound: (id, components, meaning, tags) => 
-    defaultBuilder.createCompound(id, components, meaning, tags),
-  getCompound: (id) => defaultBuilder.getCompound(id),
-  createSequence: (id, symbols, type, desc) => 
-    defaultBuilder.createSequence(id, symbols, type, desc),
-  getSequence: (id) => defaultBuilder.getSequence(id),
-  findCompoundsContaining: (symbolId) => 
-    defaultBuilder.findCompoundsContaining(symbolId)
+  compoundBuilder,
+  createCompound,
+  getCompound,
+  createSequence,
+  getSequence,
+  findCompoundsContaining
 };

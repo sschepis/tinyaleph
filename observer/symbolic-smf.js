@@ -13,13 +13,11 @@
  * @module observer/symbolic-smf
  */
 
-'use strict';
-
-const { SedenionMemoryField, SMF_AXES, AXIS_INDEX } = require('./smf');
-const { symbolDatabase, SymbolCategory } = require('../core/symbols');
-const { SemanticInference, EntityExtractor } = require('../core/inference');
-const { CompoundBuilder, CompoundSymbol, SymbolSequence } = require('../core/compound');
-const { ResonanceCalculator } = require('../core/resonance');
+import { SedenionMemoryField, SMF_AXES, AXIS_INDEX } from './smf.js';
+import { symbolDatabase, SymbolCategory } from '../core/symbols.js';
+import { SemanticInference, EntityExtractor } from '../core/inference.js';
+import { CompoundBuilder, CompoundSymbol, SymbolSequence } from '../core/compound.js';
+import { ResonanceCalculator } from '../core/resonance.js';
 
 // ═══════════════════════════════════════════════════════════════════
 // SMF Axis to Symbol Category Mapping
@@ -687,21 +685,42 @@ class SMFSymbolMapper {
 // Singleton instance
 const smfMapper = new SMFSymbolMapper();
 
-module.exports = {
-    // Classes
+export {
+  // Classes
     SymbolicSMF,
-    SMFSymbolMapper,
-    
-    // Singleton instance
+  SMFSymbolMapper,
+  // Singleton instance
     smfMapper,
-    
-    // Mappings (for external use)
+  // Mappings (for external use)
     AXIS_SYMBOL_MAPPING,
-    TAG_TO_AXIS,
-    
-    // Convenience functions
-    createSymbolicSMF: (components, options) => new SymbolicSMF(components, options),
-    fromSMF: (smf, options) => SymbolicSMF.fromSMF(smf, options),
-    symbolToSMF: (symbol) => smfMapper.symbolToSMF(symbol),
-    symbolsToSMF: (symbols) => smfMapper.symbolsToSMF(symbols)
+  TAG_TO_AXIS,
+  // Convenience functions
+    createSymbolicSMF: (components,
+  options) => new SymbolicSMF(components,
+  options),
+  fromSMF: (smf,
+  options) => SymbolicSMF.fromSMF(smf,
+  options),
+  symbolToSMF: (symbol) => smfMapper.symbolToSMF(symbol),
+  symbolsToSMF: (symbols) => smfMapper.symbolsToSMF(symbols)
+};
+
+export default {
+  // Classes
+    SymbolicSMF,
+  SMFSymbolMapper,
+  // Singleton instance
+    smfMapper,
+  // Mappings (for external use)
+    AXIS_SYMBOL_MAPPING,
+  TAG_TO_AXIS,
+  // Convenience functions
+    createSymbolicSMF: (components,
+  options) => new SymbolicSMF(components,
+  options),
+  fromSMF: (smf,
+  options) => SymbolicSMF.fromSMF(smf,
+  options),
+  symbolToSMF: (symbol) => smfMapper.symbolToSMF(symbol),
+  symbolsToSMF: (symbols) => smfMapper.symbolsToSMF(symbols)
 };

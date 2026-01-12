@@ -701,3 +701,14 @@ export {
     Summary,
     MetricRegistry
 };
+
+// Default export for compatibility with modular.js
+export default {
+    MetricType,
+    Metric,
+    Counter,
+    Gauge,
+    Histogram,
+    Summary,
+    MetricRegistry
+};

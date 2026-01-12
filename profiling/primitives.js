@@ -11,7 +11,7 @@
  * Extracted from apps/sentient/lib/profiler.js for library reuse.
  */
 
-const { SimpleEventEmitter } = require('../core/errors');
+import { SimpleEventEmitter } from '../core/errors.js';
 
 // ============================================================================
 // HIGH-RESOLUTION TIME
@@ -659,23 +659,36 @@ class Profiler {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // Time utilities
+export {
+  // Time utilities
     hrtime,
-    hrtimeNs,
-    
-    // Data structures
+  hrtimeNs,
+  // Data structures
     RingBuffer,
-    Histogram,
-    
-    // Timing
+  Histogram,
+  // Timing
     Timer,
-    Sampler,
-    
-    // Rate analysis
+  Sampler,
+  // Rate analysis
     RateCalculator,
-    MovingAverage,
-    
-    // Profiling
+  MovingAverage,
+  // Profiling
+    Profiler
+};
+
+export default {
+  // Time utilities
+    hrtime,
+  hrtimeNs,
+  // Data structures
+    RingBuffer,
+  Histogram,
+  // Timing
+    Timer,
+  Sampler,
+  // Rate analysis
+    RateCalculator,
+  MovingAverage,
+  // Profiling
     Profiler
 };

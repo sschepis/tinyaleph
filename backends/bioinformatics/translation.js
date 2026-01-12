@@ -264,3 +264,7 @@ class TranslationOperator {
 export {
     TranslationOperator
 };
+
+export default {
+    TranslationOperator
+};

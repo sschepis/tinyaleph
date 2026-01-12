@@ -14,9 +14,7 @@
  * @module observer/boundary
  */
 
-'use strict';
-
-const { SMF_AXES } = require('./smf');
+import { SMF_AXES } from './smf.js';
 
 // Extract axis names
 const AXIS_NAMES = SMF_AXES.map(a => a.name);
@@ -1138,11 +1136,20 @@ class BoundaryLayer {
     }
 }
 
-module.exports = {
-    SensoryChannel,
-    MotorChannel,
-    EnvironmentalModel,
-    SelfModel,
-    ObjectivityGate,
-    BoundaryLayer
+export {
+  SensoryChannel,
+  MotorChannel,
+  EnvironmentalModel,
+  SelfModel,
+  ObjectivityGate,
+  BoundaryLayer
+};
+
+export default {
+  SensoryChannel,
+  MotorChannel,
+  EnvironmentalModel,
+  SelfModel,
+  ObjectivityGate,
+  BoundaryLayer
 };

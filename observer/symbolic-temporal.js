@@ -13,11 +13,9 @@
  * @module observer/symbolic-temporal
  */
 
-'use strict';
-
-const { Moment, TemporalLayer, TemporalPatternDetector } = require('./temporal');
-const { EntropyCollapseHead, SparsePrimeState } = require('../core/rformer');
-const { symbolDatabase } = require('../core/symbols');
+import { Moment, TemporalLayer, TemporalPatternDetector } from './temporal.js';
+import { EntropyCollapseHead, SparsePrimeState } from '../core/rformer.js';
+import { symbolDatabase } from '../core/symbols.js';
 
 // PHI constant for resonance calculations
 const PHI = (1 + Math.sqrt(5)) / 2;
@@ -769,14 +767,24 @@ class SymbolicPatternDetector extends TemporalPatternDetector {
     }
 }
 
-module.exports = {
-    // Classes
+export {
+  // Classes
     SymbolicMoment,
-    SymbolicTemporalLayer,
-    SymbolicPatternDetector,
-    
-    // Data
+  SymbolicTemporalLayer,
+  SymbolicPatternDetector,
+  // Data
     HEXAGRAM_ARCHETYPES,
-    FIRST_64_PRIMES,
-    PHI
+  FIRST_64_PRIMES,
+  PHI
+};
+
+export default {
+  // Classes
+    SymbolicMoment,
+  SymbolicTemporalLayer,
+  SymbolicPatternDetector,
+  // Data
+    HEXAGRAM_ARCHETYPES,
+  FIRST_64_PRIMES,
+  PHI
 };

@@ -15,9 +15,7 @@
  * @module observer/safety
  */
 
-'use strict';
-
-const { SMF_AXES } = require('./smf');
+import { SMF_AXES } from './smf.js';
 
 // Extract axis names
 const AXIS_NAMES = SMF_AXES.map(a => a.name);
@@ -802,9 +800,16 @@ class SafetyLayer {
     }
 }
 
-module.exports = {
-    SafetyConstraint,
-    ViolationEvent,
-    SafetyMonitor,
-    SafetyLayer
+export {
+  SafetyConstraint,
+  ViolationEvent,
+  SafetyMonitor,
+  SafetyLayer
+};
+
+export default {
+  SafetyConstraint,
+  ViolationEvent,
+  SafetyMonitor,
+  SafetyLayer
 };

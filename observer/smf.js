@@ -19,8 +19,8 @@
  * Browser-compatible: No Node.js dependencies
  */
 
-const { Hypercomplex } = require('../core/hypercomplex');
-const { multiplyIndices } = require('../core/fano');
+import { Hypercomplex } from '../core/hypercomplex.js';
+import { multiplyIndices } from '../core/fano.js';
 
 // ============================================================================
 // CODEBOOK TUNNELING (from discrete.pdf Section 5)
@@ -991,11 +991,21 @@ class SedenionMemoryField {
     }
 }
 
-module.exports = {
+export {
     SedenionMemoryField,
     SMF_AXES,
     AXIS_INDEX,
-    // Codebook tunneling exports
+    SMF_CODEBOOK,
+    CODEBOOK_SIZE,
+    nearestCodebookAttractor,
+    codebookTunnel,
+    getTunnelingCandidates
+};
+
+export default {
+    SedenionMemoryField,
+    SMF_AXES,
+    AXIS_INDEX,
     SMF_CODEBOOK,
     CODEBOOK_SIZE,
     nearestCodebookAttractor,

@@ -528,3 +528,7 @@ class SemanticBackend extends Backend {
 export {
     SemanticBackend
 };
+
+export default {
+    SemanticBackend
+};

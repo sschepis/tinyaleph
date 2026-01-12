@@ -221,3 +221,7 @@ class TranscriptionOperator {
 export {
     TranscriptionOperator
 };
+
+export default {
+    TranscriptionOperator
+};

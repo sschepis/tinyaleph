@@ -14,8 +14,6 @@
  * @module observer/entanglement
  */
 
-'use strict';
-
 /**
  * Entangled Pair - Two primes with strong correlation
  */
@@ -662,8 +660,14 @@ class EntanglementLayer {
     }
 }
 
-module.exports = {
-    EntangledPair,
-    Phrase,
-    EntanglementLayer
+export {
+  EntangledPair,
+  Phrase,
+  EntanglementLayer
+};
+
+export default {
+  EntangledPair,
+  Phrase,
+  EntanglementLayer
 };

@@ -11,7 +11,7 @@
  * Extracted from apps/sentient/lib/transport/index.js for library reuse.
  */
 
-const { SimpleEventEmitter } = require('../core/errors');
+import { SimpleEventEmitter } from '../core/errors.js';
 
 // ============================================================================
 // TRANSPORT STATE
@@ -646,17 +646,28 @@ class TransportManager extends SimpleEventEmitter {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
-    // State enum
+export {
+  // State enum
     TransportState,
-    
-    // Transport classes
+  // Transport classes
     Transport,
-    WebSocketTransport,
-    SSETransport,
-    MemoryTransport,
-    PollingTransport,
-    
-    // Manager
+  WebSocketTransport,
+  SSETransport,
+  MemoryTransport,
+  PollingTransport,
+  // Manager
+    TransportManager
+};
+
+export default {
+  // State enum
+    TransportState,
+  // Transport classes
+    Transport,
+  WebSocketTransport,
+  SSETransport,
+  MemoryTransport,
+  PollingTransport,
+  // Manager
     TransportManager
 };

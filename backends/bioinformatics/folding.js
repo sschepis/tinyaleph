@@ -444,3 +444,7 @@ class FoldingTransform {
 export {
     FoldingTransform
 };
+
+export default {
+    FoldingTransform
+};

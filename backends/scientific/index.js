@@ -273,3 +273,7 @@ class ScientificBackend extends Backend {
 export {
     ScientificBackend
 };
+
+export default {
+    ScientificBackend
+};

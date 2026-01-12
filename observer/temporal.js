@@ -14,8 +14,6 @@
  * @module observer/temporal
  */
 
-'use strict';
-
 /**
  * Moment - A discrete unit of experiential time
  * 
@@ -658,8 +656,14 @@ class TemporalPatternDetector {
     }
 }
 
-module.exports = {
-    Moment,
-    TemporalLayer,
-    TemporalPatternDetector
+export {
+  Moment,
+  TemporalLayer,
+  TemporalPatternDetector
+};
+
+export default {
+  Moment,
+  TemporalLayer,
+  TemporalPatternDetector
 };

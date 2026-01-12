@@ -347,3 +347,11 @@ export {
     LogLevel,
     LogLevelNames
 };
+
+// Default export for compatibility with modular.js
+export default {
+    Logger,
+    createLogger,
+    LogLevel,
+    LogLevelNames
+};

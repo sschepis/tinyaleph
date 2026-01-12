@@ -21,10 +21,8 @@
  * @module observer/prsc
  */
 
-'use strict';
-
-const { Complex, PrimeState } = require('../core/hilbert');
-const { firstNPrimes } = require('../core/prime');
+import { Complex, PrimeState } from '../core/hilbert.js';
+import { firstNPrimes } from '../core/prime.js';
 
 // ============================================================================
 // STOCHASTIC UTILITIES
@@ -1258,18 +1256,34 @@ class EntanglementDetector {
     }
 }
 
-module.exports = {
-    PrimeOscillator,
-    PRSCLayer,
-    EntanglementDetector,
-    // Discrete phase dynamics exports
+export {
+  PrimeOscillator,
+  PRSCLayer,
+  EntanglementDetector,
+  // Discrete phase dynamics exports
     INT_SINE_TABLE,
-    INT_SINE_M,
-    INT_SINE_SCALE,
-    intSin,
-    phaseToIndex,
-    indexToPhase,
-    computeHistogramCoherence,
-    // Stochastic utilities
+  INT_SINE_M,
+  INT_SINE_SCALE,
+  intSin,
+  phaseToIndex,
+  indexToPhase,
+  computeHistogramCoherence,
+  // Stochastic utilities
+    gaussianRandom
+};
+
+export default {
+  PrimeOscillator,
+  PRSCLayer,
+  EntanglementDetector,
+  // Discrete phase dynamics exports
+    INT_SINE_TABLE,
+  INT_SINE_M,
+  INT_SINE_SCALE,
+  intSin,
+  phaseToIndex,
+  indexToPhase,
+  computeHistogramCoherence,
+  // Stochastic utilities
     gaussianRandom
 };

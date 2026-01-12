@@ -14,9 +14,7 @@
  * @module observer/agency
  */
 
-'use strict';
-
-const { SMF_AXES } = require('./smf');
+import { SMF_AXES } from './smf.js';
 
 /**
  * Attention Focus - A point of concentrated processing
@@ -872,7 +870,14 @@ class AgencyLayer {
     }
 }
 
-module.exports = {
+export {
+    AttentionFocus,
+    Goal,
+    Action,
+    AgencyLayer
+};
+
+export default {
     AttentionFocus,
     Goal,
     Action,

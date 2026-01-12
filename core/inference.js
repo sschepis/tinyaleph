@@ -584,22 +584,47 @@ class EntityExtractor {
 const defaultInference = new SemanticInference();
 const defaultExtractor = new EntityExtractor();
 
+// Convenience function aliases
+const semanticInference = defaultInference;
+const entityExtractor = defaultExtractor;
+const inferSymbol = (text) => defaultInference.inferSymbol(text);
+const inferSymbols = (entities) => defaultInference.inferSymbols(entities);
+const inferWithResonance = (text, options) => defaultInference.inferWithResonance(text, options);
+const inferMostResonant = (text, contextSymbols) => defaultInference.inferMostResonant(text, contextSymbols);
+const extractEntities = (text) => defaultExtractor.extract(text);
+const extractAndInfer = (text) => defaultExtractor.extractAndInfer(text, defaultInference);
+
+// Named exports for ESM compatibility
+export {
+  SemanticInference,
+  EntityExtractor,
+  InferenceMethod,
+  semanticInference,
+  entityExtractor,
+  inferSymbol,
+  inferSymbols,
+  inferWithResonance,
+  inferMostResonant,
+  extractEntities,
+  extractAndInfer
+};
+
 export default {
   SemanticInference,
   EntityExtractor,
   InferenceMethod,
   
   // Singleton instances
-  semanticInference: defaultInference,
-  entityExtractor: defaultExtractor,
+  semanticInference,
+  entityExtractor,
   
   // Convenience functions
-  inferSymbol: (text) => defaultInference.inferSymbol(text),
-  inferSymbols: (entities) => defaultInference.inferSymbols(entities),
+  inferSymbol,
+  inferSymbols,
   
   // Resonance-enhanced inference
-  inferWithResonance: (text, options) => defaultInference.inferWithResonance(text, options),
-  inferMostResonant: (text, contextSymbols) => defaultInference.inferMostResonant(text, contextSymbols),
-  extractEntities: (text) => defaultExtractor.extract(text),
-  extractAndInfer: (text) => defaultExtractor.extractAndInfer(text, defaultInference)
+  inferWithResonance,
+  inferMostResonant,
+  extractEntities,
+  extractAndInfer
 };

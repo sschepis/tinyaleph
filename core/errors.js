@@ -577,3 +577,20 @@ export {
     errorBoundary,
     withTimeout
 };
+
+// Default export for compatibility with modular.js
+export default {
+    LogLevel,
+    LogLevelNames,
+    ErrorCategory,
+    AlephError,
+    NetworkError,
+    LLMError,
+    ValidationError,
+    TimeoutError,
+    SimpleEventEmitter,
+    ErrorHandler,
+    withErrorHandling,
+    errorBoundary,
+    withTimeout
+};

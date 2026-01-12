@@ -19,19 +19,11 @@
  * @module observer/hqe
  */
 
-'use strict';
-
-const { Complex, PrimeState } = require('../core/hilbert');
-const { firstNPrimes } = require('../core/prime');
+import { Complex, PrimeState } from '../core/hilbert.js';
+import { firstNPrimes } from '../core/prime.js';
 
 // CRT-Homology components for consistency detection
-const {
-    CRTReconstructor,
-    HomologyLoss,
-    CoprimeSelector,
-    ResidueEncoder,
-    BirkhoffProjector
-} = require('../core/crt-homology');
+import { CRTReconstructor, HomologyLoss, CoprimeSelector, ResidueEncoder, BirkhoffProjector } from '../core/crt-homology.js';
 
 // ════════════════════════════════════════════════════════════════════
 // TICK GATE (from discrete.pdf Section 4.2)
@@ -1456,10 +1448,18 @@ class HolographicSimilarity {
 // EXPORTS
 // ════════════════════════════════════════════════════════════════════
 
-module.exports = {
-    TickGate,
-    StabilizationController,
-    HolographicEncoder,
-    HolographicMemory,
-    HolographicSimilarity
+export {
+  TickGate,
+  StabilizationController,
+  HolographicEncoder,
+  HolographicMemory,
+  HolographicSimilarity
+};
+
+export default {
+  TickGate,
+  StabilizationController,
+  HolographicEncoder,
+  HolographicMemory,
+  HolographicSimilarity
 };

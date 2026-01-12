@@ -53,7 +53,8 @@ class PrimeRegistry {
 
 class Sieve {
   constructor() {
-    this.data = require('./data.json');
+    // Load data.json using ESM-compatible approach (fs already imported)
+    this.data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
     
     // Initialize Prime Registry with all currently used primes
     const usedPrimes = [

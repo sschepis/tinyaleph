@@ -648,3 +648,10 @@ export {
     EntropySensitiveEncryptor,
     HolographicKeyDistributor
 };
+
+export default {
+    CryptographicBackend,
+    PrimeStateKeyGenerator,
+    EntropySensitiveEncryptor,
+    HolographicKeyDistributor
+};

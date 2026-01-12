@@ -878,8 +878,16 @@ function IMPL(s1, s2) {
 // EXPORTS
 // ============================================================================
 
+// Type aliases for compatibility with core/index.js
+const NounType = Types.NOUN;
+const AdjType = Types.ADJECTIVE;
+const SentenceType = Types.SENTENCE;
+
 export {
     Types,
+    NounType,
+    AdjType,
+    SentenceType,
     Term,
     NounTerm,
     AdjTerm,

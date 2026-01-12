@@ -653,3 +653,17 @@ export {
     createHalfAdder,
     createFullAdder
 };
+
+export default {
+    DNAStrand,
+    DNADuplex,
+    ANDGate,
+    ORGate,
+    NOTGate,
+    NANDGate,
+    SeesawGate,
+    StrandDisplacementReaction,
+    DNACircuit,
+    createHalfAdder,
+    createFullAdder
+};

@@ -263,3 +263,21 @@ export {
     getSynonymousCodons,
     classifyMutation
 };
+
+export default {
+    STANDARD_GENETIC_CODE,
+    VERTEBRATE_MITOCHONDRIAL_CODE,
+    YEAST_MITOCHONDRIAL_CODE,
+    START_CODONS,
+    STOP_CODONS,
+    CODON_USAGE_ECOLI,
+    translateCodon,
+    getCodonsForAminoAcid,
+    getCodonDegeneracy,
+    isStartCodon,
+    isStopCodon,
+    calculateGCContent,
+    calculateCAI,
+    getSynonymousCodons,
+    classifyMutation
+};

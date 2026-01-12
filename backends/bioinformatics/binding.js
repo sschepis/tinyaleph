@@ -493,3 +493,9 @@ export {
     MolecularDocker,
     ProteinProteinDocker
 };
+
+export default {
+    BindingAffinityCalculator,
+    MolecularDocker,
+    ProteinProteinDocker
+};

@@ -166,6 +166,216 @@ let rformerTF = null;
 // Dynamic import for optional TensorFlow.js support
 // Use: const tf = await import('./rformer-tf.js') when needed
 
+// Named exports for ESM compatibility
+export {
+  // Hypercomplex algebra
+  Hypercomplex,
+  
+  // Fano plane / multiplication
+  FANO_LINES,
+  octonionMultiplyIndex,
+  sedenionMultiplyIndex,
+  multiplyIndices,
+  buildMultiplicationTable,
+  
+  // Prime utilities
+  primeGenerator,
+  nthPrime,
+  primesUpTo,
+  isPrime,
+  factorize,
+  primeSignature,
+  firstNPrimes,
+  GaussianInteger,
+  EisensteinInteger,
+  primeToFrequency,
+  primeToAngle,
+  sumOfTwoSquares,
+  DEFAULT_PRIMES,
+  
+  // LLM client
+  LLM,
+  
+  // Prime Hilbert Space
+  Complex,
+  PrimeState,
+  ResonanceOperators,
+  EntropyDrivenEvolution,
+  encodeMemory,
+  symbolicCompute,
+  QuaternionPrime,
+  PrimeResonanceIdentity,
+  PhaseLockedRing,
+  HolographicField,
+  EntangledNode,
+  ResonantFragment,
+  DELTA_S,
+  
+  // Golden Ratio Resonance
+  PHI,
+  PHI_THRESHOLD,
+  PHI_BONUS,
+  ResonanceCalculator,
+  resonanceSignature,
+  findFibonacciSequences,
+  calculateResonance,
+  findGoldenPairs,
+  findMostResonant,
+  
+  // Symbol Database
+  SymbolDatabase,
+  SymbolCategory,
+  PrimeGenerator,
+  symbolDatabase,
+  getSymbol,
+  getSymbolByPrime,
+  searchSymbols,
+  encodeSymbols,
+  decodeSymbols,
+  
+  // Semantic Inference
+  SemanticInference,
+  EntityExtractor,
+  InferenceMethod,
+  semanticInference,
+  entityExtractor,
+  inferSymbol,
+  inferSymbols,
+  extractEntities,
+  extractAndInfer,
+  inferWithResonance,
+  inferMostResonant,
+  
+  // Compound Builder
+  CompoundBuilder,
+  CompoundSymbol,
+  SymbolSequence,
+  compoundBuilder,
+  createCompound,
+  getCompound,
+  createSequence,
+  getSequence,
+  findCompoundsContaining,
+  
+  // ResoFormer ML Primitives
+  Quaternion,
+  SparsePrimeState,
+  resonanceScore,
+  resonantAttention,
+  hamiltonCompose,
+  measureNonCommutativity,
+  computeCoherence,
+  haltingDecision,
+  coherenceGatedCompute,
+  EntropyCollapseHead,
+  generateAttractorCodebook,
+  PRGraphMemory,
+  applyResonanceOperator,
+  
+  // ResoFormer Complete Layers
+  ResonantMultiHeadAttention,
+  PrimeFFN,
+  PrimeLayerNorm,
+  PositionalPrimeEncoding,
+  ResoFormerBlock,
+  ResoFormer,
+  
+  // CRT-enhanced ResoFormer
+  CRTResonantAttention,
+  HomologyRegularizedBlock,
+  CRTResoFormer,
+  createCRTResoFormer,
+  
+  // Prime Entanglement Graph
+  EntanglementEdge,
+  PrimeEntanglementGraph,
+  createEntanglementGraph,
+  
+  // Event System
+  AlephEventEmitter,
+  AlephMonitor,
+  EvolutionStream,
+  createEvolutionStream,
+  createMonitor,
+  
+  // Formal Type System
+  NounType,
+  AdjType,
+  SentenceType,
+  NounTerm,
+  AdjTerm,
+  ChainTerm,
+  FusionTerm,
+  NounSentence,
+  SeqSentence,
+  ImplSentence,
+  TypingContext,
+  TypingJudgment,
+  TypeChecker,
+  N,
+  A,
+  FUSE,
+  CHAIN,
+  SENTENCE,
+  SEQ,
+  IMPL,
+  
+  // Reduction Semantics
+  PrimeOperator,
+  NextPrimeOperator,
+  ModularPrimeOperator,
+  ResonancePrimeOperator,
+  IdentityPrimeOperator,
+  DEFAULT_OPERATOR,
+  ReductionStep,
+  ReductionTrace,
+  ReductionSystem,
+  isNormalForm,
+  isReducible,
+  termSize,
+  FusionCanonicalizer,
+  NormalFormVerifier,
+  demonstrateStrongNormalization,
+  testLocalConfluence,
+  
+  // Lambda Calculus
+  LambdaExpr,
+  VarExpr,
+  ConstExpr,
+  LamExpr,
+  AppExpr,
+  PairExpr,
+  ImplExpr,
+  PrimOpExpr,
+  Translator,
+  TypeDirectedTranslator,
+  LambdaEvaluator,
+  Semantics,
+  ConceptInterpreter,
+  
+  // Enochian
+  enochian,
+  enochianVocabulary,
+  
+  // CRT-Homology
+  extendedGCD,
+  modInverse,
+  areCoprime,
+  softmax,
+  ResidueEncoder,
+  CRTReconstructor,
+  BirkhoffProjector,
+  HomologyLoss,
+  CRTModularLayer,
+  CRTFusedAttention,
+  CoprimeSelector,
+  createCRTLayer,
+  createFusedAttention,
+  DEFAULT_PRIMES_SMALL,
+  DEFAULT_PRIMES_MEDIUM,
+  DEFAULT_PRIMES_SEMANTIC
+};
+
 export default {
   // Hypercomplex algebra
   Hypercomplex,

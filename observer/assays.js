@@ -956,10 +956,18 @@ class AssaySuite {
     }
 }
 
-module.exports = {
-    TimeDilationAssay,
-    MemoryContinuityAssay,
-    AgencyConstraintAssay,
-    NonCommutativeMeaningAssay,
-    AssaySuite
+export {
+  TimeDilationAssay,
+  MemoryContinuityAssay,
+  AgencyConstraintAssay,
+  NonCommutativeMeaningAssay,
+  AssaySuite
+};
+
+export default {
+  TimeDilationAssay,
+  MemoryContinuityAssay,
+  AgencyConstraintAssay,
+  NonCommutativeMeaningAssay,
+  AssaySuite
 };

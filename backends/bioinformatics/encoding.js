@@ -329,3 +329,26 @@ export {
     getChargeFromPrime,
     getHydrophobicityFromPrime
 };
+
+export default {
+    NUCLEOTIDE_PRIMES,
+    PRIME_TO_NUCLEOTIDE,
+    DNA_COMPLEMENTS,
+    PRIME_COMPLEMENTS,
+    AMINO_ACID_PRIMES,
+    PRIME_TO_AMINO_ACID,
+    AMINO_ACID_PROPERTIES,
+    encodeCodon,
+    decodeCodon,
+    encodeDNA,
+    decodeDNA,
+    encodeRNA,
+    decodeRNA,
+    encodeProtein,
+    decodeProtein,
+    detectSequenceType,
+    parseFASTA,
+    getAminoAcidProperties,
+    getChargeFromPrime,
+    getHydrophobicityFromPrime
+};
