@@ -1,7 +1,7 @@
 {
   "name": "@aleph-ai/tinyaleph",
-  "version": "1.5.6",
-  "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, and entropy-minimizing reasoning",
+  "version": "1.6.0",
+  "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, arithmetic topology, and entropy-minimizing reasoning",
   "type": "module",
   "main": "index.js",
   "module": "index.js",
@@ -67,7 +67,11 @@
     "machine-learning",
     "reasoning",
     "symbolic-ai",
-    "quantum-inspired"
+    "quantum-inspired",
+    "arithmetic-topology",
+    "legendre-symbol",
+    "alexander-polynomial",
+    "link-invariants"
   ],
   "author": "Sebastian Schepis",
   "license": "MIT",
@@ -90,9 +94,11 @@
     "physics/",
     "backends/",
     "engine/",
+    "observer/",
     "telemetry/",
     "types/",
     "docs/",
+    "examples/",
     "LICENSE",
     "README.md"
   ],

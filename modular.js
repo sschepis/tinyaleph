@@ -96,7 +96,30 @@ const {
   EntropyCollapseHead,
   generateAttractorCodebook,
   PRGraphMemory,
-  applyResonanceOperator
+  applyResonanceOperator,
+  // Arithmetic Link Kernel (ArithmeticLinkKernels.pdf)
+  LegendreSymbol,
+  PowerResidueSymbol,
+  RedeiSymbol,
+  ArithmeticMilnorInvariant,
+  MultipleResidueSymbol,
+  ArithmeticLinkKernel,
+  ALKOperators,
+  findBorromeanPrimes,
+  computeLegendreMatrix,
+  quickBorromeanCheck,
+  // Alexander Modules (CompleteAlexanderModules.pdf)
+  LaurentPolynomial,
+  FittingIdeal,
+  CrowellSequence,
+  AlexanderModule,
+  ModuleSignature,
+  SignatureMemory,
+  SignatureExtractor,
+  createAlexanderModule,
+  extractSignature,
+  createSignatureMemory,
+  createSignatureExtractor
 } = core;
 
 // Physics engine
@@ -155,7 +178,13 @@ const {
   collapseToIndex,
   bornMeasurement,
   partialCollapse,
-  applyDecoherence
+  applyDecoherence,
+  // ALK-Kuramoto models (Arithmetic Link Kernel + synchronization)
+  ALKKuramotoModel,
+  ALKNetworkKuramoto,
+  createALKKuramoto,
+  createALKNetworkKuramoto,
+  runBorromeanExperiment
 } = physics;
 
 // Domain backends
@@ -375,6 +404,38 @@ export default {
   generateAttractorCodebook,
   PRGraphMemory,
   applyResonanceOperator,
+  
+  // Arithmetic Link Kernel (ArithmeticLinkKernels.pdf)
+  LegendreSymbol,
+  PowerResidueSymbol,
+  RedeiSymbol,
+  ArithmeticMilnorInvariant,
+  MultipleResidueSymbol,
+  ArithmeticLinkKernel,
+  ALKOperators,
+  findBorromeanPrimes,
+  computeLegendreMatrix,
+  quickBorromeanCheck,
+  
+  // Alexander Modules (CompleteAlexanderModules.pdf)
+  LaurentPolynomial,
+  FittingIdeal,
+  CrowellSequence,
+  AlexanderModule,
+  ModuleSignature,
+  SignatureMemory,
+  SignatureExtractor,
+  createAlexanderModule,
+  extractSignature,
+  createSignatureMemory,
+  createSignatureExtractor,
+  
+  // ALK-Kuramoto models (Arithmetic Link Kernel + synchronization)
+  ALKKuramotoModel,
+  ALKNetworkKuramoto,
+  createALKKuramoto,
+  createALKNetworkKuramoto,
+  runBorromeanExperiment,
   
   // Sub-modules
   core,

@@ -47,6 +47,35 @@ import {  LambdaExpr, VarExpr, ConstExpr, LamExpr, AppExpr,
 import enochian from './enochian.js';
 import enochianVocabulary from './enochian-vocabulary.js';
 
+// Arithmetic Link Kernel (ArithmeticLinkKernels.pdf)
+import {
+  LegendreSymbol,
+  PowerResidueSymbol,
+  RedeiSymbol,
+  ArithmeticMilnorInvariant,
+  MultipleResidueSymbol,
+  ArithmeticLinkKernel,
+  ALKOperators,
+  findBorromeanPrimes,
+  computeLegendreMatrix,
+  quickBorromeanCheck
+} from './arithmetic-link-kernel.js';
+
+// Alexander Modules (CompleteAlexanderModules.pdf)
+import {
+  LaurentPolynomial,
+  FittingIdeal,
+  CrowellSequence,
+  AlexanderModule,
+  ModuleSignature,
+  SignatureMemory,
+  SignatureExtractor,
+  createAlexanderModule,
+  extractSignature,
+  createSignatureMemory,
+  createSignatureExtractor
+} from './alexander-module.js';
+
 import {  FANO_LINES,
   octonionMultiplyIndex,
   sedenionMultiplyIndex,
@@ -373,7 +402,32 @@ export {
   createFusedAttention,
   DEFAULT_PRIMES_SMALL,
   DEFAULT_PRIMES_MEDIUM,
-  DEFAULT_PRIMES_SEMANTIC
+  DEFAULT_PRIMES_SEMANTIC,
+  
+  // Arithmetic Link Kernel (ArithmeticLinkKernels.pdf)
+  LegendreSymbol,
+  PowerResidueSymbol,
+  RedeiSymbol,
+  ArithmeticMilnorInvariant,
+  MultipleResidueSymbol,
+  ArithmeticLinkKernel,
+  ALKOperators,
+  findBorromeanPrimes,
+  computeLegendreMatrix,
+  quickBorromeanCheck,
+  
+  // Alexander Modules (CompleteAlexanderModules.pdf)
+  LaurentPolynomial,
+  FittingIdeal,
+  CrowellSequence,
+  AlexanderModule,
+  ModuleSignature,
+  SignatureMemory,
+  SignatureExtractor,
+  createAlexanderModule,
+  extractSignature,
+  createSignatureMemory,
+  createSignatureExtractor
 };
 
 export default {
@@ -608,5 +662,44 @@ export default {
   CRTResonantAttention,
   HomologyRegularizedBlock,
   CRTResoFormer,
-  createCRTResoFormer
+  createCRTResoFormer,
+  
+  // Arithmetic Link Kernel (ArithmeticLinkKernels.pdf)
+  // Pairwise coupling via Legendre/power-residue symbols
+  LegendreSymbol,
+  PowerResidueSymbol,
+  // Triadic coupling via Rédei symbol
+  RedeiSymbol,
+  // Higher-order coupling via arithmetic Milnor invariants
+  ArithmeticMilnorInvariant,
+  MultipleResidueSymbol,
+  // Main ALK kernel class
+  ArithmeticLinkKernel,
+  // Integration with PrimeState/Hilbert dynamics
+  ALKOperators,
+  // Utility functions
+  findBorromeanPrimes,
+  computeLegendreMatrix,
+  quickBorromeanCheck,
+  
+  // Alexander Modules (CompleteAlexanderModules.pdf)
+  // Laurent polynomial ring Z[t, t⁻¹]
+  LaurentPolynomial,
+  // Fitting ideals E_d(A_ψ)
+  FittingIdeal,
+  // Crowell exact sequence: 0 → N^ab → A_ψ → I_{Z[H]} → 0
+  CrowellSequence,
+  // Complete Alexander module A_ψ
+  AlexanderModule,
+  // Module signature Σ_{k,S,ℓ,ψ} for content-addressable memory
+  ModuleSignature,
+  // Content-addressable signature memory store
+  SignatureMemory,
+  // Signature extraction pipeline
+  SignatureExtractor,
+  // Factory functions
+  createAlexanderModule,
+  extractSignature,
+  createSignatureMemory,
+  createSignatureExtractor
 };

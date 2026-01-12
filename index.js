@@ -128,6 +128,13 @@ export const {
   partialCollapse,
   applyDecoherence,
   
+  // ALK-Kuramoto models
+  ALKKuramotoModel,
+  ALKNetworkKuramoto,
+  createALKKuramoto,
+  createALKNetworkKuramoto,
+  runBorromeanExperiment,
+  
   // Convenience functions
   hash,
   deriveKey,
@@ -168,6 +175,31 @@ export const {
   generateAttractorCodebook,
   PRGraphMemory,
   applyResonanceOperator,
+  
+  // Arithmetic Link Kernel (ArithmeticLinkKernels.pdf)
+  LegendreSymbol,
+  PowerResidueSymbol,
+  RedeiSymbol,
+  ArithmeticMilnorInvariant,
+  MultipleResidueSymbol,
+  ArithmeticLinkKernel,
+  ALKOperators,
+  findBorromeanPrimes,
+  computeLegendreMatrix,
+  quickBorromeanCheck,
+  
+  // Alexander Modules (CompleteAlexanderModules.pdf)
+  LaurentPolynomial,
+  FittingIdeal,
+  CrowellSequence,
+  AlexanderModule,
+  ModuleSignature,
+  SignatureMemory,
+  SignatureExtractor,
+  createAlexanderModule,
+  extractSignature,
+  createSignatureMemory,
+  createSignatureExtractor,
   
   // Sub-modules
   core,

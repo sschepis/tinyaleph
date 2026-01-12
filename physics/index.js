@@ -62,6 +62,15 @@ import {  KuramotoCoupledLadder,
   kuramotoOrderParameter,
   getPhase  } from './kuramoto-coupled-ladder.js';
 
+// ALK-Kuramoto models (Arithmetic Link Kernel + synchronization)
+import {
+  ALKKuramotoModel,
+  ALKNetworkKuramoto,
+  createALKKuramoto,
+  createALKNetworkKuramoto,
+  runBorromeanExperiment
+} from './alk-kuramoto.js';
+
 export {
     Oscillator,
     OscillatorBank,
@@ -111,7 +120,13 @@ export {
     collapseToIndex,
     bornMeasurement,
     partialCollapse,
-    applyDecoherence
+    applyDecoherence,
+    // ALK-Kuramoto models (Arithmetic Link Kernel + synchronization)
+    ALKKuramotoModel,
+    ALKNetworkKuramoto,
+    createALKKuramoto,
+    createALKNetworkKuramoto,
+    runBorromeanExperiment
 };
 
 // Default export for compatibility with modular.js
@@ -164,5 +179,11 @@ export default {
     collapseToIndex,
     bornMeasurement,
     partialCollapse,
-    applyDecoherence
+    applyDecoherence,
+    // ALK-Kuramoto models (Arithmetic Link Kernel + synchronization)
+    ALKKuramotoModel,
+    ALKNetworkKuramoto,
+    createALKKuramoto,
+    createALKNetworkKuramoto,
+    runBorromeanExperiment
 };
