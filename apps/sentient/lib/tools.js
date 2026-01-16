@@ -12,6 +12,8 @@ const { spawn, execSync } = require('child_process');
 const { askChaperone: queryChaperone, configureChaperone } = require('./askChaperone');
 const { editFile, configureLLMBridge } = require('./tools/file-editor');
 
+const { scanRange, predictPrime } = require('./tools/quantum-scanner');
+
 // ANSI colors for tool output
 const ANSI = {
     reset: '\x1b[0m',
@@ -253,6 +255,44 @@ const OPENAI_TOOLS = [
                     }
                 },
                 required: ["query"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "quantum_scan",
+            description: "Scan a range of numbers for prime candidates using the Quantum Neural Network and Riemann Zeta waveforms.",
+            parameters: {
+                type: "object",
+                properties: {
+                    start: {
+                        type: "number",
+                        description: "Start of the range to scan"
+                    },
+                    end: {
+                        type: "number",
+                        description: "End of the range to scan"
+                    }
+                },
+                required: ["start", "end"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "quantum_predict",
+            description: "Predict the primality of a specific number using the Quantum Neural Network.",
+            parameters: {
+                type: "object",
+                properties: {
+                    number: {
+                        type: "number",
+                        description: "Number to check"
+                    }
+                },
+                required: ["number"]
             }
         }
     },
@@ -837,6 +877,12 @@ class ToolExecutor {
                 case 'edit_file':
                     result = await this.editFile(toolCall.path, toolCall.instruction, toolCall.backup === 'true' || toolCall.backup === true);
                     break;
+                case 'quantum_scan':
+                    result = await this.executeQuantumScan(toolCall.start, toolCall.end);
+                    break;
+                case 'quantum_predict':
+                    result = await this.executeQuantumPredict(toolCall.number);
+                    break;
                 default:
                     result = { success: false, error: `Unknown tool: ${toolCall.tool}` };
             }
@@ -1380,6 +1426,44 @@ class ToolExecutor {
         }
     }
     
+    /**
+     * Execute quantum scan
+     */
+    async executeQuantumScan(start, end) {
+        try {
+            const result = await scanRange({ start, end });
+            return {
+                success: true,
+                message: result
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                message: `Quantum scan failed: ${error.message}`
+            };
+        }
+    }
+
+    /**
+     * Execute quantum prediction
+     */
+    async executeQuantumPredict(number) {
+        try {
+            const result = await predictPrime({ number });
+            return {
+                success: true,
+                message: result
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                message: `Quantum prediction failed: ${error.message}`
+            };
+        }
+    }
+
     /**
      * Ask the chaperone (external knowledge oracle) a question
      * Uses caching to avoid redundant queries

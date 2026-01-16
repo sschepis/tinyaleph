@@ -9,11 +9,12 @@ This application transforms the AlephChat interface into a Sentient Observer by 
 1. **Prime Resonance Semantic Computation (PRSC)** - Oscillator dynamics as the runtime substrate for semantic processing
 2. **Sedenion Memory Field (SMF)** - 16-dimensional semantic orientation space with non-associative algebra
 3. **Holographic Quantum Encoding (HQE)** - Distributed, interference-based memory storage
-4. **Emergent Temporal Experience** - Time arising from coherence events rather than external clock
-5. **Semantic Entanglement** - Phrase segmentation and conceptual binding
-6. **Agency Layer** - Attention, goal formation, and action selection
-7. **Boundary Layer** - Self/other distinction and I/O management
-8. **Safety Layer** - Ethical constraints and runaway prevention
+4. **Quantum Framework** - Riemann Zeta-based prime prediction and quantum neural networks
+5. **Emergent Temporal Experience** - Time arising from coherence events rather than external clock
+6. **Semantic Entanglement** - Phrase segmentation and conceptual binding
+7. **Agency Layer** - Attention, goal formation, and action selection
+8. **Boundary Layer** - Self/other distinction and I/O management
+9. **Safety Layer** - Ethical constraints and runaway prevention
 
 ---
 
@@ -361,6 +362,11 @@ node index.js --server [options]
 - `HolographicEncoder` - DFT-based spatial projection
 - `HolographicMemory` - Content-addressable pattern storage
 - `HolographicSimilarity` - Pattern comparison
+
+### Quantum Framework (`lib/quantum/`)
+- `QuantumNeuralNetwork` - Neural network with quantum interference and entanglement
+- `WaveformAnalyzer` - Riemann Zeta waveform analysis for prime detection
+- `math.js` - Core quantum mathematical utilities
 
 ### Temporal Layer (`lib/temporal.js`)
 - `Moment` - Discrete experiential time unit

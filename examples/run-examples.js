@@ -83,6 +83,16 @@ const categories = {
             { file: '05-content-hash.js', name: 'Content Hash', desc: 'Content-addressable storage' }
         ]
     },
+    quantum: {
+        name: '🌌 Quantum Framework',
+        description: 'Prime prediction & quantum neural networks',
+        path: 'quantum',
+        examples: [
+            { file: '01-prime-hunter.js', name: 'Prime Hunter', desc: 'Scan for prime resonance' },
+            { file: '02-entanglement-demo.js', name: 'Entanglement Demo', desc: 'Quantum neural network demo' },
+            { file: '03-wave-analysis.js', name: 'Wave Analysis', desc: 'Visualize quantum waveforms' }
+        ]
+    },
     scientific: {
         name: '⚛️ Scientific Computing',
         description: 'Quantum computing simulation',
