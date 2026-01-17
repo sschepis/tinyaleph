@@ -1148,12 +1148,302 @@ function eulerTotient(n) {
   return Math.round(result);
 }
 
+// ============================================================================
+// VON MANGOLDT FUNCTION (from book.pdf Chapter 4)
+// ============================================================================
+
+/**
+ * Von Mangoldt function Λ(n)
+ *
+ * Λ(n) = log p if n = p^k for some prime p and k ≥ 1
+ * Λ(n) = 0 otherwise
+ *
+ * From book.pdf Chapter 4: "Number-Theoretic Operators"
+ * The Von Mangoldt function detects prime powers and weights them by log(p).
+ *
+ * @param {number} n - Positive integer
+ * @returns {number} Von Mangoldt function value
+ */
+function vonMangoldt(n) {
+  if (n <= 1) return 0;
+  
+  const factors = factorize(n);
+  const primeFactors = Object.keys(factors);
+  
+  // Λ(n) is non-zero only if n = p^k (single prime factor)
+  if (primeFactors.length !== 1) return 0;
+  
+  const p = parseInt(primeFactors[0]);
+  return Math.log(p);
+}
+
+/**
+ * Liouville function λ(n)
+ *
+ * λ(n) = (-1)^Ω(n) where Ω(n) is total number of prime factors with multiplicity
+ *
+ * @param {number} n - Positive integer
+ * @returns {number} Liouville function value (-1 or 1)
+ */
+function liouvilleFunction(n) {
+  if (n === 1) return 1;
+  
+  const factors = factorize(n);
+  
+  // Count total prime factors with multiplicity
+  let omega = 0;
+  for (const exp of Object.values(factors)) {
+    omega += exp;
+  }
+  
+  return Math.pow(-1, omega);
+}
+
+/**
+ * Divisor count function d(n) = σ₀(n)
+ *
+ * Counts the number of positive divisors of n.
+ * d(n) = Π (a_i + 1) where n = Π p_i^a_i
+ *
+ * @param {number} n - Positive integer
+ * @returns {number} Number of divisors
+ */
+function divisorCount(n) {
+  if (n === 1) return 1;
+  
+  const factors = factorize(n);
+  
+  let count = 1;
+  for (const exp of Object.values(factors)) {
+    count *= (exp + 1);
+  }
+  
+  return count;
+}
+
+// ============================================================================
+// DIRICHLET CHARACTERS (from book.pdf Chapter 4)
+// ============================================================================
+
+/**
+ * Dirichlet Character χ_d(n) (Legendre symbol extension)
+ *
+ * For quadratic characters modulo d:
+ * χ_d(n) = (n/d) Legendre/Jacobi symbol
+ *
+ * From book.pdf Chapter 4: Dirichlet characters encode modular arithmetic symmetries
+ *
+ * @param {number} n - Integer
+ * @param {number} d - Modulus (conductor)
+ * @returns {number} Character value: -1, 0, or 1
+ */
+function dirichletCharacter(n, d) {
+  // Use Jacobi symbol as quadratic Dirichlet character
+  return jacobiSymbol(n, d);
+}
+
+/**
+ * Jacobi symbol (n/m) - generalization of Legendre symbol
+ *
+ * Computed using quadratic reciprocity
+ *
+ * @param {number} n - Numerator
+ * @param {number} m - Denominator (positive odd integer)
+ * @returns {number} -1, 0, or 1
+ */
+function jacobiSymbol(n, m) {
+  if (m <= 0 || m % 2 === 0) {
+    throw new Error('Jacobi symbol denominator must be positive and odd');
+  }
+  
+  n = ((n % m) + m) % m;  // Reduce n mod m
+  
+  if (n === 0) return 0;
+  if (n === 1) return 1;
+  if (m === 1) return 1;
+  
+  // Factor out powers of 2 from n
+  let twos = 0;
+  while (n % 2 === 0) {
+    n /= 2;
+    twos++;
+  }
+  
+  // (2/m) = (-1)^((m²-1)/8)
+  let result = 1;
+  if (twos % 2 === 1) {
+    const mMod8 = m % 8;
+    if (mMod8 === 3 || mMod8 === 5) {
+      result = -result;
+    }
+  }
+  
+  if (n === 1) return result;
+  
+  // Quadratic reciprocity: (n/m)(m/n) = (-1)^((n-1)(m-1)/4)
+  if (n % 4 === 3 && m % 4 === 3) {
+    result = -result;
+  }
+  
+  return result * jacobiSymbol(m % n, n);
+}
+
+/**
+ * Principal Dirichlet character χ₀ mod d
+ *
+ * χ₀(n) = 1 if gcd(n, d) = 1, else 0
+ *
+ * @param {number} n - Integer
+ * @param {number} d - Modulus
+ * @returns {number} 0 or 1
+ */
+function principalCharacter(n, d) {
+  return gcd(n, d) === 1 ? 1 : 0;
+}
+
+/**
+ * Greatest common divisor
+ */
+function gcd(a, b) {
+  a = Math.abs(Math.floor(a));
+  b = Math.abs(Math.floor(b));
+  while (b > 0) {
+    [a, b] = [b, a % b];
+  }
+  return a;
+}
+
+/**
+ * Generate all Dirichlet characters modulo d
+ *
+ * For small d, enumerate character table
+ *
+ * @param {number} d - Modulus
+ * @returns {Array<Function>} Array of character functions
+ */
+function generateDirichletCharacters(d) {
+  const phi_d = eulerTotient(d);
+  const characters = [];
+  
+  // Principal character always exists
+  characters.push((n) => principalCharacter(n, d));
+  
+  // For prime modulus, we can generate all characters
+  if (isPrime(d)) {
+    // Find primitive root
+    const g = findPrimitiveRoot(d);
+    if (g) {
+      // Generate characters via powers of primitive root
+      for (let k = 1; k < phi_d; k++) {
+        const exponent = k;
+        characters.push((n) => {
+          if (gcd(n, d) !== 1) return 0;
+          const idx = discreteLog(n % d, g, d);
+          if (idx === -1) return 0;
+          return Complex.fromPolar(1, 2 * Math.PI * exponent * idx / phi_d);
+        });
+      }
+    }
+  }
+  
+  return characters;
+}
+
+/**
+ * Find a primitive root modulo p (for prime p)
+ */
+function findPrimitiveRoot(p) {
+  if (!isPrime(p)) return null;
+  if (p === 2) return 1;
+  
+  const phi = p - 1;
+  const factors = factorize(phi);
+  
+  for (let g = 2; g < p; g++) {
+    let isPrimitive = true;
+    for (const q of Object.keys(factors)) {
+      if (modPow(g, phi / parseInt(q), p) === 1) {
+        isPrimitive = false;
+        break;
+      }
+    }
+    if (isPrimitive) return g;
+  }
+  return null;
+}
+
+/**
+ * Modular exponentiation: a^b mod m
+ */
+function modPow(a, b, m) {
+  let result = 1;
+  a = a % m;
+  while (b > 0) {
+    if (b % 2 === 1) {
+      result = (result * a) % m;
+    }
+    b = Math.floor(b / 2);
+    a = (a * a) % m;
+  }
+  return result;
+}
+
+/**
+ * Discrete logarithm: find x such that g^x ≡ n (mod p)
+ * Uses baby-step giant-step for small p
+ */
+function discreteLog(n, g, p) {
+  n = ((n % p) + p) % p;
+  if (n === 1) return 0;
+  
+  const m = Math.ceil(Math.sqrt(p));
+  
+  // Baby step: compute g^j for j = 0..m-1
+  const table = new Map();
+  let val = 1;
+  for (let j = 0; j < m; j++) {
+    table.set(val, j);
+    val = (val * g) % p;
+  }
+  
+  // Giant step: compute n * (g^-m)^i for i = 0..m-1
+  const gInvM = modPow(modInverse(g, p), m, p);
+  val = n;
+  for (let i = 0; i < m; i++) {
+    if (table.has(val)) {
+      return i * m + table.get(val);
+    }
+    val = (val * gInvM) % p;
+  }
+  
+  return -1;  // Not found
+}
+
+/**
+ * Modular inverse using extended Euclidean algorithm
+ */
+function modInverse(a, m) {
+  let [old_r, r] = [a, m];
+  let [old_s, s] = [1, 0];
+  
+  while (r !== 0) {
+    const q = Math.floor(old_r / r);
+    [old_r, r] = [r, old_r - q * r];
+    [old_s, s] = [s, old_s - q * s];
+  }
+  
+  return ((old_s % m) + m) % m;
+}
+
 /**
  * Extended Resonance Operators including Möbius and Euler Totient
  *
- * From qis.pdf:
+ * From book.pdf Chapters 2 and 4:
  * - M̂|n⟩ = μ(n)|n⟩ (Möbius operator)
  * - Ê|n⟩ = exp(2πiφ(n)/n)|n⟩ (Euler phase operator)
+ * - ζ̂(s)|n⟩ = n^(-s)|n⟩ (Zeta operator)
+ * - Λ̂|n⟩ = Λ(n)|n⟩ (Von Mangoldt operator)
+ * - χ̂_d(n)|n⟩ = χ_d(n)|n⟩ (Dirichlet character operator)
  */
 const ExtendedOperators = {
   /**
@@ -1213,6 +1503,205 @@ const ExtendedOperators = {
       result.amplitudes.set(p, state.get(p).scale(-1));
     }
     return result;
+  },
+  
+  // ==========================================================================
+  // NEW OPERATORS FROM book.pdf Chapter 4
+  // ==========================================================================
+  
+  /**
+   * Zeta Operator: ζ̂(s)|n⟩ = n^(-s)|n⟩
+   * 
+   * From book.pdf Chapter 4: "Number-Theoretic Operators"
+   * 
+   * The Zeta operator scales each prime basis state by p^(-s).
+   * This connects to the Riemann zeta function ζ(s) = Σ n^(-s).
+   * 
+   * For complex s = σ + it:
+   * - Real part σ controls amplitude decay
+   * - Imaginary part t controls phase rotation
+   * 
+   * @param {number|Complex} s - The zeta parameter (real or complex)
+   * @returns {Function} Operator function that acts on PrimeState
+   */
+  Zeta(s) {
+    const sComplex = s instanceof Complex ? s : new Complex(s, 0);
+    
+    return (state) => {
+      const result = new PrimeState(state.primes);
+      
+      for (const p of state.primes) {
+        // p^(-s) = exp(-s * log(p))
+        const logP = Math.log(p);
+        const exponent = new Complex(-sComplex.re * logP, -sComplex.im * logP);
+        const scaling = exponent.exp();
+        
+        result.amplitudes.set(p, state.get(p).mul(scaling));
+      }
+      
+      return result;
+    };
+  },
+  
+  /**
+   * Von Mangoldt Operator: Λ̂|n⟩ = Λ(n)|n⟩
+   * 
+   * From book.pdf Chapter 4: "Number-Theoretic Operators"
+   * 
+   * For prime basis states |p⟩: Λ̂|p⟩ = log(p)|p⟩
+   * For non-prime-power: Λ̂|n⟩ = 0
+   * 
+   * This operator detects and weights prime powers by their logarithm.
+   * It's the "derivative" of the prime counting function.
+   */
+  Lambda(state) {
+    const result = new PrimeState(state.primes);
+    
+    for (const p of state.primes) {
+      // For prime basis states, Λ(p) = log(p)
+      const lambda = vonMangoldt(p);
+      result.amplitudes.set(p, state.get(p).scale(lambda));
+    }
+    
+    return result;
+  },
+  
+  /**
+   * Dirichlet Character Operator: χ̂_d|n⟩ = χ_d(n)|n⟩
+   * 
+   * From book.pdf Chapter 4: "Number-Theoretic Operators"
+   * 
+   * Applies Dirichlet character modulo d to scale amplitudes.
+   * For quadratic characters, this uses the Jacobi symbol.
+   * 
+   * @param {number} d - The modulus (conductor) of the character
+   * @returns {Function} Operator function
+   */
+  Chi(d) {
+    return (state) => {
+      const result = new PrimeState(state.primes);
+      
+      for (const p of state.primes) {
+        try {
+          // Use quadratic character (Jacobi symbol)
+          const chi = d % 2 === 1 ? jacobiSymbol(p, d) : principalCharacter(p, d);
+          result.amplitudes.set(p, state.get(p).scale(chi));
+        } catch (e) {
+          // For even d, fall back to principal character
+          result.amplitudes.set(p, state.get(p).scale(principalCharacter(p, d)));
+        }
+      }
+      
+      return result;
+    };
+  },
+  
+  /**
+   * Principal Character Operator: χ̂₀|n⟩ = χ₀(n)|n⟩
+   * 
+   * χ₀(n) = 1 if gcd(n, d) = 1, else 0
+   * Projects onto states coprime to d.
+   * 
+   * @param {number} d - Modulus
+   * @returns {Function} Operator function
+   */
+  Chi0(d) {
+    return (state) => {
+      const result = new PrimeState(state.primes);
+      
+      for (const p of state.primes) {
+        const chi0 = principalCharacter(p, d);
+        result.amplitudes.set(p, state.get(p).scale(chi0));
+      }
+      
+      return result;
+    };
+  },
+  
+  /**
+   * General Von Mangoldt Operator with scaling
+   * Λ̂_α|n⟩ = Λ(n)^α |n⟩
+   * 
+   * Allows fractional powers of the Von Mangoldt function.
+   * 
+   * @param {number} alpha - Power to raise Λ(n)
+   * @returns {Function} Operator function
+   */
+  LambdaAlpha(alpha) {
+    return (state) => {
+      const result = new PrimeState(state.primes);
+      
+      for (const p of state.primes) {
+        const lambda = vonMangoldt(p);
+        const scaled = lambda > 0 ? Math.pow(lambda, alpha) : 0;
+        result.amplitudes.set(p, state.get(p).scale(scaled));
+      }
+      
+      return result;
+    };
+  },
+  
+  /**
+   * Spectral Zeta Analysis: Compute ζ(s) expectation
+   * 
+   * ⟨ψ|ζ̂(s)|ψ⟩ = Σ |αp|² p^(-s)
+   * 
+   * Returns complex value representing weighted prime sum.
+   * 
+   * @param {PrimeState} state - Input state
+   * @param {number|Complex} s - Zeta parameter
+   * @returns {Complex} Expectation value
+   */
+  zetaExpectation(state, s) {
+    const sComplex = s instanceof Complex ? s : new Complex(s, 0);
+    let sum = Complex.zero();
+    
+    for (const p of state.primes) {
+      const prob = state.get(p).norm2();
+      if (prob > 1e-10) {
+        const logP = Math.log(p);
+        const exponent = new Complex(-sComplex.re * logP, -sComplex.im * logP);
+        const scaling = exponent.exp();
+        sum = sum.add(scaling.scale(prob));
+      }
+    }
+    
+    return sum;
+  },
+  
+  /**
+   * Symbolic Zeta Function approximation
+   * 
+   * Computes ζ(s) ≈ Σ_{p≤N} 1/(1 - p^(-s)) (Euler product over primes)
+   * 
+   * @param {number|Complex} s - Zeta parameter (Re(s) > 1 for convergence)
+   * @param {Array<number>} primes - Primes to sum over
+   * @returns {Complex} Approximate zeta value
+   */
+  zetaEulerProduct(s, primes = null) {
+    const ps = primes || [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+    const sComplex = s instanceof Complex ? s : new Complex(s, 0);
+    
+    let product = Complex.one();
+    
+    for (const p of ps) {
+      const logP = Math.log(p);
+      const exponent = new Complex(-sComplex.re * logP, -sComplex.im * logP);
+      const pMinusS = exponent.exp();  // p^(-s)
+      
+      // (1 - p^(-s))^(-1)
+      const denominator = Complex.one().sub(pMinusS);
+      const denom2 = denominator.norm2();
+      if (denom2 > 1e-10) {
+        const inverse = new Complex(
+          denominator.re / denom2,
+          -denominator.im / denom2
+        );
+        product = product.mul(inverse);
+      }
+    }
+    
+    return product;
   }
 };
 
@@ -1661,9 +2150,23 @@ export {
   pAdicValuation,
   pAdicCoherence,
   
-  // Number theory functions
+  // Number theory functions (book.pdf Chapter 4)
   mobiusFunction,
   eulerTotient,
+  vonMangoldt,
+  liouvilleFunction,
+  divisorCount,
+  
+  // Dirichlet characters and number theory helpers
+  dirichletCharacter,
+  jacobiSymbol,
+  principalCharacter,
+  generateDirichletCharacters,
+  findPrimitiveRoot,
+  modPow,
+  discreteLog,
+  modInverse,
+  gcd,
   
   // Extended operators and calculators
   ExtendedOperators,

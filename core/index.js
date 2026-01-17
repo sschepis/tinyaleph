@@ -101,7 +101,21 @@ import {  Complex,
   HolographicField,
   EntangledNode,
   ResonantFragment,
-  DELTA_S  } from './hilbert.js';
+  DELTA_S,
+  // Number theory functions (book.pdf Chapter 4)
+  vonMangoldt,
+  liouvilleFunction,
+  divisorCount,
+  // Dirichlet characters
+  dirichletCharacter,
+  jacobiSymbol,
+  principalCharacter,
+  generateDirichletCharacters,
+  findPrimitiveRoot,
+  modPow,
+  discreteLog,
+  modInverse,
+  gcd  } from './hilbert.js';
 
 // Golden Ratio Resonance (from symprime symbolic AI)
 import {  ResonanceCalculator,
@@ -430,7 +444,28 @@ export {
   createSignatureExtractor
 };
 
+// Export gravity module (book.pdf Chapter 6/16)
+export * from './gravity.js';
+
+// Export oracle module (book.pdf Chapter 10/11)
+export * from './oracle.js';
+
+// Export emotion module (book.pdf Chapter 9)
+export * from './emotion.js';
+
+// Export non-local communication module (book.pdf Chapter 8)
+export * from './nonlocal.js';
+
+import * as gravity from './gravity.js';
+import * as oracle from './oracle.js';
+import * as emotion from './emotion.js';
+import * as nonlocal from './nonlocal.js';
+
 export default {
+  ...gravity,
+  ...oracle,
+  ...emotion,
+  ...nonlocal,
   // Hypercomplex algebra
   Hypercomplex,
   
