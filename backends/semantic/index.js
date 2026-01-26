@@ -525,10 +525,6 @@ class SemanticBackend extends Backend {
   }
 }
 
-export {
-    SemanticBackend
-};
+export { SemanticBackend };
 
-export default {
-    SemanticBackend
-};
+export default SemanticBackend;

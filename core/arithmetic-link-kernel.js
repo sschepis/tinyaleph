@@ -19,63 +19,7 @@
 'use strict';
 
 import { isPrime, firstNPrimes, factorize } from './prime.js';
-
-// ============================================================================
-// MODULAR EXPONENTIATION UTILITIES
-// ============================================================================
-
-/**
- * Fast modular exponentiation: a^n mod m
- * Uses binary exponentiation for O(log n) complexity
- * 
- * @param {bigint|number} base - Base
- * @param {bigint|number} exp - Exponent
- * @param {bigint|number} mod - Modulus
- * @returns {bigint} Result
- */
-function modPow(base, exp, mod) {
-    base = BigInt(base);
-    exp = BigInt(exp);
-    mod = BigInt(mod);
-    
-    if (mod === 1n) return 0n;
-    
-    let result = 1n;
-    base = base % mod;
-    
-    while (exp > 0n) {
-        if (exp % 2n === 1n) {
-            result = (result * base) % mod;
-        }
-        exp = exp >> 1n;
-        base = (base * base) % mod;
-    }
-    
-    return result;
-}
-
-/**
- * Extended Euclidean Algorithm for modular inverse
- * @param {bigint} a - Number
- * @param {bigint} m - Modulus
- * @returns {bigint} a^(-1) mod m
- */
-function modInverse(a, m) {
-    a = BigInt(a);
-    m = BigInt(m);
-    
-    let [old_r, r] = [a, m];
-    let [old_s, s] = [1n, 0n];
-    
-    while (r !== 0n) {
-        const quotient = old_r / r;
-        [old_r, r] = [r, old_r - quotient * r];
-        [old_s, s] = [s, old_s - quotient * s];
-    }
-    
-    if (old_r > 1n) return null; // No inverse exists
-    return ((old_s % m) + m) % m;
-}
+import { modPowBigInt as modPow, modInverseBigInt as modInverse } from './math-utils.js';
 
 // ============================================================================
 // PHASE 1: PAIRWISE COUPLINGS - Legendre & Power Residue Symbols

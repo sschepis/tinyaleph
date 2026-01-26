@@ -4,19 +4,20 @@
  * Exports all application components for the Sentient Observer.
  */
 
-const { colors, MIME_TYPES } = require('./constants');
-const { parseArgs, printHelp } = require('./args');
-const { 
+// Use static imports for ES modules
+import { colors, MIME_TYPES } from './constants.js';
+import { parseArgs, printHelp } from './args.js';
+import { 
     getSentientSystemPrompt, 
     initializeObserver, 
     truncateToolContent, 
     clearScreen, 
     Spinner 
-} = require('./shared');
-const { SentientCLI } = require('./cli');
-const { SentientServer } = require('./server');
+} from './shared.js';
+import { SentientCLI } from './cli.js';
+import { SentientServer } from './server.js';
 
-module.exports = {
+export {
     // Constants
     colors,
     MIME_TYPES,
@@ -33,6 +34,20 @@ module.exports = {
     Spinner,
     
     // Main application classes
+    SentientCLI,
+    SentientServer
+};
+
+export default {
+    colors,
+    MIME_TYPES,
+    parseArgs,
+    printHelp,
+    getSentientSystemPrompt,
+    initializeObserver,
+    truncateToolContent,
+    clearScreen,
+    Spinner,
     SentientCLI,
     SentientServer
 };

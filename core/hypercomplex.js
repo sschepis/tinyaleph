@@ -17,9 +17,14 @@ class Hypercomplex {
       throw new Error('Dimension must be power of 2');
     }
     this.dim = dim;
-    this.c = components instanceof Float64Array 
-      ? components 
+    this.c = components instanceof Float64Array
+      ? components
       : new Float64Array(dim);
+  }
+
+  // Backward compatibility getter
+  get components() {
+    return this.c;
   }
 
   // Factory methods

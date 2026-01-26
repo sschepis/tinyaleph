@@ -17,6 +17,7 @@
  * Complex number class for amplitudes
  */
 import { factorize, isPrime, firstNPrimes } from './prime.js';
+import { modPow, modInverse } from './math-utils.js';
 
 class Complex {
   constructor(re = 0, im = 0) {
@@ -1372,21 +1373,7 @@ function findPrimitiveRoot(p) {
   return null;
 }
 
-/**
- * Modular exponentiation: a^b mod m
- */
-function modPow(a, b, m) {
-  let result = 1;
-  a = a % m;
-  while (b > 0) {
-    if (b % 2 === 1) {
-      result = (result * a) % m;
-    }
-    b = Math.floor(b / 2);
-    a = (a * a) % m;
-  }
-  return result;
-}
+// modPow imported from math-utils.js
 
 /**
  * Discrete logarithm: find x such that g^x ≡ n (mod p)
@@ -1419,21 +1406,7 @@ function discreteLog(n, g, p) {
   return -1;  // Not found
 }
 
-/**
- * Modular inverse using extended Euclidean algorithm
- */
-function modInverse(a, m) {
-  let [old_r, r] = [a, m];
-  let [old_s, s] = [1, 0];
-  
-  while (r !== 0) {
-    const q = Math.floor(old_r / r);
-    [old_r, r] = [r, old_r - q * r];
-    [old_s, s] = [s, old_s - q * s];
-  }
-  
-  return ((old_s % m) + m) % m;
-}
+// modInverse imported from math-utils.js
 
 /**
  * Extended Resonance Operators including Möbius and Euler Totient

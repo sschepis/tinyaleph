@@ -35,46 +35,7 @@
 import { firstNPrimes, isPrime, factorize } from './prime.js';
 import { Complex, PrimeState } from './hilbert.js';
 import { SparsePrimeState, resonanceScore, Quaternion } from './rformer.js';
-
-function extendedGCD(a, b) {
-    if (b === 0) {
-        return { gcd: a, x: 1, y: 0 };
-    }
-    
-    const { gcd, x: x1, y: y1 } = extendedGCD(b, a % b);
-    const x = y1;
-    const y = x1 - Math.floor(a / b) * y1;
-    
-    return { gcd, x, y };
-}
-
-/**
- * Modular multiplicative inverse
- * Returns a^{-1} mod m such that a * a^{-1} ≡ 1 (mod m)
- * @param {number} a - Number to invert
- * @param {number} m - Modulus
- * @returns {number|null} Inverse if exists, null otherwise
- */
-function modInverse(a, m) {
-    a = ((a % m) + m) % m;  // Normalize to positive
-    const { gcd, x } = extendedGCD(a, m);
-    
-    if (gcd !== 1) {
-        return null;  // No inverse exists (not coprime)
-    }
-    
-    return ((x % m) + m) % m;
-}
-
-/**
- * Check if two numbers are coprime
- * @param {number} a - First number
- * @param {number} b - Second number
- * @returns {boolean} True if gcd(a, b) = 1
- */
-function areCoprime(a, b) {
-    return extendedGCD(a, b).gcd === 1;
-}
+import { extendedGCD, modInverse, areCoprime } from './math-utils.js';
 
 /**
  * Softmax function

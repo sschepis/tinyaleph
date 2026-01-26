@@ -1,36 +1,56 @@
 {
   "name": "@aleph-ai/tinyaleph",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, arithmetic topology, and entropy-minimizing reasoning",
   "type": "module",
   "main": "index.js",
   "module": "index.js",
+  "browser": "index.js",
   "types": "types/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
-      "require": "./index.js",
+      "browser": "./index.js",
       "import": "./index.js",
-      "types": "./types/index.d.ts"
+      "require": "./index.js",
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
     },
     "./core": {
+      "browser": "./core/index.js",
+      "import": "./core/index.js",
       "require": "./core/index.js",
-      "import": "./core/index.js"
+      "default": "./core/index.js"
     },
     "./physics": {
+      "browser": "./physics/index.js",
+      "import": "./physics/index.js",
       "require": "./physics/index.js",
-      "import": "./physics/index.js"
+      "default": "./physics/index.js"
     },
     "./backends": {
+      "browser": "./backends/index.js",
+      "import": "./backends/index.js",
       "require": "./backends/index.js",
-      "import": "./backends/index.js"
+      "default": "./backends/index.js"
     },
     "./engine": {
+      "browser": "./engine/index.js",
+      "import": "./engine/index.js",
       "require": "./engine/index.js",
-      "import": "./engine/index.js"
+      "default": "./engine/index.js"
     },
     "./telemetry": {
+      "browser": "./telemetry/index.js",
+      "import": "./telemetry/index.js",
       "require": "./telemetry/index.js",
-      "import": "./telemetry/index.js"
+      "default": "./telemetry/index.js"
+    },
+    "./observer": {
+      "browser": "./observer/index.js",
+      "import": "./observer/index.js",
+      "require": "./observer/index.js",
+      "default": "./observer/index.js"
     }
   },
   "scripts": {
@@ -109,14 +129,15 @@
     "@noble/curves": "^1.9.7",
     "@sschepis/resolang": "^0.4.1"
   },
-  "optionalDependencies": {
-    "@tensorflow/tfjs-node": "^4.22.0"
-  },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^4.0.0"
+    "@tensorflow/tfjs": "^4.0.0",
+    "@tensorflow/tfjs-node": "^4.22.0"
   },
   "peerDependenciesMeta": {
     "@tensorflow/tfjs": {
+      "optional": true
+    },
+    "@tensorflow/tfjs-node": {
       "optional": true
     }
   }

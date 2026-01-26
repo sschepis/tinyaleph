@@ -113,7 +113,13 @@ function createLogger(namespace) {
     return log;
 }
 
-module.exports = {
+export {
+    colors,
+    MIME_TYPES,
+    createLogger
+};
+
+export default {
     colors,
     MIME_TYPES,
     createLogger

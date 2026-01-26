@@ -3,6 +3,9 @@
  */
 
 function estimateLyapunov(oscillators, windowSize = 20) {
+  // Defensive check for empty oscillator array or missing phaseHistory
+  if (!oscillators || oscillators.length === 0) return 0;
+  if (!oscillators[0] || !oscillators[0].phaseHistory) return 0;
   if (oscillators[0].phaseHistory.length < windowSize) return 0;
   
   let sumLog = 0, count = 0;
@@ -20,9 +23,9 @@ function estimateLyapunov(oscillators, windowSize = 20) {
 }
 
 function classifyStability(lyapunovExponent) {
-  if (lyapunovExponent < -0.1) return 'STABLE';
-  if (lyapunovExponent > 0.1) return 'CHAOTIC';
-  return 'MARGINAL';
+  if (lyapunovExponent < -0.1) return 'stable';
+  if (lyapunovExponent > 0.1) return 'chaotic';
+  return 'periodic'; // Near-zero Lyapunov indicates periodic/marginal behavior
 }
 
 function adaptiveCoupling(baseCoupling, lyapunovExponent, gain = 0.5) {

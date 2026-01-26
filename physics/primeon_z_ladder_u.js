@@ -488,5 +488,7 @@ export {
     shannonEntropyNats,
     probsOf,
     normalize,
-    C
+    normalize as normalizeComplex,
+    C,
+    C as Complex
 };

@@ -30,13 +30,18 @@ declare module '@aleph-ai/tinyaleph' {
   export class Hypercomplex implements HypercomplexState {
     constructor(dimension?: number);
     dimension: number;
+    dim: number;
     components: number[];
+    c: Float64Array;
     
     add(other: HypercomplexState): Hypercomplex;
+    sub(other: HypercomplexState): Hypercomplex;
     subtract(other: HypercomplexState): Hypercomplex;
+    mul(other: HypercomplexState): Hypercomplex;
     multiply(other: HypercomplexState): Hypercomplex;
     scale(scalar: number): Hypercomplex;
     
+    dot(other: HypercomplexState): number;
     norm(): number;
     normalize(): Hypercomplex;
     conjugate(): Hypercomplex;
@@ -44,11 +49,35 @@ declare module '@aleph-ai/tinyaleph' {
     entropy(): number;
     coherence(other: HypercomplexState): number;
     isZeroDivisorWith(other: HypercomplexState): boolean;
+    dominantAxes(n?: number): Array<{ i: number; v: number }>;
+    
+    // Advanced operations
+    scalar(): number;
+    vector(): Hypercomplex;
+    vectorNorm(): number;
+    exp(): Hypercomplex;
+    log(): Hypercomplex;
+    pow(n: number): Hypercomplex;
+    powInt(n: number): Hypercomplex;
+    sqrt(): Hypercomplex;
+    slerp(other: Hypercomplex, t: number): Hypercomplex;
+    nlerp(other: Hypercomplex, t: number): Hypercomplex;
+    squad(a: Hypercomplex, b: Hypercomplex, q2: Hypercomplex, t: number): Hypercomplex;
+    squadControlPoint(q0: Hypercomplex, q2: Hypercomplex): Hypercomplex;
+    sandwich(v: Hypercomplex): Hypercomplex;
+    rotateVector(vec: number[]): number[];
     clone(): Hypercomplex;
     toString(): string;
     
     excite(primes: number[]): void;
     getState(): number[];
+    
+    // Static factory methods
+    static zero(dim: number): Hypercomplex;
+    static basis(dim: number, index: number, value?: number): Hypercomplex;
+    static fromReal(dim: number, real: number): Hypercomplex;
+    static fromArray(arr: number[]): Hypercomplex;
+    static fromAxisAngle(dim: number, axis: number[], angle: number): Hypercomplex;
   }
 
   // ============================================
@@ -124,10 +153,12 @@ declare module '@aleph-ai/tinyaleph' {
   }
 
   export class OscillatorBank {
-    constructor(size: number);
+    constructor(frequencies: number[]);
     oscillators: Oscillator[];
     
-    excite(primes: number[]): void;
+    tick(dt: number, couplingFn?: (osc: Oscillator, all: Oscillator[]) => number): void;
+    exciteByIndices(indices: number[], amount?: number): void;
+    decayAll(rate?: number, dt?: number): void;
     step(dt: number): void;
     getPhases(): number[];
     getAmplitudes(): number[];
@@ -138,19 +169,21 @@ declare module '@aleph-ai/tinyaleph' {
   // Physics: Kuramoto
   // ============================================
 
-  export interface KuramotoOptions {
-    coupling?: number;
-    dt?: number;
-  }
-
-  export class KuramotoModel {
-    constructor(bank: OscillatorBank, options?: KuramotoOptions);
-    bank: OscillatorBank;
-    coupling: number;
+  /**
+   * KuramotoModel extends OscillatorBank with Kuramoto synchronization dynamics
+   */
+  export class KuramotoModel extends OscillatorBank {
+    constructor(frequencies: number[], couplingStrength?: number);
+    K: number;
     
-    step(dt?: number): void;
+    tick(dt: number): void;
     orderParameter(): number;
     meanPhase(): number;
+    kuramotoCoupling(osc: Oscillator): number;
+    exciteByPrimes(primes: number[], primeList: number[], amount?: number): void;
+    getWeightedAmplitudes(): number[];
+    synchronization(): number;
+    pairwiseCoherence(): number;
   }
 
   // ============================================
@@ -180,11 +213,16 @@ declare module '@aleph-ai/tinyaleph' {
   // Physics: Collapse
   // ============================================
 
-  export function collapseProbability(state: HypercomplexState, threshold?: number): number;
-  export function shouldCollapse(state: HypercomplexState, threshold?: number): boolean;
-  export function measureState(state: HypercomplexState): number;
-  export function collapseToIndex(state: HypercomplexState, index: number): HypercomplexState;
-  export function bornMeasurement(state: HypercomplexState): { index: number; probability: number };
+  export interface CollapseThresholds {
+    minCoherence?: number;
+    minEntropy?: number;
+  }
+
+  export function collapseProbability(entropyIntegral: number, lyapunovFactor?: number): number;
+  export function shouldCollapse(coherence: number, entropy: number, probability: number, thresholds: CollapseThresholds): boolean;
+  export function measureState(hypercomplex: HypercomplexState, basis?: HypercomplexState | null): { index: number; value: number } | number;
+  export function collapseToIndex(hypercomplex: HypercomplexState, index: number): HypercomplexState;
+  export function bornMeasurement(hypercomplex: HypercomplexState): { index: number; probability: number };
   export function partialCollapse(state: HypercomplexState, target: HypercomplexState, strength: number): HypercomplexState;
   export function applyDecoherence(state: HypercomplexState, rate: number): HypercomplexState;
 

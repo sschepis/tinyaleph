@@ -14,12 +14,23 @@
  * This file is now a thin wrapper around modular components in lib/app/
  */
 
-const { parseArgs, printHelp, SentientCLI, SentientServer } = require('./lib/app');
+import { createRequire } from 'module';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Use dynamic import for the app library to handle ESM/CJS interop
+const appPath = './lib/app/index.js';
 
 /**
  * Main entry point
  */
 async function main() {
+    // Dynamic import handles both ESM and CJS exports
+    const app = await import(appPath);
+    
+    // Handle both default export and named exports pattern
+    const { parseArgs, printHelp, SentientCLI, SentientServer } = app.default || app;
+    
     const options = parseArgs();
     
     if (options.help) {
