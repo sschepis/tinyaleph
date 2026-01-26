@@ -5,9 +5,39 @@
 import { OscillatorBank } from './oscillator.js';
 
 class KuramotoModel extends OscillatorBank {
-  constructor(frequencies, couplingStrength = 0.3) {
-    super(frequencies);
-    this.K = couplingStrength;
+  /**
+   * Create a Kuramoto synchronization model
+   * @param {number[]|OscillatorBank} frequenciesOrBank - Array of frequencies or an existing OscillatorBank
+   * @param {number|object} [couplingOrOptions=0.3] - Coupling strength (number) or options object
+   */
+  constructor(frequenciesOrBank, couplingOrOptions = 0.3) {
+    if (frequenciesOrBank instanceof OscillatorBank) {
+      // Use existing OscillatorBank's oscillators
+      super([]);  // Initialize with empty array
+      this.oscillators = frequenciesOrBank.oscillators;
+      this.primeList = frequenciesOrBank.primeList || frequenciesOrBank.oscillators.map(o => o.freq);
+      
+      // Parse options
+      if (typeof couplingOrOptions === 'object') {
+        this.K = couplingOrOptions.coupling ?? 0.3;
+      } else {
+        this.K = couplingOrOptions;
+      }
+    } else {
+      // Traditional constructor with frequencies array
+      super(frequenciesOrBank);
+      this.K = typeof couplingOrOptions === 'object'
+        ? (couplingOrOptions.coupling ?? 0.3)
+        : couplingOrOptions;
+    }
+  }
+  
+  /**
+   * Single step forward in time
+   * @param {number} dt - Timestep
+   */
+  step(dt) {
+    this.tick(dt);
   }
   
   orderParameter() {

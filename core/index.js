@@ -114,7 +114,7 @@ import {  Complex,
   findPrimitiveRoot,
   modPow,
   discreteLog,
-  modInverse,
+  modInverse as hilbertModInverse,
   gcd  } from './hilbert.js';
 
 // Golden Ratio Resonance (from symprime symbolic AI)

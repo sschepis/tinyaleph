@@ -49,8 +49,39 @@ class Oscillator {
  * Collection of coupled oscillators
  */
 class OscillatorBank {
-  constructor(frequencies) {
-    this.oscillators = frequencies.map(f => new Oscillator(f));
+  /**
+   * Create an OscillatorBank
+   * @param {number|number[]} sizeOrFrequencies - Either a number (size) or array of frequencies
+   * @param {number[]} [defaultPrimes] - Optional default primes for size-based construction
+   */
+  constructor(sizeOrFrequencies, defaultPrimes = null) {
+    if (typeof sizeOrFrequencies === 'number') {
+      // Size-based constructor: create oscillators with first N primes as frequencies
+      const primes = defaultPrimes || this._generatePrimes(sizeOrFrequencies);
+      this.oscillators = primes.slice(0, sizeOrFrequencies).map(p => new Oscillator(p));
+      this.primeList = primes.slice(0, sizeOrFrequencies);
+    } else {
+      // Frequency array constructor
+      this.oscillators = sizeOrFrequencies.map(f => new Oscillator(f));
+      this.primeList = sizeOrFrequencies;
+    }
+  }
+  
+  /**
+   * Generate first N primes (helper)
+   */
+  _generatePrimes(n) {
+    const primes = [];
+    let num = 2;
+    while (primes.length < n) {
+      let isPrime = true;
+      for (let i = 2; i <= Math.sqrt(num); i++) {
+        if (num % i === 0) { isPrime = false; break; }
+      }
+      if (isPrime) primes.push(num);
+      num++;
+    }
+    return primes;
   }
   
   tick(dt, couplingFn) {
@@ -64,6 +95,21 @@ class OscillatorBank {
     for (const idx of indices) {
       if (idx >= 0 && idx < this.oscillators.length) {
         this.oscillators[idx].excite(amount);
+      }
+    }
+  }
+  
+  /**
+   * Excite oscillators based on prime frequencies
+   * @param {number[]} primes - Array of prime numbers to excite
+   * @param {number} [amount=0.5] - Excitation amount
+   */
+  excite(primes, amount = 0.5) {
+    const primeSet = new Set(primes);
+    for (let i = 0; i < this.oscillators.length; i++) {
+      // Match by prime frequency
+      if (primeSet.has(this.primeList[i]) || primeSet.has(this.oscillators[i].freq)) {
+        this.oscillators[i].excite(amount);
       }
     }
   }

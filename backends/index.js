@@ -9,6 +9,15 @@ import ScientificBackend from './scientific/index.js';
 
 import bioinformatics from './bioinformatics/index.js';
 
+// Named exports for ESM compatibility
+export {
+  Backend,
+  SemanticBackend,
+  CryptographicBackend,
+  ScientificBackend,
+  bioinformatics
+};
+
 export default {
   Backend,
   SemanticBackend,

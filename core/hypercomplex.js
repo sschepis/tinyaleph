@@ -59,6 +59,11 @@ class Hypercomplex {
     return r;
   }
   
+  // Alias for sub()
+  subtract(other) {
+    return this.sub(other);
+  }
+  
   scale(k) {
     const r = new Hypercomplex(this.dim);
     for (let i = 0; i < this.dim; i++) r.c[i] = this.c[i] * k;
