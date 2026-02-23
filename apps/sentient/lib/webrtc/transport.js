@@ -8,8 +8,8 @@
  * as an underlying transport mechanism.
  */
 
-const { EventEmitter } = require('events');
-const { createLogger } = require('../app/constants');
+import { EventEmitter } from 'events';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('webrtc:transport');
 
@@ -321,7 +321,7 @@ function createPRRCWebRTCIntegration(channel, peer) {
     };
 }
 
-module.exports = {
+export {
     WebRTCTransport,
     WebRTCTransportFactory,
     createPRRCWebRTCIntegration

@@ -1,10 +1,10 @@
 /**
  * Tests for Symbolic AI components ported from symprime
  */
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 
-const {
+import {
   // Resonance
   ResonanceCalculator,
   resonanceSignature,
@@ -38,7 +38,7 @@ const {
   getCompound,
   createSequence,
   getSequence
-} = require('../core');
+} from '../core/index.js';
 
 describe('ResonanceCalculator', () => {
   const calc = new ResonanceCalculator();

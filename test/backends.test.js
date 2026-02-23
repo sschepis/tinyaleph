@@ -3,11 +3,11 @@
  * Covers Semantic, Cryptographic, and Scientific backends
  */
 
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
-const { SemanticBackend } = require('../backends/semantic');
-const { CryptographicBackend } = require('../backends/cryptographic');
-const { ScientificBackend } = require('../backends/scientific');
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
+import { SemanticBackend } from '../backends/semantic/index.js';
+import { CryptographicBackend } from '../backends/cryptographic/index.js';
+import { ScientificBackend } from '../backends/scientific/index.js';
 
 describe('SemanticBackend', () => {
   let backend;

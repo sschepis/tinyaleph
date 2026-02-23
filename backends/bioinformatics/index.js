@@ -486,6 +486,35 @@ class BioinformaticsBackend extends Backend {
   }
 }
 
+// Re-export encoding named exports
+export {
+  NUCLEOTIDE_PRIMES,
+  AMINO_ACID_PRIMES,
+  encodeDNA,
+  decodeDNA,
+  encodeRNA,
+  decodeRNA,
+  encodeProtein,
+  decodeProtein,
+} from './encoding.js';
+
+// Named exports for classes and DNA computing
+const { BindingAffinityCalculator } = binding;
+const { DNAStrand, ANDGate, ORGate, NOTGate, DNACircuit } = dnaComputing;
+
+export {
+  BioinformaticsBackend,
+  TranscriptionOperator,
+  TranslationOperator,
+  FoldingTransform,
+  BindingAffinityCalculator,
+  DNAStrand,
+  ANDGate,
+  ORGate,
+  NOTGate,
+  DNACircuit,
+};
+
 // Export everything
 export default {
   // Main backend

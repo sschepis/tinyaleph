@@ -4,9 +4,9 @@
  * Handles chat API endpoints including streaming and non-streaming chat.
  */
 
-const { loggers, sendJson, readBody } = require('./utils');
-const { truncateToolContent } = require('../shared');
-const { processToolCalls } = require('../../tools');
+import { loggers, sendJson, readBody } from './utils.js';
+import { truncateToolContent } from '../shared.js';
+import { processToolCalls } from '../../tools.js';
 
 const { http: logHttp, stream: logStream, tool: logTool, learn: logLearn } = loggers;
 
@@ -421,4 +421,4 @@ function createChatHandlers(server) {
     };
 }
 
-module.exports = { createChatHandlers };
+export { createChatHandlers };

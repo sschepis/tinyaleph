@@ -3,9 +3,9 @@
  * Verifies all expected exports are present
  */
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
-const aleph = require('../modular');
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import aleph from '../modular.js';
 
 describe('Main module exports', () => {
   describe('Engine', () => {

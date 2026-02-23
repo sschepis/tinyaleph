@@ -456,10 +456,14 @@ export * from './emotion.js';
 // Export non-local communication module (book.pdf Chapter 8)
 export * from './nonlocal.js';
 
+// Export Atlas module (atlas-embeddings)
+export * from './atlas/index.js';
+
 import * as gravity from './gravity.js';
 import * as oracle from './oracle.js';
 import * as emotion from './emotion.js';
 import * as nonlocal from './nonlocal.js';
+import { Label, Atlas, E8RootSystem, ATLAS, E8 } from './atlas/index.js';
 
 export default {
   ...gravity,
@@ -736,5 +740,13 @@ export default {
   createAlexanderModule,
   extractSignature,
   createSignatureMemory,
-  createSignatureExtractor
+  createSignatureExtractor,
+
+  // Atlas of Resonance Classes (UOR-Foundation/atlas-embeddings)
+  // 96-vertex graph, Label system, E8 root system
+  Label,
+  Atlas,
+  E8RootSystem,
+  ATLAS,
+  E8
 };

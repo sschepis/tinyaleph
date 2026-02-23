@@ -1,14 +1,16 @@
 /**
  * WebRTC Peer Client for Sentient Observer
- * 
+ *
  * Client-side WebRTC peer for connecting to other nodes:
  * - Coordinator connection (WebSocket or HTTP polling)
  * - RTCPeerConnection management
  * - DataChannel communication
  */
 
-const { EventEmitter } = require('events');
-const { createLogger } = require('../app/constants');
+import { EventEmitter } from 'events';
+import http from 'http';
+import https from 'https';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('webrtc:peer');
 
@@ -16,9 +18,16 @@ const log = createLogger('webrtc:peer');
 let RTCPeerConnection, RTCSessionDescription, RTCIceCandidate;
 try {
     // Try native (browser or modern Node with --experimental-webrtc)
-    RTCPeerConnection = global.RTCPeerConnection || require('wrtc').RTCPeerConnection;
-    RTCSessionDescription = global.RTCSessionDescription || require('wrtc').RTCSessionDescription;
-    RTCIceCandidate = global.RTCIceCandidate || require('wrtc').RTCIceCandidate;
+    if (global.RTCPeerConnection) {
+        RTCPeerConnection = global.RTCPeerConnection;
+        RTCSessionDescription = global.RTCSessionDescription;
+        RTCIceCandidate = global.RTCIceCandidate;
+    } else {
+        const wrtc = await import('wrtc');
+        RTCPeerConnection = wrtc.RTCPeerConnection;
+        RTCSessionDescription = wrtc.RTCSessionDescription;
+        RTCIceCandidate = wrtc.RTCIceCandidate;
+    }
 } catch (e) {
     log('WebRTC not available (wrtc package not installed)');
     log('Install with: npm install wrtc');
@@ -119,11 +128,15 @@ class WebRTCPeer extends EventEmitter {
     async connectWebSocket() {
         const wsUrl = this.coordinatorUrl.replace(/^http/, 'ws') + '/signal';
         
+        // Resolve WebSocket class (browser global or 'ws' module)
+        let WebSocket = global.WebSocket;
+        if (!WebSocket) {
+            try { const ws = await import('ws'); WebSocket = ws.default; } catch(e) {}
+        }
+        if (!WebSocket) { return false; }
+        
         return new Promise((resolve) => {
             try {
-                // Use ws module in Node.js
-                const WebSocket = global.WebSocket || require('ws');
-                
                 this.ws = new WebSocket(`${wsUrl}?nodeId=${this.nodeId}`);
                 
                 this.ws.onopen = () => {
@@ -668,7 +681,7 @@ class WebRTCPeer extends EventEmitter {
      */
     httpRequest(url, options = {}) {
         return new Promise((resolve, reject) => {
-            const http = url.startsWith('https') ? require('https') : require('http');
+            const httpModule = url.startsWith('https') ? https : http;
             const parsedUrl = new URL(url);
             
             const reqOptions = {
@@ -683,7 +696,7 @@ class WebRTCPeer extends EventEmitter {
                 timeout: 10000
             };
             
-            const req = http.request(reqOptions, (res) => {
+            const req = httpModule.request(reqOptions, (res) => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
@@ -731,4 +744,4 @@ class WebRTCPeer extends EventEmitter {
     }
 }
 
-module.exports = { WebRTCPeer };
+export { WebRTCPeer };

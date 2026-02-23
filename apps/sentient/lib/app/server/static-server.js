@@ -4,8 +4,8 @@
  * Handles serving static files from the public directory.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * MIME types for common file extensions
@@ -110,4 +110,4 @@ function createStaticServer(server) {
     };
 }
 
-module.exports = { createStaticServer, MIME_TYPES };
+export { createStaticServer, MIME_TYPES };

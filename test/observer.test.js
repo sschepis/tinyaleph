@@ -11,18 +11,21 @@
  * - SafetyLayer
  */
 
-'use strict';
-
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
+import { SedenionMemoryField, SMF_AXES, SMF_CODEBOOK } from '../observer/smf.js';
+import { PRSCLayer, PrimeOscillator } from '../observer/prsc.js';
+import { TemporalLayer, Moment } from '../observer/temporal.js';
+import { EntanglementLayer, EntangledPair, Phrase } from '../observer/entanglement.js';
+import { AgencyLayer, AttentionFocus, Goal, Action } from '../observer/agency.js';
+import { BoundaryLayer, SensoryChannel, MotorChannel, ObjectivityGate } from '../observer/boundary.js';
+import { SafetyLayer, SafetyConstraint, SafetyMonitor } from '../observer/safety.js';
 
 // ============================================================================
 // SMF TESTS
 // ============================================================================
 
 describe('SedenionMemoryField', () => {
-    const { SedenionMemoryField, SMF_AXES, SMF_CODEBOOK } = require('../observer/smf');
-    
     it('should export SMF_AXES with 16 dimensions', () => {
         assert.strictEqual(SMF_AXES.length, 16);
         assert.ok(SMF_AXES.some(a => a.name === 'coherence'));
@@ -166,8 +169,6 @@ describe('SedenionMemoryField', () => {
 // ============================================================================
 
 describe('PRSCLayer', () => {
-    const { PRSCLayer, PrimeOscillator } = require('../observer/prsc');
-    
     describe('PrimeOscillator', () => {
         it('should create with prime', () => {
             const osc = new PrimeOscillator(7);
@@ -276,8 +277,6 @@ describe('PRSCLayer', () => {
 // ============================================================================
 
 describe('TemporalLayer', () => {
-    const { TemporalLayer, Moment } = require('../observer/temporal');
-    
     describe('Moment', () => {
         it('should create with timestamp', () => {
             const moment = new Moment({ coherence: 0.7, entropy: 0.5 });
@@ -385,8 +384,6 @@ describe('TemporalLayer', () => {
 // ============================================================================
 
 describe('EntanglementLayer', () => {
-    const { EntanglementLayer, EntangledPair, Phrase } = require('../observer/entanglement');
-    
     describe('EntangledPair', () => {
         it('should create pair from two primes', () => {
             const pair = new EntangledPair({ prime1: 2, prime2: 3, strength: 0.8 });
@@ -528,8 +525,6 @@ describe('EntanglementLayer', () => {
 // ============================================================================
 
 describe('AgencyLayer', () => {
-    const { AgencyLayer, AttentionFocus, Goal, Action } = require('../observer/agency');
-    
     describe('AttentionFocus', () => {
         it('should create with target', () => {
             const focus = new AttentionFocus({ target: 'task', type: 'goal' });
@@ -702,8 +697,6 @@ describe('AgencyLayer', () => {
 // ============================================================================
 
 describe('BoundaryLayer', () => {
-    const { BoundaryLayer, SensoryChannel, MotorChannel, ObjectivityGate } = require('../observer/boundary');
-    
     describe('SensoryChannel', () => {
         it('should create with name', () => {
             const channel = new SensoryChannel({ name: 'vision' });
@@ -828,8 +821,6 @@ describe('BoundaryLayer', () => {
 // ============================================================================
 
 describe('SafetyLayer', () => {
-    const { SafetyLayer, SafetyConstraint, SafetyMonitor } = require('../observer/safety');
-    
     describe('SafetyConstraint', () => {
         it('should create with name and condition', () => {
             const constraint = new SafetyConstraint({
@@ -993,12 +984,6 @@ describe('SafetyLayer', () => {
 // ============================================================================
 
 describe('Observer Stack Integration', () => {
-    const { SedenionMemoryField } = require('../observer/smf');
-    const { PRSCLayer } = require('../observer/prsc');
-    const { TemporalLayer } = require('../observer/temporal');
-    const { EntanglementLayer } = require('../observer/entanglement');
-    const { SafetyLayer } = require('../observer/safety');
-    
     it('should process input through full stack', () => {
         // Create observer layers
         const smf = SedenionMemoryField.uniform();

@@ -2,10 +2,10 @@
  * WebRTC Subsystem Tests
  */
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
-const { WebRTCCoordinator } = require('../apps/sentient/lib/webrtc/coordinator');
-const { RoomManager } = require('../apps/sentient/lib/webrtc/room');
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import assert from 'node:assert';
+import { WebRTCCoordinator } from '../apps/sentient/lib/webrtc/coordinator.js';
+import { RoomManager } from '../apps/sentient/lib/webrtc/room.js';
 
 describe('WebRTC Subsystem', () => {
     describe('RoomManager', () => {

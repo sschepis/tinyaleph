@@ -1,6 +1,6 @@
 /**
  * Tests for Topological Framework (from 108bio.pdf)
- * 
+ *
  * Tests the core/topology.js module including:
  * - Knot class and trefoil complexity
  * - Physical constants (α⁻¹ = 137, proton/electron ratio)
@@ -9,21 +9,19 @@
  * - Observer Hierarchy (multi-scale observers)
  */
 
-'use strict';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
-
-const {
+import {
     Knot,
     TREFOIL,
     PhysicalConstants,
     GaugeSymmetry,
     FreeEnergyDynamics,
     OBSERVER_HIERARCHY
-} = require('../core/topology');
+} from '../core/topology.js';
 
-const { TWIST_108 } = require('../core/prime');
+import { TWIST_108, twistAngle, totalTwist, isTwistClosed, findClosingPrimes } from '../core/prime.js';
 
 // ============================================================================
 // 108 INVARIANT TESTS (core/prime.js)
@@ -63,7 +61,6 @@ describe('108 Invariant', () => {
     
     describe('Twist angle functions', () => {
         it('should compute correct twist angle for prime', () => {
-            const { twistAngle } = require('../core/prime');
             // twistAngle(p) = 360/p degrees
             const angle7 = twistAngle(7);
             assert.ok(Math.abs(angle7 - (360 / 7)) < 1e-10);
@@ -73,7 +70,6 @@ describe('108 Invariant', () => {
         });
         
         it('should compute total twist for prime sequence', () => {
-            const { totalTwist, twistAngle } = require('../core/prime');
             const primes = [2, 3, 5, 7];
             const total = totalTwist(primes);
             // Total should be sum of individual angles
@@ -83,7 +79,6 @@ describe('108 Invariant', () => {
         });
         
         it('should identify twist-closed sequences', () => {
-            const { isTwistClosed, totalTwist } = require('../core/prime');
             // Need to find primes whose twist angles sum to ~360
             // 360/2 + 360/3 + 360/5 + 360/7 = 180 + 120 + 72 + 51.43 = 423.43
             // Let's just verify the function works correctly
@@ -97,7 +92,6 @@ describe('108 Invariant', () => {
         });
         
         it('should find closing primes for sequences', () => {
-            const { findClosingPrimes } = require('../core/prime');
             const closers = findClosingPrimes([2, 3], 5.0);
             assert.ok(Array.isArray(closers));
             assert.ok(closers.length > 0);

@@ -4,21 +4,23 @@
  * Contains the SentientCLI class for interactive terminal interface.
  */
 
-const fs = require('fs');
-const path = require('path');
-const http = require('http');
-const https = require('https');
-const readline = require('readline');
-const { URL } = require('url');
+import fs from 'fs';
+import path from 'path';
+import http from 'http';
+import https from 'https';
+import readline from 'readline';
+import { URL } from 'url';
+import crypto from 'crypto';
+import os from 'os';
 
-const { colors: c, createLogger } = require('./constants');
-const { printHelp } = require('./args');
-const { initializeObserver, truncateToolContent, clearScreen, Spinner } = require('./shared');
+import { colors as c, createLogger } from './constants.js';
+import { printHelp } from './args.js';
+import { initializeObserver, truncateToolContent, clearScreen, Spinner } from './shared.js';
 
-const { MarkdownRenderer, CodeRunner } = require('../markdown');
-const { parseToolCalls, executeOpenAIToolCall } = require('../tools');
-const { AssaySuite } = require('../assays');
-const { createLearningSystem } = require('../learning');
+import { MarkdownRenderer, CodeRunner } from '../markdown.js';
+import { parseToolCalls, executeOpenAIToolCall } from '../tools.js';
+import { AssaySuite } from '../assays.js';
+import { createLearningSystem } from '../learning/index.js';
 
 // Create loggers
 const logNode = createLogger('cli:node');
@@ -67,8 +69,7 @@ class SentientCLI {
      * Generate a unique node ID
      */
     generateNodeId() {
-        const crypto = require('crypto');
-        const hostname = require('os').hostname();
+        const hostname = os.hostname();
         const timestamp = Date.now().toString(36);
         const random = crypto.randomBytes(4).toString('hex');
         return `cli-${hostname}-${timestamp}-${random}`;
@@ -1213,6 +1214,4 @@ class SentientCLI {
     }
 }
 
-module.exports = {
-    SentientCLI
-};
+export { SentientCLI };

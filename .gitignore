@@ -27,6 +27,7 @@ Thumbs.db
 *.pem
 *.key
 secrets/
+.npmrc
 
 # Logs
 logs/

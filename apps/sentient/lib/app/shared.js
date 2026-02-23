@@ -5,14 +5,15 @@
  * and utility functions used by both CLI and Server modes.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { colors as c } from './constants.js';
 
-const { SentientObserver } = require('../sentient-core');
-const { AlephChat } = require('../chat');
-const { ToolExecutor, TOOL_DEFINITIONS, OPENAI_TOOLS } = require('../tools');
-const { SensorySystem } = require('../senses');
-const { Agent, createAgent } = require('../agent');
+import { SentientObserver } from '../sentient-core.js';
+import { AlephChat } from '../chat.js';
+import { ToolExecutor, TOOL_DEFINITIONS, OPENAI_TOOLS } from '../tools.js';
+import { SensorySystem } from '../senses/index.js';
+import { Agent, createAgent } from '../agent.js';
 
 /**
  * Generate the system prompt for the Sentient Observer
@@ -168,7 +169,6 @@ function clearScreen() {
  */
 class Spinner {
     constructor(options = {}) {
-        const { colors: c } = require('./constants');
         this.frames = options.frames || ['◐', '◓', '◑', '◒'];
         this.interval = options.interval || 100;
         this.text = options.text || 'Processing...';
@@ -202,7 +202,7 @@ class Spinner {
     }
 }
 
-module.exports = {
+export {
     getSentientSystemPrompt,
     initializeObserver,
     truncateToolContent,

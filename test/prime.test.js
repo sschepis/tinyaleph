@@ -2,9 +2,9 @@
  * Tests for prime number utilities
  */
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
-const {
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import {
   isPrime,
   nthPrime,
   primesUpTo,
@@ -18,7 +18,7 @@ const {
   primeToAngle,
   sumOfTwoSquares,
   DEFAULT_PRIMES
-} = require('../core/prime');
+} from '../core/prime.js';
 
 describe('Prime utilities', () => {
   describe('isPrime', () => {

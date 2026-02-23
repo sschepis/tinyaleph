@@ -9,12 +9,10 @@
  * - Integration with SparsePrimeState
  */
 
-'use strict';
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
 
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
-
-const {
+import {
     extendedGCD,
     modInverse,
     areCoprime,
@@ -29,9 +27,9 @@ const {
     createCRTLayer,
     DEFAULT_PRIMES_SMALL,
     DEFAULT_PRIMES_SEMANTIC
-} = require('../core/crt-homology');
+} from '../core/crt-homology.js';
 
-const { SparsePrimeState, Complex } = require('../core');
+import { SparsePrimeState, Complex } from '../core/index.js';
 
 // ============================================================================
 // MODULAR ARITHMETIC TESTS

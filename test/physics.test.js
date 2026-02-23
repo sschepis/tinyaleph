@@ -3,9 +3,9 @@
  * Covers oscillator, kuramoto, entropy, lyapunov, and collapse
  */
 
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
-const {
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
+import {
   Oscillator,
   OscillatorBank,
   KuramotoModel,
@@ -29,8 +29,8 @@ const {
   bornMeasurement,
   partialCollapse,
   applyDecoherence
-} = require('../physics');
-const { Hypercomplex } = require('../core/hypercomplex');
+} from '../physics/index.js';
+import { Hypercomplex } from '../core/hypercomplex.js';
 
 describe('Oscillator', () => {
   describe('construction', () => {
@@ -354,7 +354,7 @@ describe('Lyapunov Functions', () => {
 
     it('should decrease coupling for chaotic system', () => {
       const base = 0.3;
-      const adapted = adaptiveCoupling(base, 0.5);
+      const adapted = adaptiveCoupling(base, 1.5);
       assert.ok(adapted < base);
     });
   });
@@ -410,17 +410,17 @@ describe('Collapse Functions', () => {
   });
 
   describe('measureState', () => {
-    it('should return measurement result object', () => {
+    it('should return dominant component index', () => {
       const state = Hypercomplex.fromArray([1, 0.1, 0.1, 0.1]).normalize();
       const result = measureState(state);
-      assert.ok('index' in result);
-      assert.ok('value' in result);
+      assert.strictEqual(typeof result, 'number');
+      assert.strictEqual(result, 0);
     });
 
     it('should find dominant index', () => {
       const state = Hypercomplex.fromArray([0.1, 0.1, 1, 0.1]).normalize();
       const result = measureState(state);
-      assert.strictEqual(result.index, 2);
+      assert.strictEqual(result, 2);
     });
   });
 

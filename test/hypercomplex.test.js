@@ -3,9 +3,9 @@
  * Tests Cayley-Dickson algebra operations across dimensions
  */
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
-const { Hypercomplex } = require('../core/hypercomplex');
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import { Hypercomplex } from '../core/hypercomplex.js';
 
 describe('Hypercomplex', () => {
   describe('construction', () => {

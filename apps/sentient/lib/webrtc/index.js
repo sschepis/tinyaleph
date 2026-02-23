@@ -7,12 +7,12 @@
  * - Transport: PRRCChannel-compatible transport layer
  */
 
-const { WebRTCCoordinator } = require('./coordinator');
-const { WebRTCPeer } = require('./peer');
-const { RoomManager } = require('./room');
-const { WebRTCTransport } = require('./transport');
+import { WebRTCCoordinator } from './coordinator.js';
+import { WebRTCPeer } from './peer.js';
+import { RoomManager } from './room.js';
+import { WebRTCTransport } from './transport.js';
 
-module.exports = {
+export {
     WebRTCCoordinator,
     WebRTCPeer,
     RoomManager,

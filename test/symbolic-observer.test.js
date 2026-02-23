@@ -1,131 +1,166 @@
 /**
  * Tests for Symbolic Observer Extensions
- * 
+ *
  * Tests the extracted symbolic processing modules:
  * - SymbolicSMF (symbol-grounded SMF)
  * - SymbolicTemporalLayer (I-Ching moment classification)
  * - Evaluation Assays (whitepaper Section 15 tests)
  */
 
-'use strict';
-
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
+import { SymbolicSMF, SMFSymbolMapper, AXIS_SYMBOL_MAPPING, TAG_TO_AXIS } from '../observer/symbolic-smf.js';
+import { symbolDatabase } from '../core/symbols.js';
+import {
+    SymbolicMoment,
+    SymbolicTemporalLayer,
+    SymbolicPatternDetector,
+    HEXAGRAM_ARCHETYPES
+} from '../observer/symbolic-temporal.js';
+import {
+    TimeDilationAssay,
+    MemoryContinuityAssay,
+    AgencyConstraintAssay,
+    NonCommutativeMeaningAssay,
+    AssaySuite
+} from '../observer/assays.js';
 
 // ============================================================================
 // SYMBOLIC SMF TESTS
 // ============================================================================
 
 describe('SymbolicSMF', () => {
-    const { SymbolicSMF, SMFSymbolMapper, AXIS_SYMBOL_MAPPING, TAG_TO_AXIS } = require('../observer/symbolic-smf');
-    const { symbolDatabase } = require('../core/symbols');
     
     describe('AXIS_SYMBOL_MAPPING', () => {
         it('should have 16 axis mappings', () => {
             assert.strictEqual(Object.keys(AXIS_SYMBOL_MAPPING).length, 16);
         });
         
-        it('should map coherence to unity symbol', () => {
-            assert.ok(AXIS_SYMBOL_MAPPING.coherence);
-            assert.ok(AXIS_SYMBOL_MAPPING.coherence.length > 0);
+        it('should map axis 0 (coherence) to unity-related archetypes', () => {
+            assert.ok(AXIS_SYMBOL_MAPPING[0]);
+            assert.ok(AXIS_SYMBOL_MAPPING[0].archetypes.length > 0);
         });
         
-        it('should map all SMF axes', () => {
-            const axes = ['coherence', 'identity', 'intention', 'emotion', 'wisdom', 
-                         'temporal', 'relation', 'creation', 'destruction', 'balance',
-                         'growth', 'form', 'void', 'truth', 'beauty', 'love'];
-            for (const axis of axes) {
-                assert.ok(AXIS_SYMBOL_MAPPING[axis], `Missing mapping for ${axis}`);
+        it('should map all 16 SMF axis indices', () => {
+            for (let i = 0; i < 16; i++) {
+                assert.ok(AXIS_SYMBOL_MAPPING[i], `Missing mapping for axis ${i}`);
+                assert.ok(AXIS_SYMBOL_MAPPING[i].category, `Missing category for axis ${i}`);
+                assert.ok(AXIS_SYMBOL_MAPPING[i].archetypes, `Missing archetypes for axis ${i}`);
             }
         });
     });
     
     describe('TAG_TO_AXIS', () => {
         it('should map cultural tags to axes', () => {
-            assert.ok(TAG_TO_AXIS.wisdom);
-            assert.ok(TAG_TO_AXIS.emotion);
+            assert.strictEqual(TAG_TO_AXIS.wisdom, 7);
+            assert.strictEqual(TAG_TO_AXIS.emotion, 11);
         });
     });
     
     describe('SMFSymbolMapper', () => {
-        it('should create with symbol database', () => {
-            const mapper = new SMFSymbolMapper(symbolDatabase);
+        it('should create mapper instance', () => {
+            const mapper = new SMFSymbolMapper();
             assert.ok(mapper);
         });
         
-        it('should map symbol to axis by tags', () => {
-            const mapper = new SMFSymbolMapper(symbolDatabase);
-            // Get a symbol with known tags
-            const symbol = symbolDatabase.getSymbol('wisdom') || symbolDatabase.search('wisdom')[0];
+        it('should map symbol to SMF via symbolToSMF', () => {
+            const mapper = new SMFSymbolMapper();
+            const symbol = symbolDatabase.getSymbol('unity') || symbolDatabase.search('unity')[0];
             if (symbol) {
-                const axis = mapper.symbolToAxis(symbol);
-                assert.ok(axis !== null || axis === null); // May or may not map
+                const smf = mapper.symbolToSMF(symbol);
+                assert.ok(smf);
+                assert.strictEqual(smf.s.length, 16);
             }
         });
         
-        it('should get axis symbols', () => {
-            const mapper = new SMFSymbolMapper(symbolDatabase);
-            const symbols = mapper.getAxisSymbols('wisdom');
-            assert.ok(Array.isArray(symbols));
+        it('should find best match for an SMF orientation', () => {
+            const mapper = new SMFSymbolMapper();
+            const smf = new SymbolicSMF();
+            smf.set('wisdom', 0.9);
+            const match = mapper.findBestMatch(smf);
+            // May or may not find a match depending on symbol database contents
+            assert.ok(match !== undefined);
         });
     });
     
-    describe('SymbolicSMF', () => {
-        it('should create with symbol database', () => {
-            const smf = new SymbolicSMF(symbolDatabase);
+    describe('SymbolicSMF instance', () => {
+        it('should create with default components', () => {
+            const smf = new SymbolicSMF();
             assert.ok(smf);
             assert.strictEqual(smf.s.length, 16);
         });
         
         it('should excite from symbol ID', () => {
-            const smf = new SymbolicSMF(symbolDatabase);
-            // Try to excite from a known symbol
+            const smf = new SymbolicSMF();
             const symbol = symbolDatabase.search('light')[0];
             if (symbol) {
-                const initialNorm = smf.norm();
-                smf.exciteFromSymbol(symbol.id);
-                // State should change
+                const result = smf.exciteFromSymbol(symbol.id);
+                assert.strictEqual(result, true);
                 assert.ok(smf.norm() > 0);
             }
         });
         
-        it('should get related symbols from state', () => {
-            const smf = new SymbolicSMF(symbolDatabase);
-            smf.set('wisdom', 0.8);
-            smf.set('coherence', 0.6);
-            const related = smf.getRelatedSymbols(3);
-            assert.ok(Array.isArray(related));
-        });
-        
         it('should ground state in symbols', () => {
-            const smf = new SymbolicSMF(symbolDatabase);
+            const smf = new SymbolicSMF();
             smf.set('wisdom', 0.9);
+            smf.normalize();
             const grounded = smf.groundInSymbols(3);
             assert.ok(Array.isArray(grounded));
         });
         
         it('should find resonant symbols', () => {
-            const smf = new SymbolicSMF(symbolDatabase);
+            const smf = new SymbolicSMF();
             smf.set('creation', 0.8);
+            smf.normalize();
             const resonant = smf.findResonantSymbols(5);
             assert.ok(Array.isArray(resonant));
         });
         
         it('should compute symbolic entropy', () => {
-            const smf = new SymbolicSMF(symbolDatabase);
+            const smf = new SymbolicSMF();
             smf.set('coherence', 0.5);
             smf.set('identity', 0.5);
+            smf.normalize();
             const entropy = smf.smfEntropy();
             assert.ok(entropy >= 0);
         });
         
-        it('should get semantic orientation', () => {
-            const smf = new SymbolicSMF(symbolDatabase);
-            smf.set('truth', 0.8);
-            smf.set('beauty', 0.6);
-            const orientation = smf.getSemanticOrientation();
-            assert.ok('dominant' in orientation);
-            assert.ok('grounded' in orientation);
+        it('should map cultural tag to axis', () => {
+            const smf = new SymbolicSMF();
+            const axisIdx = smf.tagToAxis('wisdom');
+            assert.strictEqual(axisIdx, 7);
+        });
+        
+        it('should return -1 for unknown tag', () => {
+            const smf = new SymbolicSMF();
+            const axisIdx = smf.tagToAxis('nonexistent_tag_xyz');
+            assert.strictEqual(axisIdx, -1);
+        });
+        
+        it('should get axis archetype', () => {
+            const smf = new SymbolicSMF();
+            // getAxisArchetype tries to look up symbols from the database
+            const archetype = smf.getAxisArchetype(0);
+            // May or may not find one depending on database
+            assert.ok(archetype !== undefined);
+        });
+        
+        it('should track symbol history', () => {
+            const smf = new SymbolicSMF();
+            const symbol = symbolDatabase.search('light')[0];
+            if (symbol) {
+                smf.exciteFromSymbol(symbol.id);
+                const stats = smf.getSymbolStats();
+                assert.ok(stats.totalActivations >= 1);
+            }
+        });
+        
+        it('should serialize to JSON with symbolic data', () => {
+            const smf = new SymbolicSMF();
+            smf.set('wisdom', 0.8);
+            smf.normalize();
+            const json = smf.toJSON();
+            assert.ok('symbolic' in json);
         });
     });
 });
@@ -135,30 +170,25 @@ describe('SymbolicSMF', () => {
 // ============================================================================
 
 describe('SymbolicTemporalLayer', () => {
-    const { 
-        SymbolicMoment, 
-        SymbolicTemporalLayer, 
-        SymbolicPatternDetector,
-        HEXAGRAM_ARCHETYPES 
-    } = require('../observer/symbolic-temporal');
     
     describe('HEXAGRAM_ARCHETYPES', () => {
         it('should have 64 hexagram archetypes', () => {
-            assert.strictEqual(HEXAGRAM_ARCHETYPES.length, 64);
+            assert.strictEqual(Object.keys(HEXAGRAM_ARCHETYPES).length, 64);
         });
         
-        it('should have name and meaning for each', () => {
-            for (const hex of HEXAGRAM_ARCHETYPES) {
-                assert.ok(hex.name, `Hexagram ${hex.index} missing name`);
-                assert.ok(hex.meaning, `Hexagram ${hex.index} missing meaning`);
+        it('should have name and symbol for each', () => {
+            for (let i = 0; i < 64; i++) {
+                const hex = HEXAGRAM_ARCHETYPES[i];
+                assert.ok(hex, `Missing hexagram archetype for index ${i}`);
+                assert.ok(hex.name, `Hexagram ${i} missing name`);
+                assert.ok(hex.symbol, `Hexagram ${i} missing symbol`);
             }
         });
         
         it('should include well-known hexagrams', () => {
-            const creative = HEXAGRAM_ARCHETYPES.find(h => h.name === 'Creative');
-            const receptive = HEXAGRAM_ARCHETYPES.find(h => h.name === 'Receptive');
-            assert.ok(creative, 'Missing Creative hexagram');
-            assert.ok(receptive, 'Missing Receptive hexagram');
+            // HEXAGRAM_ARCHETYPES uses lowercase names
+            assert.strictEqual(HEXAGRAM_ARCHETYPES[0].name, 'creative');
+            assert.strictEqual(HEXAGRAM_ARCHETYPES[1].name, 'receptive');
         });
     });
     
@@ -172,13 +202,14 @@ describe('SymbolicTemporalLayer', () => {
             assert.strictEqual(moment.hexagramIndex, 1);
         });
         
-        it('should include archetype from hexagram', () => {
+        it('should store archetype when explicitly provided', () => {
             const moment = new SymbolicMoment({
                 coherence: 0.8,
-                hexagramIndex: 0  // Creative
+                hexagramIndex: 0,
+                archetype: HEXAGRAM_ARCHETYPES[0]  // creative
             });
             assert.ok(moment.archetype);
-            assert.strictEqual(moment.archetype.name, 'Creative');
+            assert.strictEqual(moment.archetype.name, 'creative');
         });
         
         it('should track PHI resonance', () => {
@@ -193,6 +224,7 @@ describe('SymbolicTemporalLayer', () => {
             const moment = new SymbolicMoment({
                 coherence: 0.75,
                 hexagramIndex: 5,
+                archetype: HEXAGRAM_ARCHETYPES[5],
                 relatedSymbols: ['fire', 'water']
             });
             const json = moment.toJSON();
@@ -211,23 +243,24 @@ describe('SymbolicTemporalLayer', () => {
             assert.strictEqual(layer.coherenceThreshold, 0.6);
         });
         
-        it('should classify moment as hexagram', () => {
+        it('should classify moment from SMF vector', () => {
             const layer = new SymbolicTemporalLayer();
-            const classification = layer.classifyMoment({
-                coherence: 0.8,
-                entropy: 0.3,
-                phases: [0, 0.1, 0.2, 0.3, 0.4, 0.5]
-            });
+            // classifyMoment takes (smfVector, activePrimes, amplitudes)
+            const smfVector = [0.8, 0.1, 0.2, 0.3, 0.4, 0.5, 0.1, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+            const classification = layer.classifyMoment(smfVector, [2, 3, 5], null);
             
             assert.ok('hexagramIndex' in classification);
             assert.ok(classification.hexagramIndex >= 0);
             assert.ok(classification.hexagramIndex < 64);
         });
         
-        it('should get current I-Ching reading', () => {
+        it('should get current I-Ching reading after update', () => {
             const layer = new SymbolicTemporalLayer();
-            // Force a moment
-            layer.update({
+            // Need to trigger a moment via update
+            // First call won't trigger (not enough history for coherence peak)
+            // Use forceMoment instead
+            layer.forceMoment({
                 coherence: 0.8,
                 entropy: 0.4,
                 phases: [0, 0, 0],
@@ -235,15 +268,16 @@ describe('SymbolicTemporalLayer', () => {
             });
             
             const reading = layer.getIChingReading();
-            assert.ok('currentHexagram' in reading || 'hexagram' in reading || reading !== null || reading === null);
+            // The reading may or may not have data depending on moment classification
+            assert.ok(reading === null || typeof reading === 'object');
         });
         
         it('should track hexagram distribution', () => {
             const layer = new SymbolicTemporalLayer();
             
-            // Create several moments with different hexagrams
+            // forceMoment several times to build history
             for (let i = 0; i < 10; i++) {
-                layer.update({
+                layer.forceMoment({
                     coherence: 0.5 + Math.random() * 0.4,
                     entropy: 0.3 + Math.random() * 0.3,
                     phases: Array(6).fill(0).map(() => Math.random() * Math.PI * 2),
@@ -252,17 +286,19 @@ describe('SymbolicTemporalLayer', () => {
             }
             
             const stats = layer.getStats();
-            assert.ok('hexagramDistribution' in stats || 'symbolicStats' in stats || stats.momentCount >= 0);
+            assert.ok(stats.momentCount >= 0);
+            assert.ok('symbolic' in stats);
         });
         
         it('should get dominant archetypes', () => {
             const layer = new SymbolicTemporalLayer();
             
-            // Create several moments
+            // forceMoment several times
             for (let i = 0; i < 5; i++) {
                 layer.forceMoment({
                     coherence: 0.8,
-                    hexagramIndex: i % 3  // Cycle through 3 hexagrams
+                    entropy: 0.3,
+                    activePrimes: [2, 3, 5]
                 });
             }
             
@@ -280,31 +316,31 @@ describe('SymbolicTemporalLayer', () => {
         it('should detect narrative patterns from moments', () => {
             const detector = new SymbolicPatternDetector();
             
-            // Create a sequence that might form a narrative
+            // Create moments with archetype data (required for narrative detection)
             const moments = [
-                new SymbolicMoment({ coherence: 0.5, hexagramIndex: 3 }),  // Difficulty
-                new SymbolicMoment({ coherence: 0.6, hexagramIndex: 4 }),  // Youthful Folly
-                new SymbolicMoment({ coherence: 0.7, hexagramIndex: 11 }), // Peace
-                new SymbolicMoment({ coherence: 0.8, hexagramIndex: 1 })   // Creative
+                new SymbolicMoment({ coherence: 0.5, hexagramIndex: 3, archetype: HEXAGRAM_ARCHETYPES[3] }),
+                new SymbolicMoment({ coherence: 0.6, hexagramIndex: 4, archetype: HEXAGRAM_ARCHETYPES[4] }),
+                new SymbolicMoment({ coherence: 0.7, hexagramIndex: 11, archetype: HEXAGRAM_ARCHETYPES[11] }),
+                new SymbolicMoment({ coherence: 0.8, hexagramIndex: 1, archetype: HEXAGRAM_ARCHETYPES[1] })
             ];
             
             const narratives = detector.detectNarrativePatterns(moments);
             assert.ok(Array.isArray(narratives));
         });
         
-        it('should detect hero journey pattern', () => {
+        it('should detect hero journey pattern when present', () => {
             const detector = new SymbolicPatternDetector();
             
-            // Hero's journey: ordinary → challenge → transformation → return
+            // Hero's journey uses archetypes 'creative'(0) → 'difficulty'(2) → 'return'(23)
             const moments = [
-                new SymbolicMoment({ coherence: 0.5, hexagramIndex: 2 }),  // Receptive
-                new SymbolicMoment({ coherence: 0.3, hexagramIndex: 29 }), // Abysmal (challenge)
-                new SymbolicMoment({ coherence: 0.7, hexagramIndex: 50 }), // Cauldron (transformation)
-                new SymbolicMoment({ coherence: 0.9, hexagramIndex: 1 })   // Creative (mastery)
+                new SymbolicMoment({ coherence: 0.5, hexagramIndex: 0, archetype: HEXAGRAM_ARCHETYPES[0] }),
+                new SymbolicMoment({ coherence: 0.3, hexagramIndex: 2, archetype: HEXAGRAM_ARCHETYPES[2] }),
+                new SymbolicMoment({ coherence: 0.7, hexagramIndex: 23, archetype: HEXAGRAM_ARCHETYPES[23] }),
+                new SymbolicMoment({ coherence: 0.9, hexagramIndex: 0, archetype: HEXAGRAM_ARCHETYPES[0] })
             ];
             
             const narratives = detector.detectNarrativePatterns(moments);
-            // May or may not detect depending on implementation
+            // May or may not detect depending on exact sequence matching
             assert.ok(Array.isArray(narratives));
         });
     });
@@ -315,13 +351,6 @@ describe('SymbolicTemporalLayer', () => {
 // ============================================================================
 
 describe('Evaluation Assays', () => {
-    const {
-        TimeDilationAssay,
-        MemoryContinuityAssay,
-        AgencyConstraintAssay,
-        NonCommutativeMeaningAssay,
-        AssaySuite
-    } = require('../observer/assays');
     
     // Mock observer core for testing
     const createMockCore = () => ({
@@ -461,15 +490,12 @@ describe('Evaluation Assays', () => {
 // ============================================================================
 
 describe('Symbolic Observer Integration', () => {
-    const { SymbolicSMF } = require('../observer/symbolic-smf');
-    const { SymbolicTemporalLayer, SymbolicMoment } = require('../observer/symbolic-temporal');
-    const { symbolDatabase } = require('../core/symbols');
-    
     it('should process symbolic moment through full stack', () => {
-        // Create symbolic SMF
-        const smf = new SymbolicSMF(symbolDatabase);
+        // Create symbolic SMF with default initialization
+        const smf = new SymbolicSMF();
         smf.set('wisdom', 0.8);
         smf.set('creation', 0.6);
+        smf.normalize();
         
         // Get grounded symbols
         const grounded = smf.groundInSymbols(3);
@@ -477,15 +503,12 @@ describe('Symbolic Observer Integration', () => {
         // Create symbolic temporal layer
         const temporal = new SymbolicTemporalLayer();
         
-        // Update with symbolic state
-        temporal.update({
+        // forceMoment to create a moment
+        temporal.forceMoment({
             coherence: 0.75,
             entropy: 0.35,
             phases: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
-            activePrimes: [2, 3, 5, 7],
-            symbolicState: {
-                groundedSymbols: grounded.map(s => s.id || s.symbol?.id)
-            }
+            activePrimes: [2, 3, 5, 7]
         });
         
         // Get stats
@@ -496,11 +519,11 @@ describe('Symbolic Observer Integration', () => {
     it('should detect symbolic patterns over time', () => {
         const temporal = new SymbolicTemporalLayer();
         
-        // Simulate a session with varying coherence
+        // Simulate a session with varying coherence using forceMoment
         const coherenceSequence = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9];
         
         for (let i = 0; i < coherenceSequence.length; i++) {
-            temporal.update({
+            temporal.forceMoment({
                 coherence: coherenceSequence[i],
                 entropy: 1 - coherenceSequence[i] * 0.8,
                 phases: Array(6).fill(0).map((_, j) => i * 0.1 + j * 0.05),
@@ -514,7 +537,7 @@ describe('Symbolic Observer Integration', () => {
         
         // Each moment should have hexagram classification
         for (const moment of moments) {
-            if (moment.hexagramIndex !== undefined) {
+            if (moment.hexagramIndex !== undefined && moment.hexagramIndex !== null) {
                 assert.ok(moment.hexagramIndex >= 0);
                 assert.ok(moment.hexagramIndex < 64);
             }

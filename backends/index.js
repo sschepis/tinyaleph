@@ -4,8 +4,8 @@
 
 import { Backend } from './interface.js';
 import SemanticBackend from './semantic/index.js';
-import CryptographicBackend from './cryptographic/index.js';
-import ScientificBackend from './scientific/index.js';
+import { CryptographicBackend } from './cryptographic/index.js';
+import { ScientificBackend } from './scientific/index.js';
 
 import bioinformatics from './bioinformatics/index.js';
 

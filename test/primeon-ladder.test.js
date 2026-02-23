@@ -3,16 +3,16 @@
  * Covers ladder creation, evolution, measurement, and metrics
  */
 
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
-const { 
-  PrimeonZLadderU, 
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
+import {
+  PrimeonZLadderU,
   createPrimeonLadder,
   shannonEntropyNats,
   probsOf,
   normalizeComplex,
   Complex
-} = require('../physics');
+} from '../physics/index.js';
 
 describe('Complex number operations', () => {
   describe('construction', () => {

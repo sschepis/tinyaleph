@@ -89,13 +89,12 @@ function estimateLyapunovFromTimeSeries(history, windowSize = 20) {
 /**
  * Classify stability based on Lyapunov exponent
  * @param {number} lyapunovExponent - The Lyapunov exponent
- * @returns {'stable'|'unstable'|'chaotic'|'collapsed'} Stability classification
+ * @returns {'STABLE'|'MARGINAL'|'CHAOTIC'} Stability classification
  */
 function classifyStability(lyapunovExponent) {
-  if (lyapunovExponent < -0.1) return 'collapsed';  // Strong convergence
-  if (lyapunovExponent < 0) return 'stable';         // Weak convergence
-  if (lyapunovExponent < 0.5) return 'unstable';    // Weak divergence
-  return 'chaotic';                                   // Strong divergence
+  if (lyapunovExponent < 0) return 'STABLE';       // Convergent (negative exponent)
+  if (lyapunovExponent < 0.5) return 'MARGINAL';   // Near-zero / weak divergence
+  return 'CHAOTIC';                                  // Strong divergence
 }
 
 /**

@@ -4,7 +4,9 @@
  * Common utilities for the HTTP server including logging, CORS, and response helpers.
  */
 
-const { createLogger, colors } = require('../constants');
+import { createLogger, colors } from '../constants.js';
+import crypto from 'crypto';
+import os from 'os';
 
 // Create loggers for different subsystems
 const loggers = {
@@ -61,8 +63,7 @@ function readBody(req) {
  * @returns {string} Node ID
  */
 function generateNodeId() {
-    const crypto = require('crypto');
-    const hostname = require('os').hostname();
+    const hostname = os.hostname();
     const timestamp = Date.now().toString(36);
     const random = crypto.randomBytes(4).toString('hex');
     return `${hostname}-${timestamp}-${random}`;
@@ -132,7 +133,7 @@ const SMF_AXIS_DESCRIPTIONS = [
     'verity', 'connection', 'capacity', 'temporality', 'extension', 'awareness'
 ];
 
-module.exports = {
+export {
     loggers,
     colors,
     setCorsHeaders,

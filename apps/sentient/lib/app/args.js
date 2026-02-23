@@ -4,7 +4,7 @@
  * Handles parsing CLI arguments and displaying help.
  */
 
-const { colors: c } = require('./constants');
+import { colors as c } from './constants.js';
 
 /**
  * Parse command line arguments
@@ -283,7 +283,4 @@ ${c.bold}Debug Namespaces:${c.reset}
 `);
 }
 
-module.exports = {
-    parseArgs,
-    printHelp
-};
+export { parseArgs, printHelp };

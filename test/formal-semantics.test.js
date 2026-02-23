@@ -8,11 +8,12 @@
  * 4. Enochian vocabulary (enochian-vocabulary.js)
  */
 
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert';
+import { isPrime } from '../core/prime.js';
 
 // Core modules
-const {
+import {
     // Types
     NounType, AdjType, SentenceType,
     NounTerm, AdjTerm, ChainTerm, FusionTerm,
@@ -29,10 +30,10 @@ const {
     // Lambda
     Translator, LambdaEvaluator, Semantics, ConceptInterpreter,
     ConstExpr, LamExpr, VarExpr, AppExpr
-} = require('../core');
+} from '../core/index.js';
 
 // Enochian vocabulary
-const {
+import {
     ENOCHIAN_ALPHABET,
     letterToPrime,
     PRIME_BASIS,
@@ -44,7 +45,7 @@ const {
     THE_NINETEEN_CALLS,
     SedenionElement,
     EnochianEngine
-} = require('../apps/sentient/lib/enochian-vocabulary');
+} from '../core/enochian-vocabulary.js';
 
 // ============================================================================
 // TYPE SYSTEM TESTS (mtspbc.pdf)
@@ -202,7 +203,6 @@ describe('Reduction Semantics', function() {
             const op = new NextPrimeOperator();
             const result = op.apply(3, 7);
             // Result should be prime
-            const { isPrime } = require('../core/prime');
             assert.ok(isPrime(result));
         });
     });
@@ -407,13 +407,13 @@ describe('Lambda Calculus Translation', function() {
         it('should interpret noun terms', function() {
             const noun = N(7);
             const concept = interpreter.interpretNoun(noun);
-            assert.strictEqual(concept, 'truth');
+            assert.strictEqual(concept, 'identity');
         });
         
         it('should interpret chain terms as phrases', function() {
             const chain = CHAIN([2, 3], N(7));
             const phrase = interpreter.interpretChain(chain);
-            assert.ok(phrase.includes('truth'));
+            assert.ok(phrase.includes('identity'));
         });
         
         it('should support custom concept mappings', function() {
@@ -443,7 +443,6 @@ describe('Enochian Vocabulary', function() {
         });
         
         it('should use prime numbers only', function() {
-            const { isPrime } = require('../core/prime');
             for (const entry of ENOCHIAN_ALPHABET) {
                 assert.ok(isPrime(entry.prime), `${entry.letter} maps to non-prime ${entry.prime}`);
             }

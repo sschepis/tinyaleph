@@ -685,42 +685,32 @@ class SMFSymbolMapper {
 // Singleton instance
 const smfMapper = new SMFSymbolMapper();
 
+// Convenience functions
+const createSymbolicSMF = (components, options) => new SymbolicSMF(components, options);
+const fromSMF = (smf, options) => SymbolicSMF.fromSMF(smf, options);
+const symbolToSMF = (symbol) => smfMapper.symbolToSMF(symbol);
+const symbolsToSMF = (symbols) => smfMapper.symbolsToSMF(symbols);
+
 export {
-  // Classes
-    SymbolicSMF,
+  SymbolicSMF,
   SMFSymbolMapper,
-  // Singleton instance
-    smfMapper,
-  // Mappings (for external use)
-    AXIS_SYMBOL_MAPPING,
+  smfMapper,
+  AXIS_SYMBOL_MAPPING,
   TAG_TO_AXIS,
-  // Convenience functions
-    createSymbolicSMF: (components,
-  options) => new SymbolicSMF(components,
-  options),
-  fromSMF: (smf,
-  options) => SymbolicSMF.fromSMF(smf,
-  options),
-  symbolToSMF: (symbol) => smfMapper.symbolToSMF(symbol),
-  symbolsToSMF: (symbols) => smfMapper.symbolsToSMF(symbols)
+  createSymbolicSMF,
+  fromSMF,
+  symbolToSMF,
+  symbolsToSMF
 };
 
 export default {
-  // Classes
-    SymbolicSMF,
+  SymbolicSMF,
   SMFSymbolMapper,
-  // Singleton instance
-    smfMapper,
-  // Mappings (for external use)
-    AXIS_SYMBOL_MAPPING,
+  smfMapper,
+  AXIS_SYMBOL_MAPPING,
   TAG_TO_AXIS,
-  // Convenience functions
-    createSymbolicSMF: (components,
-  options) => new SymbolicSMF(components,
-  options),
-  fromSMF: (smf,
-  options) => SymbolicSMF.fromSMF(smf,
-  options),
-  symbolToSMF: (symbol) => smfMapper.symbolToSMF(symbol),
-  symbolsToSMF: (symbols) => smfMapper.symbolsToSMF(symbols)
+  createSymbolicSMF,
+  fromSMF,
+  symbolToSMF,
+  symbolsToSMF
 };

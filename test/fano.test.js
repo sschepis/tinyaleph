@@ -2,15 +2,15 @@
  * Tests for Fano plane and multiplication tables
  */
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
-const {
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import {
   FANO_LINES,
   octonionMultiplyIndex,
   sedenionMultiplyIndex,
   multiplyIndices,
   buildMultiplicationTable
-} = require('../core/fano');
+} from '../core/fano.js';
 
 describe('Fano plane', () => {
   describe('FANO_LINES', () => {

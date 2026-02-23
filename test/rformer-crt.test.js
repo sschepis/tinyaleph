@@ -1,6 +1,6 @@
 /**
  * Tests for CRT-Enhanced ResoFormer
- * 
+ *
  * Tests cover:
  * - CRTResonantAttention: Multi-head attention with modular structure
  * - HomologyRegularizedBlock: Transformer block with homology loss
@@ -8,20 +8,18 @@
  * - Integration with SparsePrimeState
  */
 
-'use strict';
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
-
-const {
+import {
     CRTResonantAttention,
     HomologyRegularizedBlock,
     CRTResoFormer,
     createCRTResoFormer
-} = require('../core/rformer-crt');
+} from '../core/rformer-crt.js';
 
-const { SparsePrimeState, Quaternion } = require('../core/rformer');
-const { Complex } = require('../core/hilbert');
+import { SparsePrimeState, Quaternion } from '../core/rformer.js';
+import { Complex } from '../core/hilbert.js';
 
 // ============================================================================
 // CRTResonantAttention Tests

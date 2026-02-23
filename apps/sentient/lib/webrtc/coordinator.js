@@ -1,6 +1,6 @@
 /**
  * WebRTC Coordinator for Sentient Observer
- * 
+ *
  * Server-side coordinator for WebRTC signaling:
  * - Room management
  * - SDP offer/answer exchange
@@ -8,9 +8,9 @@
  * - WebSocket and HTTP signaling
  */
 
-const { EventEmitter } = require('events');
-const { RoomManager } = require('./room');
-const { createLogger } = require('../app/constants');
+import { EventEmitter } from 'events';
+import { RoomManager } from './room.js';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('webrtc:coordinator');
 
@@ -555,4 +555,4 @@ class WebRTCCoordinator extends EventEmitter {
     }
 }
 
-module.exports = { WebRTCCoordinator, SignalEntry };
+export { WebRTCCoordinator, SignalEntry };

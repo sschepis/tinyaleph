@@ -1,14 +1,14 @@
 /**
  * Room Manager for WebRTC Coordinator
- * 
+ *
  * Manages peer rooms for WebRTC signaling:
  * - Room membership tracking
  * - Peer metadata storage
  * - Room-based broadcasting
  */
 
-const { EventEmitter } = require('events');
-const { createLogger } = require('../app/constants');
+import { EventEmitter } from 'events';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('webrtc:room');
 
@@ -432,4 +432,4 @@ class RoomManager extends EventEmitter {
     }
 }
 
-module.exports = { Room, RoomManager };
+export { Room, RoomManager };

@@ -4,7 +4,7 @@
  * Handles observer state API endpoints including status, introspection, memory, etc.
  */
 
-const { loggers, sendJson, readBody, getSenseSummary, SMF_AXES, SMF_AXIS_DESCRIPTIONS } = require('./utils');
+import { loggers, sendJson, readBody, getSenseSummary, SMF_AXES, SMF_AXIS_DESCRIPTIONS } from './utils.js';
 
 /**
  * Creates observer route handlers
@@ -429,4 +429,4 @@ function createObserverRoutes(server) {
     };
 }
 
-module.exports = { createObserverRoutes };
+export { createObserverRoutes };

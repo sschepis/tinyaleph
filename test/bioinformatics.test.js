@@ -5,10 +5,10 @@
  * binding, and DNA computing features.
  */
 
-const { test, describe } = require('node:test');
-const assert = require('node:assert');
+import { test, describe } from 'node:test';
+import assert from 'node:assert';
 
-const {
+import {
   BioinformaticsBackend,
   NUCLEOTIDE_PRIMES,
   AMINO_ACID_PRIMES,
@@ -27,7 +27,10 @@ const {
   ORGate,
   NOTGate,
   DNACircuit
-} = require('../backends/bioinformatics');
+} from '../backends/bioinformatics/index.js';
+
+import modular from '../modular.js';
+const { createEngine } = modular;
 
 // ============================================================================
 // Encoding Tests
@@ -471,8 +474,6 @@ describe('Central Dogma Pipeline', () => {
 
 describe('createEngine integration', () => {
   test('createEngine creates bioinformatics engine', () => {
-    const { createEngine } = require('../modular');
-    
     const engine = createEngine('bioinformatics', {});
     
     assert.ok(engine);
@@ -480,8 +481,6 @@ describe('createEngine integration', () => {
   });
   
   test('engine can process DNA sequences', () => {
-    const { createEngine } = require('../modular');
-    
     const engine = createEngine('bio', {});
     const result = engine.run('ATGCATGC');
     

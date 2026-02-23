@@ -5,7 +5,7 @@
  * "Programming Reality: Prime Resonance Systems for Memory, Computation, and Probability Control"
  */
 
-const {
+import {
   Complex,
   PrimeState,
   ResonanceOperators,
@@ -20,7 +20,7 @@ const {
   PHI,
   DELTA_S,
   QuaternionPrime
-} = require('../core');
+} from '../core/index.js';
 
 let passed = 0;
 let failed = 0;

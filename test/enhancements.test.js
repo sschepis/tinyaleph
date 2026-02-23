@@ -11,23 +11,71 @@
  * - Kuramoto-coupled ladder
  */
 
-'use strict';
+import { describe, it, before, after } from 'node:test';
+import assert from 'node:assert';
 
-const { describe, it, before, after } = require('node:test');
-const assert = require('node:assert');
+// Stochastic Kuramoto imports
+import {
+  StochasticKuramoto,
+  ColoredNoiseKuramoto,
+  ThermalKuramoto,
+  gaussianRandom
+} from '../physics/stochastic-kuramoto.js';
+
+// Prime Entanglement Graph imports
+import {
+  PrimeEntanglementGraph,
+  EntanglementEdge,
+  createEntanglementGraph
+} from '../core/entanglement.js';
+
+// Event System and Streaming imports
+import {
+  AlephEventEmitter,
+  AlephMonitor,
+  EvolutionStream
+} from '../core/events.js';
+
+// Hypercomplex Extensions imports
+import { Hypercomplex } from '../core/hypercomplex.js';
+
+// Multi-Channel Primeon Z-Ladder imports
+import {
+  PrimeonZLadderMulti,
+  ZChannel,
+  createMultiChannelLadder,
+  createAdiabaticSchedule
+} from '../physics/primeon_z_ladder_multi.js';
+
+// ResoFormer Layers imports
+import {
+  ResonantMultiHeadAttention,
+  PrimeFFN,
+  PrimeLayerNorm,
+  PositionalPrimeEncoding,
+  ResoFormerBlock,
+  ResoFormer
+} from '../core/rformer-layers.js';
+
+import { SparsePrimeState } from '../core/rformer.js';
+
+// Kuramoto model for EvolutionStream
+import { KuramotoModel } from '../physics/kuramoto.js';
+
+// Kuramoto-Coupled Ladder imports
+import {
+  KuramotoCoupledLadder,
+  createKuramotoLadder,
+  runCollapsePressureExperiment,
+  kuramotoOrderParameter,
+  getPhase
+} from '../physics/kuramoto-coupled-ladder.js';
 
 // ============================================================================
 // STOCHASTIC KURAMOTO TESTS
 // ============================================================================
 
 describe('Stochastic Kuramoto Models', () => {
-  const { 
-    StochasticKuramoto, 
-    ColoredNoiseKuramoto, 
-    ThermalKuramoto,
-    gaussianRandom 
-  } = require('../physics/stochastic-kuramoto');
-  
   describe('gaussianRandom', () => {
     it('should generate values with approximately zero mean', () => {
       const samples = Array.from({ length: 10000 }, () => gaussianRandom());
@@ -150,12 +198,6 @@ describe('Stochastic Kuramoto Models', () => {
 // ============================================================================
 
 describe('Prime Entanglement Graph', () => {
-  const { 
-    PrimeEntanglementGraph, 
-    EntanglementEdge,
-    createEntanglementGraph 
-  } = require('../core/entanglement');
-  
   describe('EntanglementEdge', () => {
     it('should create with source and target', () => {
       const edge = new EntanglementEdge(2, 3);
@@ -302,12 +344,6 @@ describe('Prime Entanglement Graph', () => {
 // ============================================================================
 
 describe('Event System and Streaming', () => {
-  const { 
-    AlephEventEmitter, 
-    AlephMonitor,
-    EvolutionStream 
-  } = require('../core/events');
-  
   describe('AlephEventEmitter', () => {
     it('should emit and receive events', () => {
       const emitter = new AlephEventEmitter();
@@ -417,8 +453,6 @@ describe('Event System and Streaming', () => {
 // ============================================================================
 
 describe('Hypercomplex Extensions', () => {
-  const { Hypercomplex } = require('../core/hypercomplex');
-  
   describe('exp and log', () => {
     it('should compute exponential of zero', () => {
       const zero = Hypercomplex.zero(4);
@@ -582,13 +616,6 @@ describe('Hypercomplex Extensions', () => {
 // ============================================================================
 
 describe('Multi-Channel Primeon Z-Ladder', () => {
-  const { 
-    PrimeonZLadderMulti, 
-    ZChannel,
-    createMultiChannelLadder,
-    createAdiabaticSchedule
-  } = require('../physics/primeon_z_ladder_multi');
-  
   describe('ZChannel', () => {
     it('should create with configuration', () => {
       const channel = new ZChannel({
@@ -750,17 +777,6 @@ describe('Multi-Channel Primeon Z-Ladder', () => {
 // ============================================================================
 
 describe('ResoFormer Layers', () => {
-  const {
-    ResonantMultiHeadAttention,
-    PrimeFFN,
-    PrimeLayerNorm,
-    PositionalPrimeEncoding,
-    ResoFormerBlock,
-    ResoFormer
-  } = require('../core/rformer-layers');
-  
-  const { SparsePrimeState } = require('../core/rformer');
-  
   describe('ResonantMultiHeadAttention', () => {
     it('should create with default heads', () => {
       const attention = new ResonantMultiHeadAttention({});
@@ -937,9 +953,6 @@ describe('ResoFormer Layers', () => {
 // ============================================================================
 
 describe('EvolutionStream', () => {
-  const { EvolutionStream } = require('../core/events');
-  const { KuramotoModel } = require('../physics/kuramoto');
-  
   it('should create stream from evolvable', () => {
     const kuramoto = new KuramotoModel([1.0, 1.1, 0.9], 0.5);
     const stream = EvolutionStream.fromEvolvable(kuramoto);
@@ -1038,9 +1051,6 @@ describe('EvolutionStream', () => {
 
 describe('Integration Tests', () => {
   it('should integrate entanglement graph with stochastic Kuramoto', () => {
-    const { PrimeEntanglementGraph } = require('../core/entanglement');
-    const { StochasticKuramoto } = require('../physics/stochastic-kuramoto');
-    
     // Build entanglement graph
     const graph = new PrimeEntanglementGraph([2, 3, 5, 7, 11]);
     graph.observe([2, 3], [5, 7], 0.8);
@@ -1065,9 +1075,6 @@ describe('Integration Tests', () => {
   });
   
   it('should stream hypercomplex interpolations', async () => {
-    const { Hypercomplex } = require('../core/hypercomplex');
-    const { AlephEventEmitter } = require('../core/events');
-    
     const emitter = new AlephEventEmitter();
     const results = [];
     
@@ -1088,10 +1095,6 @@ describe('Integration Tests', () => {
   });
   
   it('should use multi-channel ladder with ResoFormer', () => {
-    const { PrimeonZLadderMulti } = require('../physics/primeon_z_ladder_multi');
-    const { ResoFormer } = require('../core/rformer-layers');
-    const { SparsePrimeState } = require('../core/rformer');
-    
     // Create multi-channel ladder
     const ladder = new PrimeonZLadderMulti({ N: 8 });
     ladder.exciteRung(0);
@@ -1123,14 +1126,6 @@ describe('Integration Tests', () => {
 // ============================================================================
 
 describe('Kuramoto-Coupled Ladder', () => {
-  const {
-    KuramotoCoupledLadder,
-    createKuramotoLadder,
-    runCollapsePressureExperiment,
-    kuramotoOrderParameter,
-    getPhase
-  } = require('../physics/kuramoto-coupled-ladder');
-  
   describe('getPhase', () => {
     it('should extract phase from complex number', () => {
       const complex = { re: 1, im: 1 };
