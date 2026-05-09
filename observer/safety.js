@@ -677,25 +677,47 @@ class SafetyLayer {
         return { permissible: true };
     }
     
-    /**
-     * Check content for harmful patterns (placeholder)
-     */
     containsHarmfulContent(content) {
         if (!content) return false;
-        
+
         const harmfulPatterns = [
             /\b(harm|hurt|damage|destroy)\s+(yourself|others)/i,
-            /instructions\s+for\s+(weapon|bomb|explosive)/i
+            /instructions\s+for\s+(weapon|bomb|explosive)/i,
+            /\b(exploit|attack|compromise)\s+(system|server|network|user)/i,
+            /\b(steal|exfiltrate|leak)\s+(data|credentials|keys|secrets)/i,
+            /\b(bypass|disable)\s+(safety|security|auth|firewall)/i,
         ];
-        
+
         const text = typeof content === 'string' ? content : JSON.stringify(content);
         return harmfulPatterns.some(pattern => pattern.test(text));
     }
-    
-    /**
-     * Check if action is deceptive (placeholder)
-     */
+
     isDeceptive(action, state) {
+        if (!action) return false;
+
+        // Flag actions that claim one intent but target a different resource
+        if (action.description && action.target) {
+            const desc = String(action.description).toLowerCase();
+            const target = String(action.target).toLowerCase();
+            // Stated intent mentions read-only but target is a write/delete operation
+            if ((desc.includes('read') || desc.includes('inspect') || desc.includes('check'))
+                && (target.includes('delete') || target.includes('drop') || target.includes('rm '))) {
+                return true;
+            }
+        }
+
+        // Flag actions that impersonate another node
+        if (action.source && state?.nodeId && action.source !== state.nodeId) {
+            if (action.type === 'external' && !action.delegated) {
+                return true;
+            }
+        }
+
+        // Flag anomalous action rate — sudden burst may indicate automated abuse
+        if (state?.recentActionCount > 100 && state?.recentActionWindow < 60000) {
+            return true;
+        }
+
         return false;
     }
     
