@@ -643,6 +643,305 @@ class TransportManager extends SimpleEventEmitter {
 }
 
 // ============================================================================
+// WEBSOCKET SERVER TRANSPORT (Node.js only — requires 'ws' package)
+// ============================================================================
+
+class WebSocketServerTransport extends Transport {
+    constructor(options = {}) {
+        super(options);
+        this.port = options.port || 4000;
+        this.host = options.host || '0.0.0.0';
+        this.path = options.path || '/mesh';
+        this.wss = null;
+        this.clients = new Map();
+        this._clientIdCounter = 0;
+        this._externalWss = options.wss || null;
+    }
+
+    async connect() {
+        this.setState(TransportState.CONNECTING);
+
+        let WebSocketServerImpl;
+        if (!this._externalWss) {
+            try {
+                const wsModule = await import('ws');
+                WebSocketServerImpl = wsModule.WebSocketServer || wsModule.default?.WebSocketServer;
+            } catch {
+                throw new Error('ws package required for WebSocketServerTransport: npm install ws');
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            try {
+                if (this._externalWss) {
+                    this.wss = this._externalWss;
+                } else {
+                    this.wss = new WebSocketServerImpl({
+                        port: this.port,
+                        host: this.host,
+                        path: this.path,
+                    });
+                }
+
+                const onListening = () => {
+                    this.setState(TransportState.CONNECTED);
+                    this.emit('connected');
+                    resolve();
+                };
+
+                if (this._externalWss) {
+                    onListening();
+                } else {
+                    this.wss.on('listening', onListening);
+                }
+
+                this.wss.on('error', (error) => {
+                    this.emit('error', error);
+                    if (this.state === TransportState.CONNECTING) {
+                        reject(error);
+                    }
+                });
+
+                this.wss.on('connection', (ws, req) => {
+                    const clientId = `peer-${++this._clientIdCounter}`;
+                    this.clients.set(clientId, ws);
+                    this.emit('peer_connected', { clientId, remoteAddress: req?.socket?.remoteAddress });
+
+                    ws.on('message', (raw) => {
+                        try {
+                            const message = JSON.parse(raw.toString());
+                            this.emit('message', message, clientId);
+                        } catch (error) {
+                            this.emit('error', { type: 'parseError', error, clientId });
+                        }
+                    });
+
+                    ws.on('close', () => {
+                        this.clients.delete(clientId);
+                        this.emit('peer_disconnected', { clientId });
+                    });
+
+                    ws.on('error', (error) => {
+                        this.emit('error', { type: 'clientError', error, clientId });
+                    });
+                });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    async disconnect() {
+        this.setState(TransportState.CLOSED);
+        for (const [, ws] of this.clients) {
+            ws.close(1000, 'Server shutting down');
+        }
+        this.clients.clear();
+        if (this.wss && !this._externalWss) {
+            await new Promise(resolve => this.wss.close(resolve));
+        }
+        this.wss = null;
+    }
+
+    async send(message) {
+        const data = typeof message === 'string' ? message : JSON.stringify(message);
+        for (const [, ws] of this.clients) {
+            if (ws.readyState === 1) {
+                ws.send(data);
+            }
+        }
+    }
+
+    async sendTo(clientId, message) {
+        const ws = this.clients.get(clientId);
+        if (!ws || ws.readyState !== 1) return;
+        const data = typeof message === 'string' ? message : JSON.stringify(message);
+        ws.send(data);
+    }
+
+    getClientCount() {
+        return this.clients.size;
+    }
+}
+
+// ============================================================================
+// MESH TRANSPORT MANAGER (P2P: server + multiple outbound peers)
+// ============================================================================
+
+class MeshTransportManager extends SimpleEventEmitter {
+    constructor(options = {}) {
+        super();
+        this.nodeId = options.nodeId || `node-${Date.now().toString(36)}`;
+        this.server = null;
+        this.peers = new Map();
+        this._seenMessages = new Map();
+        this._dedupeWindowMs = options.dedupeWindowMs || 60000;
+        this._sweepTimer = null;
+        this._reconnectTimers = new Map();
+        this._reconnectDelayMs = options.reconnectDelayMs || 3000;
+        this._maxReconnectDelayMs = options.maxReconnectDelayMs || 30000;
+    }
+
+    async startServer(options = {}) {
+        this.server = new WebSocketServerTransport(options);
+        this.server.on('message', (message, clientId) => {
+            this._handleIncoming(message, clientId, 'server');
+        });
+        this.server.on('peer_connected', (info) => this.emit('peer_connected', info));
+        this.server.on('peer_disconnected', (info) => this.emit('peer_disconnected', info));
+        this.server.on('error', (err) => this.emit('error', { source: 'server', ...err }));
+        await this.server.connect();
+        this._startSweep();
+    }
+
+    async addPeer(url) {
+        if (this.peers.has(url)) return;
+        const transport = new WebSocketTransport(url, { pingInterval: 30000 });
+        this.peers.set(url, transport);
+
+        transport.on('message', (message) => {
+            this._handleIncoming(message, url, 'peer');
+        });
+        transport.on('disconnected', () => {
+            this.emit('peer_disconnected', { url });
+            this._scheduleReconnect(url);
+        });
+        transport.on('error', (err) => {
+            this.emit('error', { source: 'peer', url, error: err });
+        });
+
+        try {
+            await transport.connect();
+            this.emit('peer_connected', { url });
+        } catch {
+            this._scheduleReconnect(url);
+        }
+    }
+
+    _scheduleReconnect(url, attempt = 0) {
+        if (this._reconnectTimers.has(url)) return;
+        const delay = Math.min(this._reconnectDelayMs * Math.pow(1.5, attempt), this._maxReconnectDelayMs);
+        const timer = setTimeout(async () => {
+            this._reconnectTimers.delete(url);
+            const transport = this.peers.get(url);
+            if (!transport || transport.isConnected()) return;
+            try {
+                await transport.connect();
+                this.emit('peer_connected', { url });
+            } catch {
+                this._scheduleReconnect(url, attempt + 1);
+            }
+        }, delay);
+        this._reconnectTimers.set(url, timer);
+    }
+
+    async removePeer(url) {
+        const transport = this.peers.get(url);
+        if (transport) {
+            await transport.disconnect();
+            this.peers.delete(url);
+        }
+        const timer = this._reconnectTimers.get(url);
+        if (timer) {
+            clearTimeout(timer);
+            this._reconnectTimers.delete(url);
+        }
+    }
+
+    broadcast(type, payload) {
+        const message = {
+            id: `${this.nodeId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            type,
+            source: this.nodeId,
+            timestamp: Date.now(),
+            payload,
+        };
+        this._seenMessages.set(message.id, Date.now());
+        this._sendToAll(message);
+        return message;
+    }
+
+    _handleIncoming(message, senderId, senderType) {
+        if (!message || !message.id) return;
+        if (message.type === 'ping' || message.type === 'pong') return;
+        if (this._seenMessages.has(message.id)) return;
+        this._seenMessages.set(message.id, Date.now());
+
+        this.emit('message', message);
+
+        this._relay(message, senderId, senderType);
+    }
+
+    _relay(message, excludeId, excludeType) {
+        const data = JSON.stringify(message);
+
+        if (this.server && this.server.isConnected()) {
+            if (excludeType === 'server') {
+                for (const [clientId, ws] of this.server.clients) {
+                    if (clientId !== excludeId && ws.readyState === 1) {
+                        ws.send(data);
+                    }
+                }
+            } else {
+                this.server.send(message);
+            }
+        }
+
+        for (const [url, transport] of this.peers) {
+            if (excludeType === 'peer' && url === excludeId) continue;
+            if (transport.isConnected()) {
+                transport.send(message).catch(() => {});
+            }
+        }
+    }
+
+    _sendToAll(message) {
+        if (this.server && this.server.isConnected()) {
+            this.server.send(message);
+        }
+        for (const [, transport] of this.peers) {
+            if (transport.isConnected()) {
+                transport.send(message).catch(() => {});
+            }
+        }
+    }
+
+    _startSweep() {
+        this._sweepTimer = setInterval(() => {
+            const cutoff = Date.now() - this._dedupeWindowMs;
+            for (const [id, ts] of this._seenMessages) {
+                if (ts < cutoff) this._seenMessages.delete(id);
+            }
+        }, this._dedupeWindowMs);
+        if (this._sweepTimer.unref) this._sweepTimer.unref();
+    }
+
+    subscribe(type, handler) {
+        const wrapper = (message) => {
+            if (message.type === type) handler(message);
+        };
+        this.on('message', wrapper);
+        return () => this.off('message', wrapper);
+    }
+
+    async shutdown() {
+        if (this._sweepTimer) clearInterval(this._sweepTimer);
+        for (const timer of this._reconnectTimers.values()) clearTimeout(timer);
+        this._reconnectTimers.clear();
+        for (const [url] of this.peers) await this.removePeer(url);
+        if (this.server) await this.server.disconnect();
+    }
+
+    getPeerCount() {
+        let count = this.server ? this.server.getClientCount() : 0;
+        for (const [, t] of this.peers) {
+            if (t.isConnected()) count++;
+        }
+        return count;
+    }
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -652,11 +951,13 @@ export {
   // Transport classes
     Transport,
   WebSocketTransport,
+  WebSocketServerTransport,
   SSETransport,
   MemoryTransport,
   PollingTransport,
-  // Manager
-    TransportManager
+  // Managers
+    TransportManager,
+    MeshTransportManager
 };
 
 export default {
@@ -665,9 +966,11 @@ export default {
   // Transport classes
     Transport,
   WebSocketTransport,
+  WebSocketServerTransport,
   SSETransport,
   MemoryTransport,
   PollingTransport,
-  // Manager
-    TransportManager
+  // Managers
+    TransportManager,
+    MeshTransportManager
 };

@@ -1,6 +1,6 @@
 {
   "name": "@aleph-ai/tinyaleph",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, arithmetic topology, and entropy-minimizing reasoning",
   "type": "module",
   "main": "index.js",
@@ -51,6 +51,11 @@
       "import": "./observer/index.js",
       "require": "./observer/index.js",
       "default": "./observer/index.js"
+    },
+    "./transport": {
+      "import": "./transport/index.js",
+      "require": "./transport/index.js",
+      "default": "./transport/index.js"
     }
   },
   "scripts": {
@@ -116,6 +121,7 @@
     "engine/",
     "observer/",
     "telemetry/",
+    "transport/",
     "types/",
     "docs/",
     "examples/",
@@ -131,13 +137,17 @@
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^4.0.0",
-    "@tensorflow/tfjs-node": "^4.22.0"
+    "@tensorflow/tfjs-node": "^4.22.0",
+    "ws": "^8.20.0"
   },
   "peerDependenciesMeta": {
     "@tensorflow/tfjs": {
       "optional": true
     },
     "@tensorflow/tfjs-node": {
+      "optional": true
+    },
+    "ws": {
       "optional": true
     }
   }
