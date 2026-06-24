@@ -14,10 +14,15 @@
  * be configured separately for a different model or endpoint.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { LMStudioClient } = require('./lmstudio');
-const { VertexAIClient } = require('./vertex-ai');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { LMStudioClient } from './lmstudio.js';
+import { VertexAIClient } from './vertex-ai.js';
+import { GeminiClient } from './gemini.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Cache file for storing chaperone interactions
 const CACHE_FILE = path.join(__dirname, '..', 'data', 'chaperone-cache.json');
@@ -113,7 +118,14 @@ function getChaperoneClient() {
     const config = _chaperoneConfig || {};
     const provider = config.provider || 'lmstudio';
     
-    if (provider === 'vertex' || provider === 'google' || provider === 'gemini') {
+    if (provider === 'gemini') {
+        _chaperoneClient = new GeminiClient({
+            apiKey: config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY,
+            model: config.model || 'gemini-2.5-flash',
+            temperature: 0.3, // Lower temperature for more factual responses
+            maxTokens: 4096
+        });
+    } else if (provider === 'vertex' || provider === 'google') {
         _chaperoneClient = new VertexAIClient({
             credentialsPath: config.credentialsPath,
             projectId: config.projectId,
@@ -247,7 +259,7 @@ function clearChaperoneCache() {
     console.log('[Chaperone] Cache cleared');
 }
 
-module.exports = {
+export {
     askChaperone,
     configureChaperone,
     getChaperoneStats,

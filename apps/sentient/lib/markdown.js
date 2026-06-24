@@ -6,7 +6,7 @@
  * Supports runnable JavaScript code blocks with output display.
  */
 
-const { VM } = require('vm');
+import vm from 'vm';
 
 // ANSI escape codes
 const ANSI = {
@@ -769,7 +769,6 @@ class CodeRunner {
             };
             
             // Use vm module for sandboxed execution
-            const vm = require('vm');
             const context = vm.createContext(sandbox);
             
             // Wrap code to capture return value
@@ -927,7 +926,7 @@ function formatMarkdown(text, useColor = true) {
     return lines.join('');
 }
 
-module.exports = {
+export {
     MarkdownRenderer,
     formatMarkdown,
     formatInline,

@@ -10,8 +10,8 @@
  * - Bottleneck detection
  */
 
-const { EventEmitter } = require('events');
-const { performance, PerformanceObserver } = require('perf_hooks');
+import { EventEmitter } from 'events';
+import { performance, PerformanceObserver } from 'perf_hooks';
 
 // ============================================================================
 // METRIC TYPES
@@ -808,7 +808,7 @@ const globalProfiler = new OscillatorProfiler();
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Classes
     OscillatorProfiler,
     Timer,

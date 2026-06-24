@@ -7,7 +7,12 @@
  * @module apps/sentient/lib/boundary
  */
 
-'use strict';
-
 // Re-export from library
-module.exports = require('../../../observer/boundary');
+export {
+    SensoryChannel,
+    MotorChannel,
+    EnvironmentalModel,
+    SelfModel,
+    ObjectivityGate,
+    BoundaryLayer
+} from '../../../observer/boundary.js';

@@ -14,12 +14,12 @@
  * - Binary checkpoint management with rollback policy
  */
 
-const { Complex, PrimeState } = require('../../../core/hilbert');
-const { firstNPrimes } = require('../../../core/prime');
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import { Complex, PrimeState } from '../../../core/hilbert.js';
+import { firstNPrimes } from '../../../core/prime.js';
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 /**
  * Holographic Quantum Encoding system
@@ -1738,7 +1738,7 @@ class CheckpointManager {
     }
 }
 
-module.exports = {
+export {
     TickGate,
     StabilizationController,
     HolographicEncoder,

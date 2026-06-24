@@ -126,19 +126,19 @@ class Agent {
     if (preRouted.length > 0) {
       const toolContext = preRouted.map(r => {
         if (r.tool === 'read_file' && r.content) {
-          return `[Auto-retrieved file ${r.path}]:\n${r.content}`;
+          return `[FILE CONTENT: ${r.path}]\n\`\`\`\n${r.content}\n\`\`\``;
         } else if (r.tool === 'read_file' && r.error) {
-          return `[Attempted to read ${r.path} but got error: ${r.error}]`;
+          return `[FILE ERROR: ${r.path}]: ${r.error}`;
         } else if (r.tool === 'list_files') {
-          return `[Files in ${r.path}]: ${Array.isArray(r.files) ? r.files.map(f => typeof f === 'string' ? f : f.name).join(', ') : JSON.stringify(r.files)}`;
+          return `[FILES IN ${r.path}]: ${Array.isArray(r.files) ? r.files.map(f => typeof f === 'string' ? f : f.name).join(', ') : JSON.stringify(r.files)}`;
         } else if (r.tool === 'cognitive_state') {
-          return `[Your current cognitive state]: ${JSON.stringify(r.state, null, 2)}`;
+          return `[YOUR COGNITIVE STATE]:\n${JSON.stringify(r.state, null, 2)}`;
         }
         return '';
       }).filter(Boolean).join('\n\n');
 
       // Add as a system message with the pre-fetched context
-      messages.push({ role: 'system', content: `I have already retrieved the requested information for you. Here is the data — use it to answer the user's question directly:\n\n${toolContext}\n\nYou may still call additional tools if needed.` });
+      messages.push({ role: 'system', content: `The following data has been retrieved for you. You MUST analyze this data carefully to answer the user's question. Reference specific details from the data in your response.\n\n${toolContext}\n\nIMPORTANT: Base your answer on the actual data above. Do NOT make up information or describe things in general terms — cite specific code, values, thresholds, function names, or state values from the retrieved data.` });
 
       // Track pre-routed tools in metadata
       toolsUsed.push(...preRouted.map(r => r.tool));
@@ -272,23 +272,45 @@ class Agent {
   async _preRoute(input) {
     const lower = input.toLowerCase();
     const results = [];
+    const fetchedPaths = new Set();
 
-    // Detect file read requests
+    // Detect file read requests — explicit verb patterns
     const filePatterns = [
       /read\s+(?:the\s+)?file\s+([^\s,]+)/i,
-      /(?:look at|examine|analyze|check|open)\s+(?:the\s+)?(?:file\s+)?([a-zA-Z0-9_./-]+\.[a-zA-Z]+)/i,
+      /read\s+([a-zA-Z0-9_./-]+\.[a-zA-Z]+)/i,
+      /(?:look at|examine|analyze|analyse|check|open|inspect|review)\s+(?:the\s+)?(?:file\s+)?([a-zA-Z0-9_./-]+\.[a-zA-Z]+)/i,
       /(?:contents?\s+of|what's\s+in)\s+([a-zA-Z0-9_./-]+\.[a-zA-Z]+)/i,
     ];
 
     for (const pattern of filePatterns) {
       const match = input.match(pattern);
-      if (match && Agent._isLikelyFilePath(match[1])) {
+      if (match && Agent._isLikelyFilePath(match[1]) && !fetchedPaths.has(match[1])) {
         const filePath = match[1];
+        fetchedPaths.add(filePath);
         const result = await executeTool('read_file', { path: filePath }, this.toolContext);
         if (result.success) {
           results.push({ tool: 'read_file', path: filePath, content: result.content.substring(0, 4000) });
         } else {
           results.push({ tool: 'read_file', path: filePath, error: result.error });
+        }
+      }
+    }
+
+    // Fallback: scan input for any file-path-like strings we haven't fetched yet
+    // This catches patterns like "the definitions in apps/agentic/lib/tools.js"
+    const pathRegex = /(?:^|\s)((?:[a-zA-Z0-9_.-]+\/)+[a-zA-Z0-9_.-]+\.[a-zA-Z]{1,5})(?:\s|$|[,;?!])/g;
+    let pathMatch;
+    while ((pathMatch = pathRegex.exec(input)) !== null) {
+      const candidate = pathMatch[1];
+      // Skip domain-like strings (e.g. "github.com/user/repo.git")
+      if (/^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}\//.test(candidate)) continue;
+      if (Agent._isLikelyFilePath(candidate) && !fetchedPaths.has(candidate)) {
+        fetchedPaths.add(candidate);
+        const result = await executeTool('read_file', { path: candidate }, this.toolContext);
+        if (result.success) {
+          results.push({ tool: 'read_file', path: candidate, content: result.content.substring(0, 4000) });
+        } else {
+          results.push({ tool: 'read_file', path: candidate, error: result.error });
         }
       }
     }
@@ -314,7 +336,8 @@ class Agent {
     // Detect cognitive state requests
     if (/cognitive\s+(?:state|diagnostics|health|metrics)/i.test(lower) ||
         /(?:your|my)\s+(?:coherence|entropy|oscillator)/i.test(lower) ||
-        /introspect/i.test(lower)) {
+        /introspect/i.test(lower) ||
+        /(?:check|assess|diagnos)\w*\s+(?:your|my|own)\s+(?:cognitive|mental|health)/i.test(lower)) {
       const result = await executeTool('cognitive_state', {}, this.toolContext);
       if (result.success) {
         results.push({ tool: 'cognitive_state', state: result.state });
@@ -359,9 +382,14 @@ class Agent {
       body.tool_choice = 'auto';
     }
 
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(this.config.llm.headers || {})
+    };
+
     const res = await fetch(this.config.llm.baseUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body)
     });
 
@@ -412,7 +440,15 @@ class Agent {
    * @returns {Promise<boolean>}
    */
   async ping() {
-    return LLM.ping();
+    try {
+      // Derive a models endpoint from the baseUrl
+      const modelsUrl = this.config.llm.baseUrl.replace('/chat/completions', '/models');
+      const headers = { ...(this.config.llm.headers || {}) };
+      const res = await fetch(modelsUrl, { headers });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }
 
   /**

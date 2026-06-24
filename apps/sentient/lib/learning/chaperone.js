@@ -15,17 +15,17 @@
  * must go through this Chaperone layer.
  */
 
-const { EventEmitter } = require('events');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const https = require('https');
-const http = require('http');
+import { EventEmitter } from 'events';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import https from 'https';
+import http from 'http';
 
-const { SafetyFilter } = require('./safety-filter');
-const { LMStudioClient } = require('../lmstudio');
-const config = require('./config');
-const { createLogger } = require('../app/constants');
+import { SafetyFilter } from './safety-filter.js';
+import { LMStudioClient } from '../lmstudio.js';
+import config from './config.js';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('learning:chaperone');
 
@@ -1086,4 +1086,4 @@ Only suggest URLs, no explanations.`;
     }
 }
 
-module.exports = { ChaperoneAPI, RateLimitBackoff };
+export { ChaperoneAPI, RateLimitBackoff };

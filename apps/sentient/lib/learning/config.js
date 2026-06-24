@@ -1,6 +1,6 @@
 /**
  * Configuration for the Autonomous Learning System
- * 
+ *
  * Central configuration for all learning components including:
  * - Learner timing and limits
  * - Chaperone API settings
@@ -8,10 +8,14 @@
  * - Content ingester settings
  */
 
-const os = require('os');
-const path = require('path');
+import os from 'os';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-module.exports = {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default {
     // Autonomous Learner settings
     learner: {
         iterationInterval: 15000,     // 15 seconds between learning iterations (faster feedback)

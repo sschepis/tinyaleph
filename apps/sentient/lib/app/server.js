@@ -5,25 +5,25 @@
  * Routes and handlers are organized in separate modules under ./server/
  */
 
-const fs = require('fs');
-const path = require('path');
-const http = require('http');
-const { URL } = require('url');
+import fs from 'fs';
+import path from 'path';
+import http from 'http';
+import { fileURLToPath } from 'url';
 
-const { createLogger, colors: c } = require('./constants');
-const { initializeObserver, truncateToolContent } = require('./shared');
+import { createLogger, colors as c } from './constants.js';
+import { initializeObserver, truncateToolContent } from './shared.js';
 
 // Learning system
-const { createLearningSystem } = require('../learning');
+import { createLearningSystem } from '../learning/index.js';
 
 // WebRTC coordinator
-const { WebRTCCoordinator } = require('../webrtc');
+import { WebRTCCoordinator } from '../webrtc/index.js';
 
 // Provider management
-const { createProviderManager } = require('../providers');
+import { createProviderManager } from '../providers/index.js';
 
 // Import modular route handlers - use explicit path to avoid circular dependency
-const {
+import {
     loggers,
     setCorsHeaders,
     sendJson,
@@ -38,7 +38,10 @@ const {
     createProviderRoutes,
     createNetworkSync,
     createStaticServer
-} = require('./server/index');
+} from './server/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create additional loggers
 const logHttp = createLogger('server:http');
@@ -727,7 +730,11 @@ class SentientServer {
         
         // Handle WebSocket upgrades for WebRTC signaling
         this.server.on('upgrade', (request, socket, head) => {
-            this.routes.webrtc.handleWebSocketUpgrade(request, socket, head);
+            this.routes.webrtc.handleWebSocketUpgrade(request, socket, head)
+                .catch(err => {
+                    console.error('WebSocket upgrade error:', err);
+                    socket.destroy();
+                });
         });
         
         this.server.listen(this.options.port, this.options.host, async () => {
@@ -793,6 +800,6 @@ class SentientServer {
     }
 }
 
-module.exports = {
+export {
     SentientServer
 };

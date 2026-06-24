@@ -5,8 +5,8 @@
  * Supports both regular and streaming chat completions.
  */
 
-const http = require('http');
-const https = require('https');
+import http from 'http';
+import https from 'https';
 
 /**
  * Clean LLM control tokens and structured output syntax from output
@@ -401,4 +401,4 @@ class LMStudioClient {
     }
 }
 
-module.exports = { LMStudioClient };
+export { LMStudioClient };

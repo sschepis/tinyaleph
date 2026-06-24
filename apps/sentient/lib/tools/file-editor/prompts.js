@@ -26,4 +26,4 @@ You must output a single JSON object with this structure:
 }
 `;
 
-module.exports = { SYSTEM_PROMPT };
+export { SYSTEM_PROMPT };

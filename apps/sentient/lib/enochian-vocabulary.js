@@ -11,7 +11,7 @@
  * - Twist closure validation
  */
 
-const { isPrime, nthPrime, firstNPrimes } = require('../../../core/prime');
+import { isPrime, nthPrime, firstNPrimes } from '../../../core/prime.js';
 
 // ============================================================================
 // ENOCHIAN ALPHABET (21 Letters)
@@ -870,7 +870,7 @@ class EnochianEngine {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Alphabet
     ENOCHIAN_ALPHABET,
     letterToPrime,

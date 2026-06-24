@@ -7,7 +7,9 @@
  * @module apps/sentient/lib/entanglement
  */
 
-'use strict';
-
 // Re-export from library
-module.exports = require('../../../observer/entanglement');
+export {
+    EntangledPair,
+    Phrase,
+    EntanglementLayer
+} from '../../../observer/entanglement.js';

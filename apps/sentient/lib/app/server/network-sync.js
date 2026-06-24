@@ -4,10 +4,9 @@
  * Handles seed node connections and memory/history synchronization.
  */
 
-const http = require('http');
-const https = require('https');
-const { URL } = require('url');
-const { loggers, colors } = require('./utils');
+import http from 'http';
+import https from 'https';
+import { loggers, colors } from './utils.js';
 
 const c = colors;
 
@@ -193,4 +192,4 @@ function createNetworkSync(server) {
     };
 }
 
-module.exports = { createNetworkSync };
+export { createNetworkSync };

@@ -1,12 +1,13 @@
 /**
  * LLM Provider Management
- * 
- * Manages multiple LLM providers (LMStudio, Vertex AI, etc.)
+ *
+ * Manages multiple LLM providers (LMStudio, Vertex AI, Gemini, etc.)
  * and allows runtime switching between them.
  */
 
-const { LMStudioClient } = require('../lmstudio');
-const { VertexAIClient } = require('../vertex-ai');
+import { LMStudioClient } from '../lmstudio.js';
+import { VertexAIClient } from '../vertex-ai.js';
+import { GeminiClient } from '../gemini.js';
 
 /**
  * Provider configuration registry
@@ -24,13 +25,22 @@ const PROVIDER_REGISTRY = {
     },
     vertex: {
         name: 'Google Vertex AI',
-        description: 'Google Cloud Vertex AI Gemini models',
+        description: 'Google Cloud Vertex AI Gemini models (service account auth)',
         clientClass: VertexAIClient,
         requiresCredentials: true,
-        aliases: ['google', 'gemini'],
+        aliases: ['google'],
         defaultConfig: {
             location: 'global',
             model: 'gemini-3-pro-preview'
+        }
+    },
+    gemini: {
+        name: 'Google Gemini',
+        description: 'Google Gemini API with API key authentication',
+        clientClass: GeminiClient,
+        requiresCredentials: true,
+        defaultConfig: {
+            model: 'gemini-2.5-flash'
         }
     },
     openai: {
@@ -114,6 +124,10 @@ class ProviderManager {
         // Check for required credentials
         if (providerId === 'vertex') {
             return !!(config?.credentialsPath || process.env.GOOGLE_APPLICATION_CREDENTIALS);
+        }
+        
+        if (providerId === 'gemini') {
+            return !!(config?.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY);
         }
         
         if (providerId === 'openai') {
@@ -408,8 +422,4 @@ function createProviderManager(options) {
     return new ProviderManager(options);
 }
 
-module.exports = {
-    ProviderManager,
-    createProviderManager,
-    PROVIDER_REGISTRY
-};
+export { ProviderManager, createProviderManager, PROVIDER_REGISTRY };

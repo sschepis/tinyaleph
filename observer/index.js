@@ -15,83 +15,134 @@
  */
 
 // Core observer components
-import { PrimeOscillator, PRSCLayer, EntanglementDetector, coherenceKernel } from './prsc.js';
+import {
+  PrimeOscillator, PRSCLayer, EntanglementDetector,
+  computeHistogramCoherence, gaussianRandom, indexToPhase, intSin, phaseToIndex,
+  INT_SINE_M, INT_SINE_SCALE, INT_SINE_TABLE
+} from './prsc.js';
 
-import { TickGate, StabilizationController, HolographicEncoder, HQE } from './hqe.js';
+import {
+  TickGate, StabilizationController, HolographicEncoder,
+  HolographicMemory, HolographicSimilarity
+} from './hqe.js';
 
-import { SedenionMemoryField, SMF_AXES, AXIS_INDEX } from './smf.js';
+import {
+  SedenionMemoryField, SMF_AXES, AXIS_INDEX,
+  SMF_CODEBOOK, CODEBOOK_SIZE, codebookTunnel, getTunnelingCandidates, nearestCodebookAttractor
+} from './smf.js';
 
 import { Moment, TemporalLayer, TemporalPatternDetector } from './temporal.js';
 
-import { AttentionFocus, Goal, Action, Intent, AgencyLayer } from './agency.js';
+import { AttentionFocus, Goal, Action, AgencyLayer } from './agency.js';
 
-import { SensoryChannel, MotorChannel, EnvironmentalModel, SelfModel, BoundaryLayer } from './boundary.js';
+import {
+  SensoryChannel, MotorChannel, EnvironmentalModel, SelfModel,
+  BoundaryLayer, ObjectivityGate
+} from './boundary.js';
 
 import { EntangledPair, Phrase, EntanglementLayer } from './entanglement.js';
 
-import { SafetyConstraint, ViolationEvent, SafetyMonitor, DEFAULT_CONSTRAINTS } from './safety.js';
+import { SafetyConstraint, ViolationEvent, SafetyMonitor, SafetyLayer } from './safety.js';
 
 // Symbolic processing extensions
-import { SymbolicSMF, SMFSymbolMapper, smfMapper, AXIS_SYMBOL_MAPPING, TAG_TO_AXIS } from './symbolic-smf.js';
+import {
+  SymbolicSMF, SMFSymbolMapper, smfMapper, AXIS_SYMBOL_MAPPING, TAG_TO_AXIS,
+  createSymbolicSMF, fromSMF, symbolToSMF, symbolsToSMF
+} from './symbolic-smf.js';
 
-import { SymbolicMoment, SymbolicTemporalLayer, SymbolicPatternDetector, HEXAGRAM_ARCHETYPES } from './symbolic-temporal.js';
+import {
+  SymbolicMoment, SymbolicTemporalLayer, SymbolicPatternDetector,
+  HEXAGRAM_ARCHETYPES, FIRST_64_PRIMES, PHI
+} from './symbolic-temporal.js';
 
 // Evaluation assays
-import { TimeDilationAssay, MemoryContinuityAssay, AgencyConstraintAssay, NonCommutativeMeaningAssay, AssaySuite } from './assays.js';
+import {
+  TimeDilationAssay, MemoryContinuityAssay, AgencyConstraintAssay,
+  NonCommutativeMeaningAssay, AssaySuite
+} from './assays.js';
 
 export {
   // PRSC - Prime Resonance Semantic Coherence
-    PrimeOscillator,
+  PrimeOscillator,
   PRSCLayer,
   EntanglementDetector,
-  coherenceKernel,
+  computeHistogramCoherence,
+  gaussianRandom,
+  indexToPhase,
+  intSin,
+  phaseToIndex,
+  INT_SINE_M,
+  INT_SINE_SCALE,
+  INT_SINE_TABLE,
+
   // HQE - Holographic Quaternion Engine
-    TickGate,
+  TickGate,
   StabilizationController,
   HolographicEncoder,
-  HQE,
+  HolographicMemory,
+  HolographicSimilarity,
+
   // SMF - Sedenion Memory Field
-    SedenionMemoryField,
+  SedenionMemoryField,
   SMF_AXES,
   AXIS_INDEX,
+  SMF_CODEBOOK,
+  CODEBOOK_SIZE,
+  codebookTunnel,
+  getTunnelingCandidates,
+  nearestCodebookAttractor,
+
   // Temporal - Moment classification
-    Moment,
+  Moment,
   TemporalLayer,
   TemporalPatternDetector,
+
   // Agency - Goals and intentions
-    AttentionFocus,
+  AttentionFocus,
   Goal,
   Action,
-  Intent,
   AgencyLayer,
+
   // Boundary - Self-other differentiation
-    SensoryChannel,
+  SensoryChannel,
   MotorChannel,
   EnvironmentalModel,
   SelfModel,
   BoundaryLayer,
+  ObjectivityGate,
+
   // Entanglement - Semantic phrase coherence
-    EntangledPair,
+  EntangledPair,
   Phrase,
   EntanglementLayer,
+
   // Safety - Constraint monitoring
-    SafetyConstraint,
+  SafetyConstraint,
   ViolationEvent,
   SafetyMonitor,
-  DEFAULT_CONSTRAINTS,
+  SafetyLayer,
+
   // Symbolic SMF - Symbol-grounded semantic field
-    SymbolicSMF,
+  SymbolicSMF,
   SMFSymbolMapper,
   smfMapper,
   AXIS_SYMBOL_MAPPING,
   TAG_TO_AXIS,
+  createSymbolicSMF,
+  fromSMF,
+  symbolToSMF,
+  symbolsToSMF,
+
   // Symbolic Temporal - I-Ching moment classification
-    SymbolicMoment,
+  SymbolicMoment,
   SymbolicTemporalLayer,
   SymbolicPatternDetector,
   HEXAGRAM_ARCHETYPES,
+  FIRST_64_PRIMES,
+  PHI,
+
   // Assays - Validation tests
-    TimeDilationAssay,
+  TimeDilationAssay,
   MemoryContinuityAssay,
   AgencyConstraintAssay,
   NonCommutativeMeaningAssay,
@@ -99,58 +150,75 @@ export {
 };
 
 export default {
-  // PRSC - Prime Resonance Semantic Coherence
-    PrimeOscillator,
+  // PRSC
+  PrimeOscillator,
   PRSCLayer,
   EntanglementDetector,
-  coherenceKernel,
-  // HQE - Holographic Quaternion Engine
-    TickGate,
+  computeHistogramCoherence,
+
+  // HQE
+  TickGate,
   StabilizationController,
   HolographicEncoder,
-  HQE,
-  // SMF - Sedenion Memory Field
-    SedenionMemoryField,
+  HolographicMemory,
+  HolographicSimilarity,
+
+  // SMF
+  SedenionMemoryField,
   SMF_AXES,
   AXIS_INDEX,
-  // Temporal - Moment classification
-    Moment,
+
+  // Temporal
+  Moment,
   TemporalLayer,
   TemporalPatternDetector,
-  // Agency - Goals and intentions
-    AttentionFocus,
+
+  // Agency
+  AttentionFocus,
   Goal,
   Action,
-  Intent,
   AgencyLayer,
-  // Boundary - Self-other differentiation
-    SensoryChannel,
+
+  // Boundary
+  SensoryChannel,
   MotorChannel,
   EnvironmentalModel,
   SelfModel,
   BoundaryLayer,
-  // Entanglement - Semantic phrase coherence
-    EntangledPair,
+  ObjectivityGate,
+
+  // Entanglement
+  EntangledPair,
   Phrase,
   EntanglementLayer,
-  // Safety - Constraint monitoring
-    SafetyConstraint,
+
+  // Safety
+  SafetyConstraint,
   ViolationEvent,
   SafetyMonitor,
-  DEFAULT_CONSTRAINTS,
-  // Symbolic SMF - Symbol-grounded semantic field
-    SymbolicSMF,
+  SafetyLayer,
+
+  // Symbolic SMF
+  SymbolicSMF,
   SMFSymbolMapper,
   smfMapper,
   AXIS_SYMBOL_MAPPING,
   TAG_TO_AXIS,
-  // Symbolic Temporal - I-Ching moment classification
-    SymbolicMoment,
+  createSymbolicSMF,
+  fromSMF,
+  symbolToSMF,
+  symbolsToSMF,
+
+  // Symbolic Temporal
+  SymbolicMoment,
   SymbolicTemporalLayer,
   SymbolicPatternDetector,
   HEXAGRAM_ARCHETYPES,
-  // Assays - Validation tests
-    TimeDilationAssay,
+  FIRST_64_PRIMES,
+  PHI,
+
+  // Assays
+  TimeDilationAssay,
   MemoryContinuityAssay,
   AgencyConstraintAssay,
   NonCommutativeMeaningAssay,

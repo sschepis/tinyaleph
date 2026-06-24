@@ -9,8 +9,8 @@
  * - HTTP metrics endpoint
  */
 
-const { EventEmitter } = require('events');
-const http = require('http');
+import { EventEmitter } from 'events';
+import http from 'http';
 
 // ============================================================================
 // METRIC TYPES
@@ -932,7 +932,7 @@ const globalCollector = new SentientMetricsCollector(globalRegistry);
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Metric types
     MetricType,
     

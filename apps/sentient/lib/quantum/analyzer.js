@@ -5,7 +5,7 @@
  * potential prime candidates.
  */
 
-const { calculateWaveform, isPrime } = require('./math');
+import { calculateWaveform, isPrime } from './math.js';
 
 class WaveformAnalyzer {
     constructor() {
@@ -67,7 +67,4 @@ class WaveformAnalyzer {
     }
 }
 
-// Export for CommonJS
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { WaveformAnalyzer };
-}
+export { WaveformAnalyzer };

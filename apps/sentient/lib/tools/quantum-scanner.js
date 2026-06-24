@@ -6,9 +6,9 @@
  * Riemann Zeta waveforms and Quantum Neural Network predictions.
  */
 
-const { QuantumNeuralNetwork } = require('../quantum/network');
-const { WaveformAnalyzer } = require('../quantum/analyzer');
-const { calculateWaveform } = require('../quantum/math');
+import { QuantumNeuralNetwork } from '../quantum/network.js';
+import { WaveformAnalyzer } from '../quantum/analyzer.js';
+import { calculateWaveform } from '../quantum/math.js';
 
 // Singleton instances to persist state/training
 let qnn = null;
@@ -132,10 +132,7 @@ async function predictPrime(params) {
            `- Confidence: ${confidence.toFixed(1)}%`;
 }
 
-// Export for CommonJS
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        scanRange,
-        predictPrime
-    };
-}
+export {
+    scanRange,
+    predictPrime
+};

@@ -14,11 +14,11 @@
  * - GOOGLE_APPLICATION_CREDENTIALS: Path to service account JSON
  */
 
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { spawn } = require('child_process');
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { spawn } from 'child_process';
 
 /**
  * Create a JWT for service account authentication
@@ -138,14 +138,14 @@ async function getAccessToken(credentialsPath = null) {
             stderr += data.toString();
         });
         
-        gcloud.on('close', (code) => {
+        gcloud.on('close', async (code) => {
             if (code === 0 && stdout.trim()) {
                 console.log('[VertexAI] Authenticated via gcloud CLI');
                 resolve(stdout.trim());
             } else {
                 // If gcloud fails, try Google Auth Library (if available)
                 try {
-                    const { GoogleAuth } = require('google-auth-library');
+                    const { GoogleAuth } = await import('google-auth-library');
                     const auth = new GoogleAuth({
                         scopes: ['https://www.googleapis.com/auth/cloud-platform']
                     });
@@ -727,4 +727,4 @@ class VertexAIClient {
     }
 }
 
-module.exports = { VertexAIClient, getAccessToken };
+export { VertexAIClient, getAccessToken };

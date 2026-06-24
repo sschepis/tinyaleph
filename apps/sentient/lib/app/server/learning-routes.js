@@ -4,7 +4,7 @@
  * Handles all autonomous learning system API endpoints.
  */
 
-const { loggers, sendJson, readBody } = require('./utils');
+import { loggers, sendJson, readBody } from './utils.js';
 
 const { learn: logLearn } = loggers;
 
@@ -305,4 +305,4 @@ function createLearningRoutes(server) {
     };
 }
 
-module.exports = { createLearningRoutes };
+export { createLearningRoutes };

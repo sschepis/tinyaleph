@@ -11,10 +11,10 @@
  * All external access MUST pass through this filter.
  */
 
-const path = require('path');
-const os = require('os');
-const config = require('./config');
-const { createLogger } = require('../app/constants');
+import path from 'path';
+import os from 'os';
+import config from './config.js';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('learning:safety');
 
@@ -394,4 +394,4 @@ class SafetyFilter {
     }
 }
 
-module.exports = { SafetyFilter };
+export { SafetyFilter };

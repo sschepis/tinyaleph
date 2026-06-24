@@ -8,8 +8,10 @@
  * - Prime encoding preparation
  */
 
-const config = require('./config');
-const { createLogger } = require('../app/constants');
+import fs from 'fs';
+import path from 'path';
+import config from './config.js';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('learning:ingester');
 
@@ -66,7 +68,6 @@ class ContentIngester {
                 // Content saved to file, read it
                 if (response.filepath) {
                     try {
-                        const fs = require('fs');
                         const data = await fs.promises.readFile(response.filepath, 'utf-8');
                         content = data;
                         source = response.url || response.filepath;
@@ -180,7 +181,6 @@ class ContentIngester {
         }
         
         if (filepath) {
-            const path = require('path');
             const ext = path.extname(filepath).toLowerCase();
             const extFormats = {
                 '.txt': 'text',
@@ -602,4 +602,4 @@ class ContentIngester {
     }
 }
 
-module.exports = { ContentIngester };
+export { ContentIngester };

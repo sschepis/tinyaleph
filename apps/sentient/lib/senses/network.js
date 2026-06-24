@@ -7,7 +7,7 @@
  * - Token usage tracking
  */
 
-const { Sense } = require('./base');
+import { Sense } from './base.js';
 
 class NetworkSense extends Sense {
     constructor(options = {}) {
@@ -181,4 +181,4 @@ class NetworkSense extends Sense {
     }
 }
 
-module.exports = { NetworkSense };
+export { NetworkSense };

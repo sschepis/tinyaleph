@@ -14,15 +14,15 @@
  * - AutonomousLearner: Main learning loop orchestrator
  */
 
-const { SafetyFilter } = require('./safety-filter');
-const { ChaperoneAPI } = require('./chaperone');
-const { CuriosityEngine, SMF_AXES, AXIS_QUERIES } = require('./curiosity');
-const { QueryFormulator } = require('./query');
-const { ContentIngester } = require('./ingester');
-const { ReflectionLoop } = require('./reflector');
-const { AutonomousLearner } = require('./learner');
-const { NextStepGenerator, createNextStepGenerator } = require('./next-steps');
-const config = require('./config');
+import { SafetyFilter } from './safety-filter.js';
+import { ChaperoneAPI } from './chaperone.js';
+import { CuriosityEngine, SMF_AXES, AXIS_QUERIES } from './curiosity.js';
+import { QueryFormulator } from './query.js';
+import { ContentIngester } from './ingester.js';
+import { ReflectionLoop } from './reflector.js';
+import { AutonomousLearner } from './learner.js';
+import { NextStepGenerator, createNextStepGenerator } from './next-steps.js';
+import config from './config.js';
 
 /**
  * Create a complete learning system
@@ -66,7 +66,7 @@ function createLearningSystem(observer, options = {}) {
     };
 }
 
-module.exports = {
+export {
     // Classes
     SafetyFilter,
     ChaperoneAPI,

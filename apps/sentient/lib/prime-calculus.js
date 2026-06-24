@@ -22,25 +22,27 @@
 // Try to load resolang for WASM-accelerated operations
 let resolang = null;
 try {
-    resolang = require('@sschepis/resolang');
+    resolang = await import('@sschepis/resolang');
+    // Handle default export if present
+    if (resolang.default) resolang = resolang.default;
 } catch (e) {
     // Will use JS fallback
 }
 
 // Import formal semantics modules from core
-const {
+import {
     TypeChecker,
     Types,
-    NounTerm: CoreNounTerm,
-    AdjTerm: CoreAdjTerm,
-    ChainTerm: CoreChainTerm,
-    FusionTerm: CoreFusionTerm,
+    NounTerm as CoreNounTerm,
+    AdjTerm as CoreAdjTerm,
+    ChainTerm as CoreChainTerm,
+    FusionTerm as CoreFusionTerm,
     NounSentence,
     SeqSentence,
     ImplSentence
-} = require('../../../core/types');
+} from '../../../core/types.js';
 
-const {
+import {
     ReductionSystem,
     ResonancePrimeOperator,
     NextPrimeOperator,
@@ -50,14 +52,14 @@ const {
     NormalFormVerifier,
     demonstrateStrongNormalization,
     testLocalConfluence
-} = require('../../../core/reduction');
+} from '../../../core/reduction.js';
 
-const {
+import {
     Translator,
     LambdaEvaluator,
     Semantics,
     ConceptInterpreter
-} = require('../../../core/lambda');
+} from '../../../core/lambda.js';
 
 /**
  * Small primes for prime checking
@@ -1437,7 +1439,7 @@ class SemanticObject {
     }
 }
 
-module.exports = {
+export {
     // Term types
     TermType,
     NounTerm,

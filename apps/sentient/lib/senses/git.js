@@ -8,9 +8,9 @@
  * - Remote status
  */
 
-const { Sense } = require('./base');
-const { execSync } = require('child_process');
-const path = require('path');
+import { Sense } from './base.js';
+import { execSync } from 'child_process';
+import path from 'path';
 
 class GitSense extends Sense {
     constructor(options = {}) {
@@ -239,4 +239,4 @@ class GitSense extends Sense {
     }
 }
 
-module.exports = { GitSense };
+export { GitSense };

@@ -14,7 +14,7 @@
  * - LLM for planning and reasoning
  */
 
-const { EventEmitter } = require('events');
+import { EventEmitter } from 'events';
 
 /**
  * Task status enum
@@ -1329,7 +1329,7 @@ function createAgent(options = {}) {
     return new Agent(options);
 }
 
-module.exports = {
+export {
     // Enums
     TaskStatus,
     StepStatus,

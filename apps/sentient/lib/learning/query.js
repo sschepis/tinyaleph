@@ -10,8 +10,8 @@
  * - Add context from observer state
  */
 
-const config = require('./config');
-const { createLogger } = require('../app/constants');
+import config from './config.js';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('learning:query');
 
@@ -448,4 +448,4 @@ class QueryFormulator {
     }
 }
 
-module.exports = { QueryFormulator };
+export { QueryFormulator };

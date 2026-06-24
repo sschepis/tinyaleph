@@ -8,7 +8,7 @@
  * These mechanisms enable emergent abstraction and richer conceptual hierarchies.
  */
 
-const EventEmitter = require('events');
+import EventEmitter from 'events';
 
 /**
  * Fusion Discovery Engine
@@ -734,7 +734,7 @@ function calculateReasoningDepth(entanglementLayer, sampleSize = 20) {
     return maxDepth;
 }
 
-module.exports = {
+export {
     FusionDiscoveryEngine,
     ReinforcedEntanglementLayer,
     calculateAbstractionLevel,

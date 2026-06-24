@@ -24,108 +24,108 @@
  */
 
 // Sedenion Memory Field
-const { SedenionMemoryField } = require('./smf');
+import { SedenionMemoryField } from './smf.js';
 
 // Prime Resonance Semantic Computation
-const { 
+import { 
     PrimeOscillator, 
     PRSCLayer, 
     EntanglementDetector 
-} = require('./prsc');
+} from './prsc.js';
 
 // Holographic Quantum Encoding
-const { 
+import { 
     HolographicEncoder, 
     HolographicMemory, 
     HolographicSimilarity 
-} = require('./hqe');
+} from './hqe.js';
 
 // Temporal Layer
-const { 
+import { 
     Moment, 
     TemporalLayer, 
     TemporalPatternDetector 
-} = require('./temporal');
+} from './temporal.js';
 
 // Entanglement Layer
-const { 
+import { 
     EntangledPair, 
     Phrase, 
     EntanglementLayer 
-} = require('./entanglement');
+} from './entanglement.js';
 
 // Enhanced Memory
-const { 
+import { 
     MemoryTrace, 
     HolographicMemoryBank, 
     TemporalMemoryIndex, 
     EntanglementMemoryIndex, 
     SentientMemory 
-} = require('./sentient-memory');
+} from './sentient-memory.js';
 
 // Agency Layer
-const { 
+import { 
     AttentionFocus, 
     Goal, 
     Action, 
     AgencyLayer 
-} = require('./agency');
+} from './agency.js';
 
 // Boundary Layer
-const {
+import {
     SensoryChannel,
     MotorChannel,
     EnvironmentalModel,
     SelfModel,
     ObjectivityGate,
     BoundaryLayer
-} = require('./boundary');
+} from './boundary.js';
 
 // Safety Layer
-const { 
+import { 
     SafetyConstraint, 
     ViolationEvent, 
     SafetyMonitor, 
     SafetyLayer 
-} = require('./safety');
+} from './safety.js';
 
 // Sentient Core
-const {
+import {
     SentientState,
     SentientObserver
-} = require('./sentient-core');
+} from './sentient-core.js';
 
 // Symbolic Extensions (v1.3.0)
-const {
+import {
     SymbolicSMF,
     SMFSymbolMapper,
     AXIS_SYMBOL_MAPPING,
     TAG_TO_AXIS
-} = require('./symbolic-smf');
+} from './symbolic-smf.js';
 
-const {
+import {
     SymbolicMoment,
     SymbolicTemporalLayer,
     SymbolicPatternDetector,
     HEXAGRAM_ARCHETYPES
-} = require('./symbolic-temporal');
+} from './symbolic-temporal.js';
 
-const {
+import {
     SymbolicState,
     SymbolicObserver
-} = require('./symbolic-observer');
+} from './symbolic-observer.js';
 
 // Evaluation Assays (Section 15)
-const {
+import {
     TimeDilationAssay,
     MemoryContinuityAssay,
     AgencyConstraintAssay,
     NonCommutativeMeaningAssay,
     AssaySuite
-} = require('./assays');
+} from './assays.js';
 
 // Prime Calculus Kernel (Section 6) - Enhanced with formal semantics
-const {
+import {
     TermType,
     NounTerm,
     AdjTerm,
@@ -142,19 +142,19 @@ const {
     TypeChecker,
     Types,
     ReductionSystem,
-    ResonanceOperator,
+    ResonancePrimeOperator as ResonanceOperator,
     NextPrimeOperator,
-    ModularOperator,
-    IdentityOperator,
+    ModularPrimeOperator as ModularOperator,
+    IdentityPrimeOperator as IdentityOperator,
     demonstrateStrongNormalization,
     testLocalConfluence,
     Translator,
     LambdaEvaluator,
     Semantics
-} = require('./prime-calculus');
+} from './prime-calculus.js';
 
 // Enochian Packet Layer (Section 7.4) - Enhanced with vocabulary
-const {
+import {
     ENOCHIAN_PRIMES,
     MODES,
     twistAngle,
@@ -180,10 +180,10 @@ const {
     SedenionElement,
     TwistOperator,
     validateTwistClosure
-} = require('./enochian');
+} from './enochian.js';
 
 // Distributed Sentience Network (Section 7)
-const {
+import {
     LocalField,
     Proposal,
     ProposalLog,
@@ -195,49 +195,49 @@ const {
     generateNodeId,
     SEMANTIC_DOMAINS,
     FIRST_100_PRIMES
-} = require('./network');
+} from './network.js';
 
 // Intelligence Scaling Modules
-const {
+import {
     FusionDiscoveryEngine,
     ReinforcedEntanglementLayer,
     calculateAbstractionLevel,
     calculateReasoningDepth
-} = require('./abstraction');
+} from './abstraction.js';
 
-const {
+import {
     WisdomAggregator,
     ConceptFormation,
     CompositeIntelligenceScore,
     calculateAmplificationFactor,
     calculateCoherenceEfficiency
-} = require('./collective');
+} from './collective.js';
 
 // Legacy exports (for backwards compatibility)
-const { AlephChat } = require('./chat');
-const { ContextMemory, ImmediateBuffer, SessionMemory, PersistentMemory } = require('./memory');
-const { ResponseProcessor } = require('./processor');
-const { VocabularyTracker } = require('./vocabulary');
-const { StyleProfile } = require('./style');
-const { TopicTracker } = require('./topics');
-const { ConceptGraph } = require('./concepts');
-const { ResponseEnhancer } = require('./enhancer');
-const { AlephCore } = require('./core');
-const { LMStudioClient } = require('./lmstudio');
-const { MarkdownRenderer, formatMarkdown } = require('./markdown');
-const { ToolExecutor, executeOpenAIToolCall, processToolCalls } = require('./tools');
+import { AlephChat } from './chat.js';
+import { ContextMemory, ImmediateBuffer, SessionMemory, PersistentMemory } from './memory.js';
+import { ResponseProcessor } from './processor.js';
+import { VocabularyManager as VocabularyTracker } from './vocabulary.js';
+import { StyleProfiler as StyleProfile } from './style.js';
+import { TopicTracker } from './topics.js';
+import { ConceptGraph } from './concepts.js';
+import { PromptEnhancer as ResponseEnhancer } from './enhancer.js';
+import { AlephSemanticCore as AlephCore } from './core.js';
+import { LMStudioClient } from './lmstudio.js';
+import { MarkdownRenderer, formatMarkdown } from './markdown.js';
+import { ToolExecutor, executeOpenAIToolCall, processToolCalls } from './tools.js';
 
 // Resolang WASM Integration
-const {
+import {
     ResolangLoader,
     ResolangPipeline,
     ResolangSMF,
     initResolang,
     createPipeline
-} = require('./resolang');
+} from './resolang.js';
 
 // Agent Module (Agentic Behavior)
-const {
+import {
     TaskStatus,
     StepStatus,
     ComplexityIndicators,
@@ -248,9 +248,9 @@ const {
     StepExecutor,
     Agent,
     createAgent
-} = require('./agent');
+} from './agent.js';
 
-module.exports = {
+export {
     // Sentient Observer Components
     SedenionMemoryField,
     

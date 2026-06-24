@@ -4,17 +4,17 @@
  * Exports all server route handlers and utilities.
  */
 
-const { loggers, setCorsHeaders, sendJson, readBody, generateNodeId, getSenseSummary, SMF_AXES, SMF_AXIS_DESCRIPTIONS, colors } = require('./utils');
-const { createChatHandlers } = require('./chat-handler');
-const { createLearningRoutes } = require('./learning-routes');
-const { createObserverRoutes } = require('./observer-routes');
-const { createStreamRoutes } = require('./stream-routes');
-const { createWebRTCRoutes } = require('./webrtc-routes');
-const { createProviderRoutes } = require('./provider-routes');
-const { createNetworkSync } = require('./network-sync');
-const { createStaticServer, MIME_TYPES } = require('./static-server');
+import { loggers, setCorsHeaders, sendJson, readBody, generateNodeId, getSenseSummary, SMF_AXES, SMF_AXIS_DESCRIPTIONS, colors } from './utils.js';
+import { createChatHandlers } from './chat-handler.js';
+import { createLearningRoutes } from './learning-routes.js';
+import { createObserverRoutes } from './observer-routes.js';
+import { createStreamRoutes } from './stream-routes.js';
+import { createWebRTCRoutes } from './webrtc-routes.js';
+import { createProviderRoutes } from './provider-routes.js';
+import { createNetworkSync } from './network-sync.js';
+import { createStaticServer, MIME_TYPES } from './static-server.js';
 
-module.exports = {
+export {
     // Utilities
     loggers,
     setCorsHeaders,

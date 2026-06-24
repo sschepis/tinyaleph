@@ -5,7 +5,7 @@
  * Calculates visual entropy and integrates it into the observer's state.
  */
 
-const { Sense } = require('./base');
+import { Sense } from './base.js';
 
 class SightSense extends Sense {
     constructor(observer) {
@@ -89,4 +89,4 @@ class SightSense extends Sense {
     }
 }
 
-module.exports = { SightSense };
+export { SightSense };

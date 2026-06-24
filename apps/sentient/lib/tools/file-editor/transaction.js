@@ -10,10 +10,12 @@
  * - Conflict detection
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const crypto = require('crypto');
-const { applyPatch, applyPatches, validateEdit } = require('./patchEngine');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { applyPatch, applyPatches, validateEdit } from './patchEngine.js';
+
+const fsPromises = fs.promises;
 
 // ============================================================================
 // TRANSACTION STATES
@@ -201,7 +203,7 @@ class FileTransaction {
             
             try {
                 // Check file exists and is readable
-                const content = await fs.readFile(filePath, 'utf-8');
+                const content = await fsPromises.readFile(filePath, 'utf-8');
                 fileResult.exists = true;
                 fileResult.readable = true;
                 this.originalContents.set(filePath, content);
@@ -279,13 +281,13 @@ class FileTransaction {
      */
     async createBackup(filePath) {
         // Ensure backup directory exists
-        await fs.mkdir(this.backupDir, { recursive: true });
+        await fsPromises.mkdir(this.backupDir, { recursive: true });
         
         const fileName = path.basename(filePath);
         const backupName = `${this.id}-${Date.now()}-${fileName}`;
         const backupPath = path.join(this.backupDir, backupName);
         
-        await fs.copyFile(filePath, backupPath);
+        await fsPromises.copyFile(filePath, backupPath);
         this.backups.set(filePath, backupPath);
         
         return backupPath;
@@ -332,7 +334,7 @@ class FileTransaction {
             // Write all modified files
             for (const [filePath, content] of this.modifiedContents) {
                 try {
-                    await fs.writeFile(filePath, content, 'utf-8');
+                    await fsPromises.writeFile(filePath, content, 'utf-8');
                     committedFiles.push(filePath);
                     results.filesCommitted++;
                     results.editsApplied += this.stagedEdits.get(filePath).length;
@@ -393,7 +395,7 @@ class FileTransaction {
                 const backupPath = this.backups.get(filePath);
                 if (backupPath) {
                     try {
-                        await fs.copyFile(backupPath, filePath);
+                        await fsPromises.copyFile(backupPath, filePath);
                         results.filesRolledBack++;
                         continue;
                     } catch (e) {
@@ -404,7 +406,7 @@ class FileTransaction {
                 // Use stored original content
                 const original = this.originalContents.get(filePath);
                 if (original !== undefined) {
-                    await fs.writeFile(filePath, original, 'utf-8');
+                    await fsPromises.writeFile(filePath, original, 'utf-8');
                     results.filesRolledBack++;
                 }
             } catch (error) {
@@ -443,7 +445,7 @@ class FileTransaction {
         
         for (const backupPath of this.backups.values()) {
             try {
-                await fs.unlink(backupPath);
+                await fsPromises.unlink(backupPath);
                 deleted++;
             } catch (e) {
                 // Ignore cleanup errors
@@ -710,7 +712,7 @@ async function validateEdits(edits, options = {}) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // States
     TransactionState,
     

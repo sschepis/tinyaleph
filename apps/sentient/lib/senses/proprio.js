@@ -8,7 +8,7 @@
  * - SMF orientation summary
  */
 
-const { Sense } = require('./base');
+import { Sense } from './base.js';
 
 class ProprioSense extends Sense {
     constructor(options = {}) {
@@ -177,4 +177,4 @@ class ProprioSense extends Sense {
     }
 }
 
-module.exports = { ProprioSense };
+export { ProprioSense };

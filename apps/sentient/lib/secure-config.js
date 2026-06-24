@@ -9,10 +9,10 @@
  * - Runtime secret rotation support
  */
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const { createLogger } = require('./error-handler');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { createLogger } from './error-handler.js';
 
 const log = createLogger('secure-config');
 
@@ -669,17 +669,17 @@ if (process.env.SENTIENT_AUTO_LOAD !== 'false') {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Classes
     SecureConfig,
-    
+
     // Constants
     ENV_SOURCES,
     CONFIG_SCHEMA,
-    
+
     // Global instance
     globalConfig,
-    
+
     // Utilities
     encryptCredential,
     decryptCredential

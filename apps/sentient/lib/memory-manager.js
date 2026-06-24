@@ -12,8 +12,8 @@
  * identified in the architecture review.
  */
 
-const EventEmitter = require('events');
-const { SedenionMemoryField, SMF_AXES, AXIS_INDEX } = require('./smf');
+import EventEmitter from 'events';
+import { SedenionMemoryField, SMF_AXES, AXIS_INDEX } from './smf.js';
 
 /**
  * Memory Transaction - Atomic multi-operation changes
@@ -613,7 +613,7 @@ class MemoryManager extends EventEmitter {
     }
 }
 
-module.exports = {
+export {
     MemoryManager,
     MemoryTransaction
 };

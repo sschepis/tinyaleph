@@ -5,7 +5,7 @@
  * Injects relevant history, topic context, and style hints.
  */
 
-const { TOOL_DEFINITIONS } = require('./tools');
+import { TOOL_DEFINITIONS } from './tools.js';
 
 class PromptEnhancer {
     /**
@@ -344,4 +344,4 @@ Examples of when TO use tools (with full paths):
     }
 }
 
-module.exports = { PromptEnhancer };
+export { PromptEnhancer };

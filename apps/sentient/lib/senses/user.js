@@ -8,7 +8,7 @@
  * - Conversation metrics
  */
 
-const { Sense } = require('./base');
+import { Sense } from './base.js';
 
 class UserSense extends Sense {
     constructor(options = {}) {
@@ -187,4 +187,4 @@ class UserSense extends Sense {
     }
 }
 
-module.exports = { UserSense };
+export { UserSense };

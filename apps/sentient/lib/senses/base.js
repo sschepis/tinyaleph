@@ -178,4 +178,4 @@ class Sense {
     }
 }
 
-module.exports = { Sense };
+export { Sense };

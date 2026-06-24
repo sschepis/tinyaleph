@@ -5,11 +5,11 @@
  * with vocabulary learning, style profiling, topic tracking, and concept graphs.
  */
 
-const { VocabularyManager } = require('./vocabulary');
-const { StyleProfiler } = require('./style');
-const { TopicTracker } = require('./topics');
-const { ConceptGraph } = require('./concepts');
-const { ContextMemory } = require('./memory');
+import { VocabularyManager } from './vocabulary.js';
+import { StyleProfiler } from './style.js';
+import { TopicTracker } from './topics.js';
+import { ConceptGraph } from './concepts.js';
+import { ContextMemory } from './memory.js';
 
 class AlephSemanticCore {
     /**
@@ -226,4 +226,4 @@ class AlephSemanticCore {
     }
 }
 
-module.exports = { AlephSemanticCore };
+export { AlephSemanticCore };

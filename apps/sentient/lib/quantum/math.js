@@ -94,13 +94,10 @@ function generateTrainingData(start, end) {
     return data;
 }
 
-// Export for CommonJS
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        RIEMANN_ZEROS,
-        calculateWaveform,
-        generateWaveformRange,
-        isPrime,
-        generateTrainingData
-    };
-}
+export {
+    RIEMANN_ZEROS,
+    calculateWaveform,
+    generateWaveformRange,
+    isPrime,
+    generateTrainingData
+};

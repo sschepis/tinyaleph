@@ -9,13 +9,13 @@
  * These mechanisms enable collective intelligence that exceeds individual capabilities.
  */
 
-const EventEmitter = require('events');
-const { SedenionMemoryField } = require('./smf');
+import EventEmitter from 'events';
+import { SedenionMemoryField } from './smf.js';
 
 // Import Observer Hierarchy from topology (108bio.pdf integration)
 let OBSERVER_HIERARCHY = null;
 try {
-    const topology = require('../../../core/topology');
+    const topology = await import('../../../core/topology.js');
     const rawHierarchy = topology.OBSERVER_HIERARCHY;
     // Convert array format to object keyed by scale name
     if (Array.isArray(rawHierarchy)) {
@@ -1227,7 +1227,7 @@ class CompositeIntelligenceScore {
     }
 }
 
-module.exports = {
+export {
     WisdomAggregator,
     ObserverScaleManager,
     ConceptFormation,

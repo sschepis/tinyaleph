@@ -215,7 +215,7 @@ function validateEdit(edit) {
     };
 }
 
-module.exports = {
+export {
     applyPatch,
     applyPatches,
     countOccurrences,

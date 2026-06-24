@@ -12,7 +12,7 @@
  * or user preferences.
  */
 
-const { EventEmitter } = require('events');
+import { EventEmitter } from 'events';
 
 // ============================================================================
 // TRANSPORT STATES
@@ -338,13 +338,24 @@ class WebSocketTransport extends Transport {
     }
     
     async connect() {
+        this.setState(TransportState.CONNECTING);
+        
+        // Resolve WebSocket implementation before creating the Promise
+        let WS = globalThis.WebSocket;
+        if (!WS) {
+            try {
+                const wsModule = await import('ws');
+                WS = wsModule.default || wsModule;
+            } catch (e) {
+                this.setState(TransportState.ERROR);
+                throw new Error('WebSocket not available');
+            }
+        }
+        
         return new Promise((resolve, reject) => {
-            this.setState(TransportState.CONNECTING);
-            
             try {
                 // Works in both Node.js and browser
-                const WebSocket = globalThis.WebSocket || require('ws');
-                this.ws = new WebSocket(this.url, this.protocols);
+                this.ws = new WS(this.url, this.protocols);
                 
                 this.ws.onopen = () => {
                     this.setState(TransportState.CONNECTED);
@@ -581,13 +592,24 @@ class SSETransport extends Transport {
     }
     
     async connect() {
+        this.setState(TransportState.CONNECTING);
+        
+        // Resolve EventSource implementation before creating the Promise
+        let ES = globalThis.EventSource;
+        if (!ES) {
+            try {
+                const esModule = await import('eventsource');
+                ES = esModule.default || esModule;
+            } catch (e) {
+                this.setState(TransportState.ERROR);
+                throw new Error('EventSource not available');
+            }
+        }
+        
         return new Promise((resolve, reject) => {
-            this.setState(TransportState.CONNECTING);
-            
             try {
                 // Works in browser; in Node.js, need eventsource package
-                const EventSource = globalThis.EventSource || require('eventsource');
-                this.eventSource = new EventSource(this.streamUrl);
+                this.eventSource = new ES(this.streamUrl);
                 
                 this.eventSource.onopen = () => {
                     this.setState(TransportState.CONNECTED);
@@ -1008,7 +1030,7 @@ class TransportManager extends EventEmitter {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // States
     TransportState,
     

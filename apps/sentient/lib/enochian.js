@@ -20,16 +20,17 @@
  * - Sedenion operations (16D)
  */
 
+// Import the comprehensive Enochian vocabulary system
+import * as EnochianVocabulary from './enochian-vocabulary.js';
+
 // Try to load resolang for WASM-accelerated operations
 let resolang = null;
 try {
-    resolang = require('@sschepis/resolang');
+    const mod = await import('@sschepis/resolang');
+    resolang = mod.default || mod;
 } catch (e) {
     // Will use JS fallback
 }
-
-// Import the comprehensive Enochian vocabulary system
-const EnochianVocabulary = require('./enochian-vocabulary');
 
 /**
  * Enochian prime alphabet (Section 7.4)
@@ -700,7 +701,19 @@ class EnhancedEnochianDecoder extends EnochianDecoder {
     }
 }
 
-module.exports = {
+// Convenience re-exports from vocabulary
+const ENOCHIAN_ALPHABET = EnochianVocabulary.ENOCHIAN_ALPHABET;
+const PRIME_BASIS = EnochianVocabulary.PRIME_BASIS;
+const CORE_VOCABULARY = EnochianVocabulary.CORE_VOCABULARY;
+const THE_NINETEEN_CALLS = EnochianVocabulary.THE_NINETEEN_CALLS;
+const EnochianWord = EnochianVocabulary.EnochianWord;
+const EnochianCall = EnochianVocabulary.EnochianCall;
+const EnochianEngine = EnochianVocabulary.EnochianEngine;
+const SedenionElement = EnochianVocabulary.SedenionElement;
+const TwistOperator = EnochianVocabulary.TwistOperator;
+const validateTwistClosure = EnochianVocabulary.validateTwistClosure;
+
+export {
     // Constants
     ENOCHIAN_PRIMES,
     MODES,
@@ -728,14 +741,14 @@ module.exports = {
     EnochianVocabulary,
     
     // Convenience re-exports from vocabulary
-    ENOCHIAN_ALPHABET: EnochianVocabulary.ENOCHIAN_ALPHABET,
-    PRIME_BASIS: EnochianVocabulary.PRIME_BASIS,
-    CORE_VOCABULARY: EnochianVocabulary.CORE_VOCABULARY,
-    THE_NINETEEN_CALLS: EnochianVocabulary.THE_NINETEEN_CALLS,
-    EnochianWord: EnochianVocabulary.EnochianWord,
-    EnochianCall: EnochianVocabulary.EnochianCall,
-    EnochianEngine: EnochianVocabulary.EnochianEngine,
-    SedenionElement: EnochianVocabulary.SedenionElement,
-    TwistOperator: EnochianVocabulary.TwistOperator,
-    validateTwistClosure: EnochianVocabulary.validateTwistClosure
+    ENOCHIAN_ALPHABET,
+    PRIME_BASIS,
+    CORE_VOCABULARY,
+    THE_NINETEEN_CALLS,
+    EnochianWord,
+    EnochianCall,
+    EnochianEngine,
+    SedenionElement,
+    TwistOperator,
+    validateTwistClosure
 };

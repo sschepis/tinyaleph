@@ -8,7 +8,7 @@
  * - Circadian context
  */
 
-const { Sense } = require('./base');
+import { Sense } from './base.js';
 
 class ChronoSense extends Sense {
     constructor(options = {}) {
@@ -176,4 +176,4 @@ class ChronoSense extends Sense {
     }
 }
 
-module.exports = { ChronoSense };
+export { ChronoSense };

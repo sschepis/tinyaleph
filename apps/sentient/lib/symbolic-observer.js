@@ -10,17 +10,17 @@
  * - Narrative detection for archetypal pattern recognition
  */
 
-const { SentientObserver, SentientState } = require('./sentient-core');
-const { SymbolicSMF, SMFSymbolMapper, AXIS_SYMBOL_MAPPING } = require('./symbolic-smf');
-const { SymbolicTemporalLayer, SymbolicMoment, SymbolicPatternDetector, HEXAGRAM_ARCHETYPES } = require('./symbolic-temporal');
-const { SedenionMemoryField } = require('./smf');
-const { TemporalLayer, TemporalPatternDetector } = require('./temporal');
+import { SentientObserver, SentientState } from './sentient-core.js';
+import { SymbolicSMF, SMFSymbolMapper, AXIS_SYMBOL_MAPPING } from './symbolic-smf.js';
+import { SymbolicTemporalLayer, SymbolicMoment, SymbolicPatternDetector, HEXAGRAM_ARCHETYPES } from './symbolic-temporal.js';
+import { SedenionMemoryField } from './smf.js';
+import { TemporalLayer, TemporalPatternDetector } from './temporal.js';
 
-const { symbolDatabase } = require('../../../core/symbols');
-const { SemanticInference, EntityExtractor } = require('../../../core/inference');
-const { CompoundBuilder, compoundBuilder } = require('../../../core/compound');
-const { ResonanceCalculator } = require('../../../core/resonance');
-const { OBSERVER_HIERARCHY, PhysicalConstants } = require('../../../core/topology');
+import { symbolDatabase } from '../../../core/symbols/index.js';
+import { SemanticInference, EntityExtractor } from '../../../core/inference.js';
+import { CompoundBuilder, compoundBuilder } from '../../../core/compound.js';
+import { ResonanceCalculator } from '../../../core/resonance.js';
+import { OBSERVER_HIERARCHY, PhysicalConstants } from '../../../core/topology.js';
 
 // PHI constant for golden ratio operations
 const PHI = (1 + Math.sqrt(5)) / 2;
@@ -1008,7 +1008,7 @@ class SymbolicObserver extends SentientObserver {
     }
 }
 
-module.exports = {
+export {
     SymbolicState,
     SymbolicObserver,
     HEXAGRAM_ARCHETYPES,

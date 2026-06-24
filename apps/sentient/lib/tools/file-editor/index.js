@@ -1,10 +1,13 @@
 // index.js - File Editor Tool
 // Provides LLM-powered search/replace file editing
 
-const fs = require('fs').promises;
-const path = require('path');
-const { generateEdits, generateEditsWithRetry, configureLLMBridge } = require('./llmBridge');
-const { applyPatch } = require('./patchEngine');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { generateEdits, generateEditsWithRetry, configureLLMBridge } from './llmBridge.js';
+import { applyPatch } from './patchEngine.js';
+
+const fsPromises = fs.promises;
 
 /**
  * Edit a file using LLM-generated patches
@@ -20,7 +23,7 @@ async function editFile(filePath, instruction, options = {}) {
     // Read the original file content
     let originalContent;
     try {
-        originalContent = await fs.readFile(resolvedPath, 'utf-8');
+        originalContent = await fsPromises.readFile(resolvedPath, 'utf-8');
     } catch (readError) {
         return {
             success: false,
@@ -76,10 +79,10 @@ async function editFile(filePath, instruction, options = {}) {
         try {
             // Optionally create backup
             if (options.backup) {
-                await fs.writeFile(`${resolvedPath}.bak`, originalContent, 'utf-8');
+                await fsPromises.writeFile(`${resolvedPath}.bak`, originalContent, 'utf-8');
             }
             
-            await fs.writeFile(resolvedPath, modifiedContent, 'utf-8');
+            await fsPromises.writeFile(resolvedPath, modifiedContent, 'utf-8');
             
             return {
                 success: true,
@@ -121,7 +124,7 @@ async function previewEdits(filePath, instruction, options = {}) {
     
     let originalContent;
     try {
-        originalContent = await fs.readFile(resolvedPath, 'utf-8');
+        originalContent = await fsPromises.readFile(resolvedPath, 'utf-8');
     } catch (readError) {
         return {
             success: false,
@@ -177,11 +180,12 @@ async function main() {
 }
 
 // Run CLI if executed directly
-if (require.main === module) {
+const __filename = fileURLToPath(import.meta.url);
+if (process.argv[1] === __filename) {
     main().catch(console.error);
 }
 
-module.exports = {
+export {
     editFile,
     previewEdits,
     configureLLMBridge,

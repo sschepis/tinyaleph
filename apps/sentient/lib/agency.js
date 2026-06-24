@@ -7,7 +7,10 @@
  * @module apps/sentient/lib/agency
  */
 
-'use strict';
-
 // Re-export from library
-module.exports = require('../../../observer/agency');
+export {
+    AttentionFocus,
+    Goal,
+    Action,
+    AgencyLayer
+} from '../../../observer/agency.js';

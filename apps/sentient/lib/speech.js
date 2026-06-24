@@ -5,11 +5,11 @@
  * Uses the microphone for recording and Whisper API for transcription.
  */
 
-const { spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
-const http = require('http');
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import https from 'https';
+import http from 'http';
 
 /**
  * Speech Recorder
@@ -384,7 +384,7 @@ class SpeechInputManager {
     }
 }
 
-module.exports = {
+export {
     SpeechRecorder,
     WhisperTranscriber,
     SpeechInputManager

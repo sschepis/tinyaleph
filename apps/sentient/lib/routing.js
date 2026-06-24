@@ -8,8 +8,8 @@
  * This reduces coordination overhead while maintaining semantic coverage.
  */
 
-const EventEmitter = require('events');
-const { PrimeDomainPartitioner, SemanticDomainAssignment, SEMANTIC_DOMAINS } = require('./specialization');
+import EventEmitter from 'events';
+import { PrimeDomainPartitioner, SemanticDomainAssignment, SEMANTIC_DOMAINS, FIRST_100_PRIMES } from './specialization.js';
 
 /**
  * Expertise Router
@@ -158,7 +158,6 @@ class ExpertiseRouter extends EventEmitter {
         const idx = domains.indexOf(domain);
         if (idx < 0) return [];
         
-        const { FIRST_100_PRIMES } = require('./specialization');
         const chunkSize = Math.ceil(FIRST_100_PRIMES.length / domains.length);
         return FIRST_100_PRIMES.slice(idx * chunkSize, (idx + 1) * chunkSize);
     }
@@ -676,7 +675,7 @@ function calculateRoutingEfficiency(router, testProposals) {
     return totalFull > 0 ? totalSaved / totalFull : 0;
 }
 
-module.exports = {
+export {
     ExpertiseRouter,
     HierarchicalRoomManager,
     SelectiveProposalRouter,

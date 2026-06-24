@@ -10,7 +10,7 @@
  * - Async error boundary wrappers
  */
 
-const { EventEmitter } = require('events');
+import { EventEmitter } from 'events';
 
 // ============================================================================
 // LOG LEVELS
@@ -738,7 +738,7 @@ function createLogger(namespace) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Levels and categories
     LogLevel,
     LogLevelNames,

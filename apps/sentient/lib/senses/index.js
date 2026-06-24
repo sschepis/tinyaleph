@@ -5,15 +5,15 @@
  * and formatting for system prompt injection.
  */
 
-const { Sense } = require('./base');
-const { ChronoSense } = require('./chrono');
-const { ProprioSense } = require('./proprio');
-const { FilesystemSense } = require('./filesystem');
-const { GitSense } = require('./git');
-const { ProcessSense } = require('./process');
-const { NetworkSense } = require('./network');
-const { UserSense } = require('./user');
-const { SightSense } = require('./sight');
+import { Sense } from './base.js';
+import { ChronoSense } from './chrono.js';
+import { ProprioSense } from './proprio.js';
+import { FilesystemSense } from './filesystem.js';
+import { GitSense } from './git.js';
+import { ProcessSense } from './process.js';
+import { NetworkSense } from './network.js';
+import { UserSense } from './user.js';
+import { SightSense } from './sight.js';
 
 class SensorySystem {
     constructor(options = {}) {
@@ -267,7 +267,7 @@ class SensorySystem {
     }
 }
 
-module.exports = {
+export {
     SensorySystem,
     Sense,
     ChronoSense,

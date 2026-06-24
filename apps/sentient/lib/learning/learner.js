@@ -11,13 +11,13 @@
  * This is the core runtime of the autonomous learning system.
  */
 
-const { EventEmitter } = require('events');
-const { CuriosityEngine } = require('./curiosity');
-const { QueryFormulator } = require('./query');
-const { ContentIngester } = require('./ingester');
-const { ReflectionLoop } = require('./reflector');
-const config = require('./config');
-const { createLogger } = require('../app/constants');
+import { EventEmitter } from 'events';
+import { CuriosityEngine } from './curiosity.js';
+import { QueryFormulator } from './query.js';
+import { ContentIngester } from './ingester.js';
+import { ReflectionLoop } from './reflector.js';
+import config from './config.js';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('learning:learner');
 
@@ -644,4 +644,4 @@ class AutonomousLearner {
     }
 }
 
-module.exports = { AutonomousLearner };
+export { AutonomousLearner };

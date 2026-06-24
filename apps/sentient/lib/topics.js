@@ -266,4 +266,4 @@ class TopicTracker {
     }
 }
 
-module.exports = { TopicTracker };
+export { TopicTracker };

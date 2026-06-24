@@ -7,7 +7,9 @@
  * @module apps/sentient/lib/temporal
  */
 
-'use strict';
-
 // Re-export from library
-module.exports = require('../../../observer/temporal');
+export {
+    Moment,
+    TemporalLayer,
+    TemporalPatternDetector
+} from '../../../observer/temporal.js';

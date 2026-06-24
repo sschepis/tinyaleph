@@ -7,8 +7,8 @@
  * - Persistent: Cross-session storage
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Ring buffer for immediate context
@@ -373,7 +373,7 @@ class ContextMemory {
     }
 }
 
-module.exports = { 
+export { 
     ContextMemory, 
     ImmediateBuffer, 
     SessionMemory, 

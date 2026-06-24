@@ -5,8 +5,8 @@
  * Each word is stored with its prime encoding and hypercomplex embedding.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 class VocabularyManager {
     /**
@@ -252,4 +252,4 @@ class VocabularyManager {
     }
 }
 
-module.exports = { VocabularyManager };
+export { VocabularyManager };

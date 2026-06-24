@@ -5,8 +5,8 @@
  * Uses hypercomplex embeddings for semantic similarity.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 class ConceptGraph {
     /**
@@ -403,4 +403,4 @@ class ConceptGraph {
     }
 }
 
-module.exports = { ConceptGraph };
+export { ConceptGraph };

@@ -7,7 +7,14 @@
  * @module apps/sentient/lib/smf
  */
 
-'use strict';
-
 // Re-export from library
-module.exports = require('../../../observer/smf');
+export {
+    SedenionMemoryField,
+    SMF_AXES,
+    AXIS_INDEX,
+    SMF_CODEBOOK,
+    CODEBOOK_SIZE,
+    nearestCodebookAttractor,
+    codebookTunnel,
+    getTunnelingCandidates
+} from '../../../observer/smf.js';

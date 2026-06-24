@@ -19,18 +19,18 @@
  * - Proposal Log (PL): append-only local log of proposals
  */
 
-const EventEmitter = require('events');
-const crypto = require('crypto');
+import EventEmitter from 'events';
+import crypto from 'crypto';
 
 // Import local modules
-const { SedenionMemoryField } = require('./smf');
-const { PrimeCalculusVerifier, SemanticObject } = require('./prime-calculus');
-const { EnochianEncoder, EnochianDecoder, isTwistClosed } = require('./enochian');
+import { SedenionMemoryField } from './smf.js';
+import { PrimeCalculusVerifier, SemanticObject } from './prime-calculus.js';
+import { EnochianEncoder, EnochianDecoder, isTwistClosed } from './enochian.js';
 
 // Try to load telemetry for metrics
 let telemetry = null;
 try {
-    telemetry = require('./telemetry');
+    telemetry = await import('./telemetry.js');
 } catch (e) {
     // Telemetry not available
 }
@@ -38,7 +38,7 @@ try {
 // Try to load resolang for WASM-accelerated operations
 let resolang = null;
 try {
-    resolang = require('@sschepis/resolang');
+    resolang = await import('@sschepis/resolang');
 } catch (e) {
     // Will use JS fallback
 }
@@ -1776,7 +1776,7 @@ class DSNNode extends EventEmitter {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Constants
     SEMANTIC_DOMAINS,
     FIRST_100_PRIMES,

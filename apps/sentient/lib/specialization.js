@@ -8,7 +8,7 @@
  * This creates the natural diversity needed for emergent collective intelligence.
  */
 
-const { SedenionMemoryField, SMF_AXES } = require('./smf');
+import { SedenionMemoryField, SMF_AXES } from './smf.js';
 
 /**
  * Semantic domains map to groups of SMF axes
@@ -590,7 +590,7 @@ function calculateNetworkSemanticCoverage(nodes) {
     return coveredAxes / 16;
 }
 
-module.exports = {
+export {
     SEMANTIC_DOMAINS,
     FIRST_100_PRIMES,
     SemanticDomainAssignment,

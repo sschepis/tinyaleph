@@ -4,7 +4,7 @@
  * API endpoints for LLM provider management and switching.
  */
 
-const { loggers, sendJson, readBody } = require('./utils');
+import { loggers, sendJson, readBody } from './utils.js';
 
 const logProvider = loggers.provider || loggers.http;
 
@@ -249,4 +249,4 @@ function createProviderRoutes(server) {
     };
 }
 
-module.exports = { createProviderRoutes };
+export { createProviderRoutes };

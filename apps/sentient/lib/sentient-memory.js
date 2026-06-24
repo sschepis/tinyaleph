@@ -15,14 +15,14 @@
  * Builds upon the existing ContextMemory system.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { HolographicMemory, HolographicEncoder } = require('./hqe');
-const { EntangledPair, Phrase } = require('./entanglement');
-const { Moment } = require('./temporal');
-const { Complex, PrimeState } = require('../../../core/hilbert');
-const { PRGraphMemory, SparsePrimeState, resonanceScore } = require('../../../core/rformer');
-const { PrimeonZLadderMulti, createMultiChannelLadder } = require('../../../physics/primeon_z_ladder_multi');
+import fs from 'fs';
+import path from 'path';
+import { HolographicMemory, HolographicEncoder } from './hqe.js';
+import { EntangledPair, Phrase } from './entanglement.js';
+import { Moment } from './temporal.js';
+import { Complex, PrimeState } from '../../../core/hilbert.js';
+import { PRGraphMemory, SparsePrimeState, resonanceScore } from '../../../core/rformer.js';
+import { PrimeonZLadderMulti, createMultiChannelLadder } from '../../../physics/primeon_z_ladder_multi.js';
 
 /**
  * Memory Trace - A single experiential memory
@@ -1167,7 +1167,7 @@ class SentientMemory {
     }
 }
 
-module.exports = {
+export {
     MemoryTrace,
     HolographicMemoryBank,
     TemporalMemoryIndex,

@@ -16,21 +16,29 @@ const log = createLogger('webrtc:peer');
 
 // Check for WebRTC availability (Node.js requires wrtc package)
 let RTCPeerConnection, RTCSessionDescription, RTCIceCandidate;
-try {
-    // Try native (browser or modern Node with --experimental-webrtc)
-    if (global.RTCPeerConnection) {
-        RTCPeerConnection = global.RTCPeerConnection;
-        RTCSessionDescription = global.RTCSessionDescription;
-        RTCIceCandidate = global.RTCIceCandidate;
-    } else {
-        const wrtc = await import('wrtc');
-        RTCPeerConnection = wrtc.RTCPeerConnection;
-        RTCSessionDescription = wrtc.RTCSessionDescription;
-        RTCIceCandidate = wrtc.RTCIceCandidate;
+let _wrtcPromise = null;
+
+function resolveWebRTC() {
+    if (!_wrtcPromise) {
+        _wrtcPromise = (async () => {
+            try {
+                if (globalThis.RTCPeerConnection) {
+                    RTCPeerConnection = globalThis.RTCPeerConnection;
+                    RTCSessionDescription = globalThis.RTCSessionDescription;
+                    RTCIceCandidate = globalThis.RTCIceCandidate;
+                } else {
+                    const wrtc = await import('wrtc');
+                    RTCPeerConnection = wrtc.RTCPeerConnection;
+                    RTCSessionDescription = wrtc.RTCSessionDescription;
+                    RTCIceCandidate = wrtc.RTCIceCandidate;
+                }
+            } catch (e) {
+                log('WebRTC not available (wrtc package not installed)');
+                log('Install with: npm install wrtc');
+            }
+        })();
     }
-} catch (e) {
-    log('WebRTC not available (wrtc package not installed)');
-    log('Install with: npm install wrtc');
+    return _wrtcPromise;
 }
 
 /**
@@ -39,6 +47,7 @@ try {
 class WebRTCPeer extends EventEmitter {
     constructor(nodeId, options = {}) {
         super();
+        resolveWebRTC(); // Initiate lazy resolution
         
         this.nodeId = nodeId;
         this.coordinatorUrl = null;
@@ -72,17 +81,14 @@ class WebRTCPeer extends EventEmitter {
         this.metadata = options.metadata || { name: nodeId };
         
         log('WebRTC Peer initialized:', nodeId);
-        
-        if (!RTCPeerConnection) {
-            log.warn('WebRTC not available - peer connections will fail');
-        }
     }
     
     /**
      * Check if WebRTC is available
-     * @returns {boolean}
+     * @returns {Promise<boolean>}
      */
-    static isAvailable() {
+    static async isAvailable() {
+        await resolveWebRTC();
         return !!RTCPeerConnection;
     }
     
@@ -357,6 +363,7 @@ class WebRTCPeer extends EventEmitter {
      * @param {string} room - Room context
      */
     async connectToPeer(peerId, room = 'global') {
+        await resolveWebRTC();
         if (!RTCPeerConnection) {
             throw new Error('WebRTC not available');
         }
@@ -519,6 +526,7 @@ class WebRTCPeer extends EventEmitter {
      * @param {string} room - Room context
      */
     async handleOffer(peerId, payload, room) {
+        await resolveWebRTC();
         if (!RTCPeerConnection) return;
         
         log('Received offer from:', peerId);
@@ -555,6 +563,7 @@ class WebRTCPeer extends EventEmitter {
      * @param {Object} payload - Answer payload
      */
     async handleAnswer(peerId, payload) {
+        await resolveWebRTC();
         const pc = this.peerConnections.get(peerId);
         if (!pc) {
             log.warn('Received answer for unknown peer:', peerId);
@@ -582,6 +591,7 @@ class WebRTCPeer extends EventEmitter {
      * @param {Object} payload - Candidate payload
      */
     async handleIceCandidate(peerId, payload) {
+        await resolveWebRTC();
         const pc = this.peerConnections.get(peerId);
         
         if (!pc) {

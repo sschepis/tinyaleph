@@ -8,8 +8,8 @@
  * - Platform info
  */
 
-const { Sense } = require('./base');
-const os = require('os');
+import { Sense } from './base.js';
+import os from 'os';
 
 class ProcessSense extends Sense {
     constructor(options = {}) {
@@ -110,4 +110,4 @@ class ProcessSense extends Sense {
     }
 }
 
-module.exports = { ProcessSense };
+export { ProcessSense };

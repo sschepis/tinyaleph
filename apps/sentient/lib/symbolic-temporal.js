@@ -10,9 +10,9 @@
  * - ResonanceCalculator for PHI-harmonic moment detection
  */
 
-const { Moment, TemporalLayer, TemporalPatternDetector } = require('./temporal');
-const { EntropyCollapseHead, SparsePrimeState } = require('../../../core/rformer');
-const { symbolDatabase } = require('../../../core/symbols');
+import { Moment, TemporalLayer, TemporalPatternDetector } from './temporal.js';
+import { EntropyCollapseHead, SparsePrimeState } from '../../../core/rformer.js';
+import { symbolDatabase } from '../../../core/symbols.js';
 
 // PHI constant for resonance calculations
 const PHI = (1 + Math.sqrt(5)) / 2;
@@ -674,7 +674,7 @@ class SymbolicPatternDetector extends TemporalPatternDetector {
     }
 }
 
-module.exports = {
+export {
     SymbolicMoment,
     SymbolicTemporalLayer,
     SymbolicPatternDetector,

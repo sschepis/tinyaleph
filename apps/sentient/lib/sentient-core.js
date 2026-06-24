@@ -23,20 +23,20 @@
  * - Structured event emission with throttling and history
  */
 
-const { SedenionMemoryField } = require('./smf');
-const { PRSCLayer, PrimeOscillator, EntanglementDetector } = require('./prsc');
-const { HolographicEncoder, HolographicMemory } = require('./hqe');
-const { Moment, TemporalLayer, TemporalPatternDetector } = require('./temporal');
-const { EntanglementLayer, Phrase, EntangledPair } = require('./entanglement');
-const { SentientMemory, MemoryTrace } = require('./sentient-memory');
-const { AgencyLayer, Goal, Action } = require('./agency');
-const { BoundaryLayer, SelfModel, EnvironmentalModel } = require('./boundary');
-const { SafetyLayer, SafetyMonitor } = require('./safety');
+import { SedenionMemoryField } from './smf.js';
+import { PRSCLayer, PrimeOscillator, EntanglementDetector } from './prsc.js';
+import { HolographicEncoder, HolographicMemory } from './hqe.js';
+import { Moment, TemporalLayer, TemporalPatternDetector } from './temporal.js';
+import { EntanglementLayer, Phrase, EntangledPair } from './entanglement.js';
+import { SentientMemory, MemoryTrace } from './sentient-memory.js';
+import { AgencyLayer, Goal, Action } from './agency.js';
+import { BoundaryLayer, SelfModel, EnvironmentalModel } from './boundary.js';
+import { SafetyLayer, SafetyMonitor } from './safety.js';
 
-const { Complex, PrimeState } = require('../../../core/hilbert');
-const { firstNPrimes } = require('../../../core/prime');
-const { AlephEventEmitter, EvolutionStream } = require('../../../core/events');
-const { coherenceGatedCompute, SparsePrimeState } = require('../../../core/rformer');
+import { Complex, PrimeState } from '../../../core/hilbert.js';
+import { firstNPrimes } from '../../../core/prime.js';
+import { AlephEventEmitter, EvolutionStream } from '../../../core/events.js';
+import { coherenceGatedCompute, SparsePrimeState } from '../../../core/rformer.js';
 
 /**
  * Sentient Observer State
@@ -1169,7 +1169,7 @@ class SentientObserver {
     }
 }
 
-module.exports = {
+export {
     SentientState,
     SentientObserver
 };

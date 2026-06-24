@@ -23,6 +23,7 @@ function parseArgs() {
         // LLM Provider options
         provider: 'lmstudio',  // 'lmstudio', 'vertex', 'google', 'gemini'
         model: null,  // Model name (provider-specific)
+        geminiApiKey: null,  // Gemini API key (for --provider gemini)
         googleCreds: null,  // Path to Google service account JSON
         googleProject: null,  // Google Cloud project ID
         googleLocation: 'us-central1',  // Google Cloud region
@@ -80,6 +81,12 @@ function parseArgs() {
             // Auto-set provider to vertex if google creds provided
             if (!args.includes('--provider')) {
                 options.provider = 'vertex';
+            }
+        } else if (arg === '--gemini-api-key') {
+            options.geminiApiKey = args[++i];
+            // Auto-set provider to gemini if api key provided
+            if (!args.includes('--provider')) {
+                options.provider = 'gemini';
             }
         } else if (arg === '--google-project') {
             options.googleProject = args[++i];
@@ -183,6 +190,7 @@ ${c.bold}Common Options:${c.reset}
 ${c.bold}LLM Provider Options:${c.reset}
   --provider <name>     LLM provider: lmstudio, vertex, google, gemini (default: lmstudio)
   -m, --model <name>    Model name (provider-specific)
+  --gemini-api-key <k>  Gemini API key (or set GEMINI_API_KEY env var)
   --google-creds <path> Path to Google service account JSON (enables Vertex AI)
   --google-project <id> Google Cloud project ID (auto-detected from creds)
   --google-location <r> Google Cloud region (default: us-central1)
@@ -251,7 +259,11 @@ ${c.bold}Examples:${c.reset}
   node index.js --server               # Start server on port 3000
   node index.js --server -p 8080       # Start server on port 8080
   
-  ${c.dim}# Use Google Vertex AI with Gemini:${c.reset}
+  ${c.dim}# Use Gemini API (simple API key):${c.reset}
+  GEMINI_API_KEY=your-key node index.js --provider gemini
+  node index.js --provider gemini --gemini-api-key your-key --model gemini-2.5-flash
+
+  ${c.dim}# Use Google Vertex AI (service account):${c.reset}
   node index.js --google-creds ./google.json
   node index.js --provider vertex --google-creds ./google.json --model gemini-2.0-flash-001
   node index.js --server -p 8888 --google-creds ./google.json

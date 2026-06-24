@@ -8,9 +8,9 @@
  * - Notable markers (README, package.json, .git)
  */
 
-const { Sense } = require('./base');
-const fs = require('fs');
-const path = require('path');
+import { Sense } from './base.js';
+import fs from 'fs';
+import path from 'path';
 
 class FilesystemSense extends Sense {
     constructor(options = {}) {
@@ -306,4 +306,4 @@ class FilesystemSense extends Sense {
     }
 }
 
-module.exports = { FilesystemSense };
+export { FilesystemSense };

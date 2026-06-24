@@ -9,7 +9,7 @@
  * like TensorFlow.js to keep the Sentient agent lightweight.
  */
 
-const { calculateWaveform } = require('./math');
+import { calculateWaveform } from './math.js';
 
 class QuantumNeuralNetwork {
     constructor(config = {}) {
@@ -174,7 +174,4 @@ class QuantumNeuralNetwork {
     }
 }
 
-// Export for CommonJS
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { QuantumNeuralNetwork };
-}
+export { QuantumNeuralNetwork };

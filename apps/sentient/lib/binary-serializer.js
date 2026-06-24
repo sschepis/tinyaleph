@@ -15,10 +15,10 @@
  * - Footer: checksum for integrity
  */
 
-const fs = require('fs');
-const path = require('path');
-const zlib = require('zlib');
-const crypto = require('crypto');
+import fs from 'fs';
+import path from 'path';
+import zlib from 'zlib';
+import crypto from 'crypto';
 
 // Magic bytes to identify our binary format
 const MAGIC_BYTES = Buffer.from([0x53, 0x4D, 0x46, 0x42]); // 'SMFB'
@@ -989,7 +989,7 @@ class IncrementalSnapshotManager {
     }
 }
 
-module.exports = {
+export {
     BinarySerializer,
     IncrementalSnapshotManager,
     MsgPackEncoder,

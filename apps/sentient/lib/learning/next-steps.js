@@ -415,7 +415,7 @@ function createNextStepGenerator(options) {
     return new NextStepGenerator(options);
 }
 
-module.exports = {
+export {
     NextStepGenerator,
     createNextStepGenerator
 };

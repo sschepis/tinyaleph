@@ -4,7 +4,7 @@
  * Handles WebRTC signaling and room management endpoints.
  */
 
-const { loggers, sendJson, readBody } = require('./utils');
+import { loggers, sendJson, readBody } from './utils.js';
 
 /**
  * Creates WebRTC route handlers
@@ -166,8 +166,7 @@ function createWebRTCRoutes(server) {
         /**
          * Handle WebSocket upgrade for signaling
          */
-        handleWebSocketUpgrade: (request, socket, head) => {
-            const { URL } = require('url');
+        handleWebSocketUpgrade: async (request, socket, head) => {
             const parsedUrl = new URL(request.url, `http://${request.headers.host}`);
             
             if (parsedUrl.pathname !== '/webrtc/signal' || !server.webrtcCoordinator) {
@@ -184,7 +183,7 @@ function createWebRTCRoutes(server) {
             }
             
             try {
-                const WebSocket = require('ws');
+                const { default: WebSocket } = await import('ws');
                 
                 if (!server.wss) {
                     server.wss = new WebSocket.Server({ noServer: true });
@@ -239,4 +238,4 @@ function createWebRTCRoutes(server) {
     };
 }
 
-module.exports = { createWebRTCRoutes };
+export { createWebRTCRoutes };

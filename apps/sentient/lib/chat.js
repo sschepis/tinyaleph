@@ -3,33 +3,44 @@
  *
  * Main chat client that combines all components:
  * - AlephSemanticCore for semantic processing
- * - LMStudioClient or VertexAIClient for LLM inference
+ * - LMStudioClient, VertexAIClient, or GeminiClient for LLM inference
  * - PromptEnhancer for context injection
  * - ResponseProcessor for learning extraction
  */
 
-const { SemanticBackend } = require('../../../modular');
-const { LMStudioClient } = require('./lmstudio');
-const { VertexAIClient } = require('./vertex-ai');
-const { AlephSemanticCore } = require('./core');
-const { PromptEnhancer } = require('./enhancer');
-const { ResponseProcessor } = require('./processor');
-const { OPENAI_TOOLS } = require('./tools');
+import modular from '../../../modular.js';
+const { SemanticBackend } = modular;
+import { LMStudioClient } from './lmstudio.js';
+import { VertexAIClient } from './vertex-ai.js';
+import { GeminiClient } from './gemini.js';
+import { AlephSemanticCore } from './core.js';
+import { PromptEnhancer } from './enhancer.js';
+import { ResponseProcessor } from './processor.js';
+import { OPENAI_TOOLS } from './tools.js';
 
 /**
  * Create an LLM client based on provider
  * @param {Object} options - Configuration options
- * @returns {LMStudioClient|VertexAIClient}
+ * @returns {LMStudioClient|VertexAIClient|GeminiClient}
  */
 function createLLMClient(options = {}) {
     const provider = options.provider || 'lmstudio';
     
     switch (provider.toLowerCase()) {
+        case 'gemini':
+            console.log('[AlephChat] Using Gemini API provider');
+            return new GeminiClient({
+                apiKey: options.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY,
+                model: options.model || 'gemini-2.5-flash',
+                temperature: options.temperature ?? 0.7,
+                maxTokens: options.maxTokens || 8192,
+                timeout: options.timeout || 120000
+            });
+
         case 'vertex':
         case 'vertexai':
         case 'vertex-ai':
         case 'google':
-        case 'gemini':
             console.log('[AlephChat] Using Vertex AI provider');
             return new VertexAIClient({
                 projectId: options.projectId || process.env.GOOGLE_CLOUD_PROJECT,
@@ -424,4 +435,4 @@ class AlephChat {
     }
 }
 
-module.exports = { AlephChat };
+export { AlephChat };

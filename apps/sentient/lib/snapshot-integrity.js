@@ -9,11 +9,11 @@
  * - Incremental snapshot chains with integrity validation
  */
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const zlib = require('zlib');
-const { promisify } = require('util');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import zlib from 'zlib';
+import { promisify } from 'util';
 
 const gzip = promisify(zlib.gzip);
 const gunzip = promisify(zlib.gunzip);
@@ -630,7 +630,7 @@ class IncrementalSnapshotChain extends SnapshotIntegrityManager {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Header utilities
     createHeader,
     parseHeader,

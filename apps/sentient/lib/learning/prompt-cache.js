@@ -12,10 +12,10 @@
  * curiosity engine and learning system.
  */
 
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
-const EventEmitter = require('events');
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { EventEmitter } from 'events';
 
 /**
  * Simple text embedding for similarity (without external API)
@@ -746,7 +746,7 @@ class CachedLLMProvider {
     }
 }
 
-module.exports = {
+export {
     PromptCache,
     CachedLLMProvider,
     LocalEmbedder,

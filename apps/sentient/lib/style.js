@@ -5,8 +5,8 @@
  * Uses hypercomplex embeddings to track style patterns over time.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 class StyleProfiler {
     /**
@@ -296,4 +296,4 @@ class StyleProfiler {
     }
 }
 
-module.exports = { StyleProfiler };
+export { StyleProfiler };

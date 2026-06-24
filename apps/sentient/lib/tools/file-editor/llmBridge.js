@@ -5,7 +5,7 @@
  * Uses the system's configured LLM (Vertex AI, LMStudio, etc.)
  */
 
-const { SYSTEM_PROMPT } = require('./prompts');
+import { SYSTEM_PROMPT } from './prompts.js';
 
 // Store reference to active LLM client
 let activeLLMClient = null;
@@ -210,7 +210,7 @@ async function generateEditsWithRetry(fileName, fileContent, instruction, option
     };
 }
 
-module.exports = {
+export {
     configureLLMBridge,
     getLLMClient,
     generateEdits,

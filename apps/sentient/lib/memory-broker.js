@@ -13,10 +13,10 @@
  * - Event-driven updates
  */
 
-const { EventEmitter } = require('events');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import { EventEmitter } from 'events';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
 // ============================================================================
 // MEMORY BROKER INTERFACE
@@ -442,7 +442,7 @@ class RedisBroker extends MemoryBroker {
     
     async connect() {
         try {
-            const Redis = require('redis');
+            const Redis = (await import('redis')).default || await import('redis');
             this.client = Redis.createClient({ url: this.url });
             await this.client.connect();
             this.connected = true;
@@ -821,7 +821,7 @@ function createSMFBroker(config = {}) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Base interface
     MemoryBroker,
     

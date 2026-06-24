@@ -8,8 +8,8 @@
  * - Updates SMF based on learning progress
  */
 
-const config = require('./config');
-const { createLogger } = require('../app/constants');
+import config from './config.js';
+import { createLogger } from '../app/constants.js';
 
 const log = createLogger('learning:reflector');
 
@@ -533,4 +533,4 @@ class ReflectionLoop {
     }
 }
 
-module.exports = { ReflectionLoop };
+export { ReflectionLoop };

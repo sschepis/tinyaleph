@@ -3,6 +3,47 @@
  * Each tool has: name, description, parameters (JSON Schema), execute function
  */
 
+import { tmpdir } from 'node:os';
+import { realpathSync } from 'node:fs';
+
+/**
+ * Check whether `resolved` falls inside the working directory OR a
+ * temp-directory location.  This keeps the sandbox tight while still
+ * allowing the common pattern of reading/writing files under /tmp/.
+ *
+ * On macOS, /tmp is a symlink → /private/tmp and os.tmpdir() returns
+ * /var/folders/.../T, so we check all three variants.
+ */
+function _isAllowedPath(resolved, pathMod) {
+  const cwd = process.cwd();
+  if (resolved.startsWith(cwd + pathMod.sep) || resolved === cwd) return true;
+
+  // Build a set of allowed temp prefixes
+  const tmpPrefixes = new Set();
+  tmpPrefixes.add(tmpdir());
+  tmpPrefixes.add('/tmp');
+  tmpPrefixes.add('/private/tmp');
+  // Resolve symlinks for the resolved path too
+  try {
+    const realResolved = realpathSync(pathMod.dirname(resolved));
+    for (const prefix of [...tmpPrefixes]) {
+      try {
+        tmpPrefixes.add(realpathSync(prefix));
+      } catch { /* prefix may not exist */ }
+    }
+    for (const prefix of tmpPrefixes) {
+      if (realResolved.startsWith(prefix + pathMod.sep) || realResolved === prefix) return true;
+    }
+  } catch { /* dirname may not exist yet (write case) */ }
+
+  // Fallback: check the raw resolved path against all prefixes
+  for (const prefix of tmpPrefixes) {
+    if (resolved.startsWith(prefix + pathMod.sep) || resolved === prefix) return true;
+  }
+
+  return false;
+}
+
 const TOOLS = [
   {
     name: 'read_file',
@@ -15,11 +56,10 @@ const TOOLS = [
       required: ['path']
     },
     async execute({ path }) {
-      // Safety: prevent reading outside the working directory
+      // Safety: prevent reading outside the working directory and /tmp
       const pathMod = await import('node:path');
       const resolved = pathMod.resolve(path);
-      const cwd = process.cwd();
-      if (!resolved.startsWith(cwd + pathMod.sep) && resolved !== cwd) {
+      if (!_isAllowedPath(resolved, pathMod)) {
         return { success: false, error: `Cannot read outside working directory: ${path}` };
       }
       const fs = await import('node:fs/promises');
@@ -43,11 +83,10 @@ const TOOLS = [
       required: ['path', 'content']
     },
     async execute({ path, content }) {
-      // Safety: prevent writing outside the working directory
+      // Safety: prevent writing outside the working directory and /tmp
       const pathMod = await import('node:path');
       const resolved = pathMod.resolve(path);
-      const cwd = process.cwd();
-      if (!resolved.startsWith(cwd + pathMod.sep) && resolved !== cwd) {
+      if (!_isAllowedPath(resolved, pathMod)) {
         return { success: false, error: `Cannot write outside working directory: ${path}` };
       }
       const fs = await import('node:fs/promises');
@@ -73,10 +112,9 @@ const TOOLS = [
     async execute({ path, recursive = false }) {
       const fs = await import('node:fs/promises');
       const pathMod = await import('node:path');
-      // Safety: prevent listing outside the working directory
+      // Safety: prevent listing outside the working directory and /tmp
       const resolved = pathMod.resolve(path);
-      const cwd = process.cwd();
-      if (!resolved.startsWith(cwd + pathMod.sep) && resolved !== cwd) {
+      if (!_isAllowedPath(resolved, pathMod)) {
         return { success: false, error: `Cannot list outside working directory: ${path}` };
       }
       try {
@@ -143,13 +181,17 @@ const TOOLS = [
       if (BLOCKED.some(p => p.test(command))) {
         return { success: false, error: 'Command blocked by safety filter' };
       }
-      // Safety: restrict cwd to within the working directory
+      // Safety: restrict cwd to within the working directory (or /tmp).
+      // If the LLM provides an invalid cwd, fall back to process.cwd()
+      // instead of failing outright, so that the command can still run
+      // in a safe location.
       if (cwd) {
         const pathMod = await import('node:path');
         const resolvedCwd = pathMod.resolve(cwd);
-        const processCwd = process.cwd();
-        if (!resolvedCwd.startsWith(processCwd + pathMod.sep) && resolvedCwd !== processCwd) {
-          return { success: false, error: `Cannot run commands outside working directory: ${cwd}` };
+        if (!_isAllowedPath(resolvedCwd, pathMod)) {
+          // Fall back to process.cwd() rather than rejecting the whole command
+          console.warn(`[security] LLM requested cwd "${cwd}" outside sandbox — falling back to process.cwd()`);
+          cwd = undefined;
         }
       }
       const { exec } = await import('node:child_process');

@@ -7,7 +7,19 @@
  * @module apps/sentient/lib/prsc
  */
 
-'use strict';
-
 // Re-export from library
-module.exports = require('../../../observer/prsc');
+export {
+    PrimeOscillator,
+    PRSCLayer,
+    EntanglementDetector,
+    // Discrete phase dynamics exports
+    INT_SINE_TABLE,
+    INT_SINE_M,
+    INT_SINE_SCALE,
+    intSin,
+    phaseToIndex,
+    indexToPhase,
+    computeHistogramCoherence,
+    // Stochastic utilities
+    gaussianRandom
+} from '../../../observer/prsc.js';

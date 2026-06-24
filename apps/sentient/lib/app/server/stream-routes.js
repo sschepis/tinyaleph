@@ -4,7 +4,7 @@
  * Handles SSE (Server-Sent Events) streaming endpoints for real-time updates.
  */
 
-const { loggers, setCorsHeaders, SMF_AXES } = require('./utils');
+import { loggers, setCorsHeaders, SMF_AXES } from './utils.js';
 
 /**
  * Creates stream route handlers
@@ -326,4 +326,4 @@ function createStreamRoutes(server) {
     };
 }
 
-module.exports = { createStreamRoutes };
+export { createStreamRoutes };

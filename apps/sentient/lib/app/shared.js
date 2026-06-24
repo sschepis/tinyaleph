@@ -82,7 +82,12 @@ async function initializeObserver(options, callbacks = {}) {
     };
     
     // Provider-specific configuration
-    if (options.provider === 'vertex' || options.provider === 'google' || options.provider === 'gemini' || options.googleCreds) {
+    if (options.provider === 'gemini') {
+        llmConfig.provider = 'gemini';
+        llmConfig.apiKey = options.geminiApiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+        llmConfig.model = options.model || 'gemini-2.5-flash';
+        console.log('[Shared] Using Gemini API provider with model:', llmConfig.model);
+    } else if (options.provider === 'vertex' || options.provider === 'google' || options.googleCreds) {
         llmConfig.provider = 'vertex';
         llmConfig.credentialsPath = options.googleCreds;
         llmConfig.projectId = options.googleProject;
@@ -98,7 +103,8 @@ async function initializeObserver(options, callbacks = {}) {
     const chat = new AlephChat(llmConfig);
     
     const connected = await chat.connect();
-    const providerName = llmConfig.provider === 'vertex' ? 'Vertex AI' : 'LMStudio';
+    const providerNames = { vertex: 'Vertex AI', gemini: 'Gemini', lmstudio: 'LMStudio' };
+    const providerName = providerNames[llmConfig.provider] || llmConfig.provider;
     if (!connected) {
         return { success: false, error: `Could not connect to ${providerName}` };
     }

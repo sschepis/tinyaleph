@@ -953,7 +953,7 @@ class AssaySuite {
     }
 }
 
-module.exports = {
+export {
     TimeDilationAssay,
     MemoryContinuityAssay,
     AgencyConstraintAssay,

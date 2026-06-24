@@ -7,7 +7,10 @@
  * @module apps/sentient/lib/safety
  */
 
-'use strict';
-
 // Re-export from library
-module.exports = require('../../../observer/safety');
+export {
+    SafetyConstraint,
+    ViolationEvent,
+    SafetyMonitor,
+    SafetyLayer
+} from '../../../observer/safety.js';

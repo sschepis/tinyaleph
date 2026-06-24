@@ -4,9 +4,12 @@
  * Progressive Challenge Harness for Live Agent Testing
  *
  * Puts the agentic agent through increasingly complex challenges
- * against a live LLM (LM Studio at http://localhost:1234/v1/chat/completions).
+ * against a live LLM. Uses the Gemini API by default (via GEMINI_API_KEY env var)
+ * or falls back to a local LMStudio instance.
  *
- * Usage:  node apps/agentic/test/challenges.js
+ * Usage:
+ *   GEMINI_API_KEY=your-key node apps/agentic/test/challenges.js
+ *   node apps/agentic/test/challenges.js   # falls back to LMStudio
  *
  * @module apps/agentic/test/challenges
  */
@@ -155,7 +158,11 @@ const CHALLENGES = [
     prompt:
       'Remember this fact: the secret code is 42-ALPHA-7. Now, what was the secret code I just told you?',
     failHint: 'Expected response to contain "42-ALPHA-7"',
-    check: (result) => result.response.includes('42-ALPHA-7'),
+    check: (result) => {
+      // Normalize Unicode hyphens (U+2010–U+2015) to ASCII hyphen-minus
+      const normalized = result.response.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-');
+      return normalized.includes('42-ALPHA-7');
+    },
   },
 
   // ── Level 4: Complex Reasoning with Tools ──────────────────────────────────
@@ -365,11 +372,22 @@ async function main() {
     '╚══════════════════════════════════════════════════════════════════════╝'
   );
 
-  const agent = new Agent({
-    llm: {
-      baseUrl: 'http://localhost:1234/v1/chat/completions',
-    },
-  });
+  // Use Gemini if API key is available, otherwise fall back to LMStudio
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+  const llmConfig = geminiKey
+    ? {
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        model: 'gemini-2.5-flash',
+        headers: { 'Authorization': `Bearer ${geminiKey}` },
+        maxTokens: 8192,
+      }
+    : {
+        baseUrl: 'http://localhost:1234/v1/chat/completions',
+      };
+
+  console.log(`\nUsing LLM: ${geminiKey ? 'Google Gemini (API key)' : 'LMStudio (local)'}`);
+
+  const agent = new Agent({ llm: llmConfig });
 
   // ── Ping LLM ──────────────────────────────────────────────────────────
   console.log('\nPinging LLM...');

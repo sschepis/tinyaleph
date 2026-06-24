@@ -13,13 +13,13 @@
  * the observer should explore next.
  */
 
-const config = require('./config');
-const { createLogger } = require('../app/constants');
+import config from './config.js';
+import { createLogger } from '../app/constants.js';
 
 // Import Free Energy Dynamics from topology (108bio.pdf integration)
 let FreeEnergyDynamics = null;
 try {
-    const topology = require('../../../../core/topology');
+    const topology = await import('../../../../core/topology.js');
     FreeEnergyDynamics = topology.FreeEnergyDynamics;
 } catch (e) {
     // Topology module not available - will use fallback
@@ -2293,7 +2293,7 @@ class CuriosityEngine {
     }
 }
 
-module.exports = {
+export {
     CuriosityEngine,
     FreeEnergyCuriosity,
     SMF_AXES,
