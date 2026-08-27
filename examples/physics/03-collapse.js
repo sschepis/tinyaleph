@@ -8,8 +8,8 @@
  * - Collapse to definite interpretation
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
-const Collapse = require('../../physics/collapse');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
+import * as Collapse from '../../physics/collapse.js';
 
 console.log('TinyAleph State Collapse Example');
 console.log('=================================\n');

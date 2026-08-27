@@ -8,7 +8,7 @@
  * - Two-qubit gates like CNOT
  */
 
-const { ScientificBackend, Hypercomplex } = require('../../modular');
+import { ScientificBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

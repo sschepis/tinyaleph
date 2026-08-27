@@ -10,8 +10,7 @@
  * - Enforcing safety constraints
  */
 
-const {
-    SedenionMemoryField,
+import { SedenionMemoryField,
     SMF_AXES,
     PRSCLayer,
     TemporalLayer,
@@ -20,8 +19,7 @@ const {
     AgencyLayer,
     BoundaryLayer,
     SafetyLayer,
-    SafetyConstraint
-} = require('../modular');
+    SafetyConstraint } from '../index.js';
 
 // ===========================================
 // OBSERVER ARCHITECTURE

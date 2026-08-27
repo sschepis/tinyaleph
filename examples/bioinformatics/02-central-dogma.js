@@ -10,7 +10,7 @@
  * Each step reduces entropy by collapsing possibility space.
  */
 
-const { BioinformaticsBackend } = require('../../modular');
+import { BioinformaticsBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

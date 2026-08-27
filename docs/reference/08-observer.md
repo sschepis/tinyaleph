@@ -5,17 +5,17 @@ The observer module provides components for building sentient observer systems b
 ## Installation
 
 ```javascript
-const observer = require('@aleph-ai/tinyaleph/observer');
+import observer from '@aleph-ai/tinyaleph/observer';
 
 // Or import specific components:
-const {
+import {
     SedenionMemoryField,
     PRSCLayer,
     TemporalLayer,
     SymbolicSMF,
     SymbolicTemporalLayer,
     AssaySuite
-} = require('@aleph-ai/tinyaleph/observer');
+} from '@aleph-ai/tinyaleph/observer';
 ```
 
 ---
@@ -27,7 +27,7 @@ const {
 16-dimensional semantic orientation field using sedenion algebra.
 
 ```javascript
-const { SedenionMemoryField, SMF_AXES } = require('@aleph-ai/tinyaleph/observer');
+import { SedenionMemoryField, SMF_AXES } from '@aleph-ai/tinyaleph/observer';
 
 // Create uniform field
 const smf = SedenionMemoryField.uniform();
@@ -67,7 +67,7 @@ const nearest = smf.nearestCodebook();
 Prime Resonance Semantic Coherence - bank of prime-indexed oscillators.
 
 ```javascript
-const { PRSCLayer, PrimeOscillator } = require('@aleph-ai/tinyaleph/observer');
+import { PRSCLayer, PrimeOscillator } from '@aleph-ai/tinyaleph/observer';
 
 // Create with first N primes
 const prsc = new PRSCLayer(10);
@@ -98,7 +98,7 @@ const active = prsc.activePrimes(0.1);     // Primes with amplitude > 0.1
 Moment classification and subjective time tracking.
 
 ```javascript
-const { TemporalLayer, Moment } = require('@aleph-ai/tinyaleph/observer');
+import { TemporalLayer, Moment } from '@aleph-ai/tinyaleph/observer';
 
 const temporal = new TemporalLayer({
     coherenceThreshold: 0.7,
@@ -130,7 +130,7 @@ const recent = temporal.recentMoments(10);
 Goal management, attention, and intention tracking.
 
 ```javascript
-const { AgencyLayer, Goal, AttentionFocus } = require('@aleph-ai/tinyaleph/observer');
+import { AgencyLayer, Goal, AttentionFocus } from '@aleph-ai/tinyaleph/observer';
 
 const agency = new AgencyLayer({
     maxFoci: 5,
@@ -165,7 +165,7 @@ const topGoal = agency.getTopGoal();
 Self-other differentiation with sensory/motor channels.
 
 ```javascript
-const { BoundaryLayer, SensoryChannel, ObjectivityGate } = require('@aleph-ai/tinyaleph/observer');
+import { BoundaryLayer, SensoryChannel, ObjectivityGate } from '@aleph-ai/tinyaleph/observer';
 
 const boundary = new BoundaryLayer();
 
@@ -184,7 +184,7 @@ const output = boundary.queueOutput('text_output', 'This is a response.');
 Constraint monitoring and violation detection.
 
 ```javascript
-const { SafetyLayer, SafetyConstraint } = require('@aleph-ai/tinyaleph/observer');
+import { SafetyLayer, SafetyConstraint } from '@aleph-ai/tinyaleph/observer';
 
 const safety = new SafetyLayer();
 
@@ -212,8 +212,8 @@ safety.addConstraint(new SafetyConstraint({
 SedenionMemoryField with symbol grounding.
 
 ```javascript
-const { SymbolicSMF, SMFSymbolMapper, AXIS_SYMBOL_MAPPING } = require('@aleph-ai/tinyaleph/observer');
-const { symbolDatabase } = require('@aleph-ai/tinyaleph/core/symbols');
+import { SymbolicSMF, SMFSymbolMapper, AXIS_SYMBOL_MAPPING } from '@aleph-ai/tinyaleph/observer';
+import { symbolDatabase } from '@aleph-ai/tinyaleph/core';
 
 const smf = new SymbolicSMF(symbolDatabase);
 
@@ -241,7 +241,7 @@ const orientation = smf.getSemanticOrientation();
 I-Ching hexagram-based moment classification.
 
 ```javascript
-const { SymbolicTemporalLayer, SymbolicMoment, HEXAGRAM_ARCHETYPES } = require('@aleph-ai/tinyaleph/observer');
+import { SymbolicTemporalLayer, SymbolicMoment, HEXAGRAM_ARCHETYPES } from '@aleph-ai/tinyaleph/observer';
 
 const temporal = new SymbolicTemporalLayer({
     onSymbolicMoment: (moment, classification) => {
@@ -283,7 +283,7 @@ const prediction = temporal.predictNextArchetype();
 Narrative pattern detection (hero's journey, transformation, etc.)
 
 ```javascript
-const { SymbolicPatternDetector, SymbolicMoment } = require('@aleph-ai/tinyaleph/observer');
+import { SymbolicPatternDetector, SymbolicMoment } from '@aleph-ai/tinyaleph/observer';
 
 const detector = new SymbolicPatternDetector();
 
@@ -309,7 +309,7 @@ Four validation tests from whitepaper Section 15.
 ### AssaySuite
 
 ```javascript
-const { AssaySuite } = require('@aleph-ai/tinyaleph/observer');
+import { AssaySuite } from '@aleph-ai/tinyaleph/observer';
 
 // Create suite with observer core
 const suite = new AssaySuite(observerCore);
@@ -332,7 +332,7 @@ Tests whether subjective time dilates with coherence.
 τ = ∫ C(t) dt / ∫ dt
 
 ```javascript
-const { TimeDilationAssay } = require('@aleph-ai/tinyaleph/observer');
+import { TimeDilationAssay } from '@aleph-ai/tinyaleph/observer';
 
 const assay = new TimeDilationAssay(observerCore);
 const result = await assay.run({
@@ -348,7 +348,7 @@ const result = await assay.run({
 Tests identity persistence under perturbation.
 
 ```javascript
-const { MemoryContinuityAssay } = require('@aleph-ai/tinyaleph/observer');
+import { MemoryContinuityAssay } from '@aleph-ai/tinyaleph/observer';
 
 const assay = new MemoryContinuityAssay(observerCore);
 const result = await assay.run({
@@ -363,7 +363,7 @@ const result = await assay.run({
 Tests goal-directed behavior under resource limits.
 
 ```javascript
-const { AgencyConstraintAssay } = require('@aleph-ai/tinyaleph/observer');
+import { AgencyConstraintAssay } from '@aleph-ai/tinyaleph/observer';
 
 const assay = new AgencyConstraintAssay(observerCore);
 const result = await assay.run({
@@ -379,7 +379,7 @@ const result = await assay.run({
 Tests whether order matters (A→B→C ≠ C→B→A).
 
 ```javascript
-const { NonCommutativeMeaningAssay } = require('@aleph-ai/tinyaleph/observer');
+import { NonCommutativeMeaningAssay } from '@aleph-ai/tinyaleph/observer';
 
 const assay = new NonCommutativeMeaningAssay(observerCore);
 const result = await assay.run({

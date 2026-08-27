@@ -44,10 +44,10 @@ Complete API documentation:
 Traditional computing manipulates symbols according to formal rules. Semantic computing manipulates *meaning* according to mathematical structure.
 
 ```javascript
-const { createEngine } = require('./modular');
+import { createEngine } from '@aleph-ai/tinyaleph';
 
 // Create a semantic engine
-const engine = createEngine('semantic', require('./data.json'));
+const engine = createEngine('semantic');
 
 // Process natural language
 const result = engine.run('What is the nature of truth?');
@@ -100,10 +100,10 @@ npm install
 ## Basic Usage
 
 ```javascript
-const { createEngine, SemanticBackend } = require('./modular');
+import { createEngine, SemanticBackend } from '@aleph-ai/tinyaleph';
 
-// Load configuration
-const config = require('./data.json');
+// Optional configuration
+const config = { dimension: 16 };
 
 // Create engine with semantic backend
 const engine = createEngine('semantic', config);
@@ -177,7 +177,7 @@ console.log({
 The library includes a modular observer architecture for building autonomous AI systems:
 
 ```javascript
-const {
+import {
   SedenionMemoryField,
   PRSCLayer,
   TemporalLayer,
@@ -185,7 +185,7 @@ const {
   AgencyLayer,
   BoundaryLayer,
   SafetyLayer
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph';
 
 // Create observer stack
 const smf = new SedenionMemoryField({ dimension: 16 });
@@ -242,7 +242,7 @@ Three primitive types with prime indexing:
 ### Key Constructs
 
 ```javascript
-const { N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL, TypeChecker } = require('@aleph-ai/tinyaleph');
+import { N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL, TypeChecker } from '@aleph-ai/tinyaleph/core';
 
 // Typed terms with prime indexing
 const n7 = N(7);          // Noun term
@@ -266,7 +266,7 @@ const implies = IMPL(s1, s2);     // s₁ ⇒ s₂
 Strong normalization guaranteed by strictly decreasing size measure:
 
 ```javascript
-const { ReductionSystem, NextPrimeOperator, demonstrateStrongNormalization } = require('@aleph-ai/tinyaleph');
+import { ReductionSystem, NextPrimeOperator, demonstrateStrongNormalization } from '@aleph-ai/tinyaleph/core';
 
 const system = new ReductionSystem();
 system.addOperator(new NextPrimeOperator());
@@ -280,7 +280,8 @@ console.log(proof.terminates);  // Always true!
 The 21-letter angelic alphabet with prime basis:
 
 ```javascript
-const { EnochianEngine, CORE_VOCABULARY } = require('@aleph-ai/tinyaleph/apps/sentient/lib/enochian-vocabulary');
+import { enochianVocabulary } from '@aleph-ai/tinyaleph';
+const { EnochianEngine, CORE_VOCABULARY } = enochianVocabulary;
 
 const engine = new EnochianEngine();
 const parsed = engine.parseWord('MADRIAX');  // "O ye heavens"

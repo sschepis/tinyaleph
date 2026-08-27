@@ -418,6 +418,14 @@ class ClauseProjector {
  * 
  * For SAT: satisfying assignments are fixed points of V̂_NP
  */
+
+/**
+ * Maximum number of variables supported by solve(): the superposition
+ * state uses 2^n basis primes, so beyond this size the method refuses
+ * to run instead of silently returning an unreliable result.
+ */
+const MAX_SOLVE_VARIABLES = 13;
+
 class NPResonanceEncoder {
   constructor(variables) {
     this.variables = variables;
@@ -539,11 +547,27 @@ class NPResonanceEncoder {
   
   /**
    * Solve SAT via resonance collapse
+   *
+   * HONEST CONTRACT: instances with more than MAX_SOLVE_VARIABLES
+   * variables are rejected explicitly (`satisfiable: null` with an
+   * error) instead of silently returning an unreliable result.
+   * Non-convergence is reported with `satisfiable: null` rather than
+   * a fabricated verdict.
    * 
    * @param {number} maxIterations - Max iterations for convergence
    * @returns {Object} Solution or UNSAT indication
    */
   solve(maxIterations = 100) {
+    // Unsupported regime: 2^n basis primes become unmanageable
+    if (this.variables.length > MAX_SOLVE_VARIABLES) {
+      return {
+        satisfiable: null,
+        error: 'unsupported instance size',
+        variables: this.variables.length,
+        maxSupportedVariables: MAX_SOLVE_VARIABLES
+      };
+    }
+    
     // Start with uniform superposition
     let state = this.createSuperposition();
     const oracle = new OracleSystem({ maxIterations: 10 });
@@ -567,24 +591,16 @@ class NPResonanceEncoder {
           confidence: result.amplitude
         };
       }
-      
-      // Check if state has collapsed to zero (UNSAT)
-      if (state.norm() < 0.01) {
-        return {
-          satisfiable: false,
-          reason: 'State collapsed to zero - no satisfying assignment',
-          iterations: i + 1
-        };
-      }
     }
     
-    // Did not converge - return best guess
+    // Did not converge - report honestly
     const result = this.collapseOperator(state);
     return {
-      satisfiable: result.satisfies,
+      satisfiable: result.collapsed ? result.satisfies : null,
       assignment: result.assignment,
       iterations: maxIterations,
       confidence: result.amplitude || 0,
+      collapsed: result.collapsed,
       note: 'Did not converge - result may be unreliable'
     };
   }

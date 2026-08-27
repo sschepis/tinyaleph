@@ -13,17 +13,15 @@
 console.log('TinyAleph Extended Synchronization Models');
 console.log('==========================================\n');
 
-const { firstNPrimes, primeToFrequency } = require('../../core/prime');
-const {
-  KuramotoModel,
+import { firstNPrimes, primeToFrequency } from '../../core/prime.js';
+import { KuramotoModel,
   NetworkKuramoto,
   AdaptiveKuramoto,
   SakaguchiKuramoto,
   SmallWorldKuramoto,
   MultiSystemCoupling,
   createHierarchicalCoupling,
-  createPeerCoupling
-} = require('../../physics');
+  createPeerCoupling } from '../../physics/index.js';
 
 // Generate prime-based frequencies
 const primes = firstNPrimes(20);
@@ -295,4 +293,4 @@ console.log('4. SmallWorldKuramoto: Balance between local clusters and global re
 console.log('5. MultiSystemCoupling: Multi-agent or hierarchical organization');
 console.log('6. All models extend KuramotoModel and integrate with existing physics');
 console.log('');
-console.log('Usage: const { NetworkKuramoto, ... } = require("tinyaleph/physics");');
+console.log('Usage: import { NetworkKuramoto } from "@aleph-ai/tinyaleph/physics";');

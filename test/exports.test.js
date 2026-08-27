@@ -213,6 +213,31 @@ describe('Main module exports', () => {
       assert.strictEqual(typeof aleph.engine, 'object');
     });
   });
+
+  describe('removed phantom exports', () => {
+    it('should not export PHI_CONJ (was undefined)', () => {
+      assert.ok(!('PHI_CONJ' in aleph));
+      assert.strictEqual(aleph.PHI_CONJ, undefined);
+    });
+
+    it('should not export ENOCHIAN_LETTER_PRIMES (was undefined)', () => {
+      assert.ok(!('ENOCHIAN_LETTER_PRIMES' in aleph));
+    });
+
+    it('should not export ENOCHIAN_VOCABULARY (was undefined)', () => {
+      assert.ok(!('ENOCHIAN_VOCABULARY' in aleph));
+    });
+
+    it('should not export ENOCHIAN_CALLS (was undefined)', () => {
+      assert.ok(!('ENOCHIAN_CALLS' in aleph));
+    });
+
+    it('should still export the valid Enochian names', () => {
+      assert.ok(aleph.ENOCHIAN_ALPHABET);
+      assert.ok(aleph.enochianVocabulary);
+      assert.ok(aleph.SedenionElement);
+    });
+  });
 });
 
 describe('createEngine factory', () => {

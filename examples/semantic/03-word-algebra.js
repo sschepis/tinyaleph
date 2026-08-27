@@ -9,7 +9,7 @@
  * - Composition: create complex concepts
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

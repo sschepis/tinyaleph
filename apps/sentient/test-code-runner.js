@@ -5,7 +5,7 @@
  * from chat responses.
  */
 
-const { MarkdownRenderer, CodeRunner, ANSI } = require('./lib/markdown');
+import { MarkdownRenderer, CodeRunner, ANSI } from './lib/markdown.js';
 
 console.log('\n🧪 Testing Code Runner Feature\n');
 console.log('='.repeat(50));

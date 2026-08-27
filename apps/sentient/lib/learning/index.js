@@ -16,7 +16,7 @@
 
 import { SafetyFilter } from './safety-filter.js';
 import { ChaperoneAPI } from './chaperone.js';
-import { CuriosityEngine, SMF_AXES, AXIS_QUERIES } from './curiosity.js';
+import { CuriosityEngine, SMF_AXES, AXIS_QUERY_VARIANTS } from './curiosity.js';
 import { QueryFormulator } from './query.js';
 import { ContentIngester } from './ingester.js';
 import { ReflectionLoop } from './reflector.js';
@@ -79,7 +79,7 @@ export {
     
     // Constants
     SMF_AXES,
-    AXIS_QUERIES,
+    AXIS_QUERY_VARIANTS,
     config,
     
     // Factories

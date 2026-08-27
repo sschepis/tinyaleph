@@ -5,6 +5,9 @@
 function shannonEntropy(probabilities) {
   let H = 0;
   for (const p of probabilities) {
+    if (!Number.isFinite(p)) {
+      throw new TypeError(`shannonEntropy: probabilities must be finite numbers, got ${p}`);
+    }
     if (p > 1e-10) H -= p * Math.log2(p);
   }
   return H;
@@ -35,11 +38,19 @@ function mutualInformation(bank1, bank2) {
 
 /**
  * Relative entropy (KL divergence) between two probability distributions
+ *
+ * Returns Infinity when p has support where q is effectively zero
+ * (the true KL divergence diverges in that case).
  */
 function relativeEntropy(p, q) {
   let kl = 0;
   for (let i = 0; i < p.length; i++) {
-    if (p[i] > 1e-10 && q[i] > 1e-10) {
+    if (p[i] > 1e-10) {
+      if (q[i] === 0) return Infinity;
+      if (!Number.isFinite(q[i])) {
+        throw new TypeError(`relativeEntropy: q[${i}] must be a finite non-negative number, got ${q[i]}`);
+      }
+      if (q[i] <= 1e-10) return Infinity;
       kl += p[i] * Math.log2(p[i] / q[i]);
     }
   }

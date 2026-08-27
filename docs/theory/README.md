@@ -14,10 +14,11 @@ This section provides a deep exploration of the mathematical and conceptual foun
 8. [The Semantic Sieve](./08-semantic-sieve.md) - Ensuring prime uniqueness
 9. [Temporal Emergence](./09-temporal-emergence.md) - Time as emergent from prime-resonant symbolic computation
 10. [Quaternionic Memory Field](./10-quaternionic-memory.md) - 4D rotational semantics and non-commutative memory
-11. [Formal Type System](./11-formal-types.md) - Typed term calculus N(p)/A(p)/S
-12. [Reduction Semantics](./12-reduction-semantics.md) - Strong normalization and confluence
-13. [Lambda Translation](./13-lambda-translation.md) - Model-theoretic semantics via λ-calculus
-14. [Enochian Language](./14-enochian-language.md) - The 21-letter angelic alphabet
+11. [PR-Graph Memory](./11-prgraph-memory.md) - Prime-resonance graph memory with sparse states
+12. [Resonant Attention](./12-resonant-attention.md) - Prime-indexed sparse attention
+
+Formal type systems, reduction semantics, λ-calculus translation, and the
+Enochian language are covered in the [reference documentation](../reference/README.md).
 
 ---
 

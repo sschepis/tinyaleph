@@ -243,11 +243,12 @@ Where g(0) is the value of the frequency distribution at its center.
 In Aleph, we use **adaptive coupling** that adjusts based on Lyapunov stability:
 
 ```javascript
-function adaptiveCoupling(baseCoupling, lyapunovExponent, gain = 0.5) {
-  if (lyapunovExponent < -0.1) return baseCoupling * (1 + gain);  // Stable: increase
-  if (lyapunovExponent > 0.1) return baseCoupling * (1 - gain);   // Chaotic: decrease
-  return baseCoupling;  // Marginal: maintain
-}
+import { adaptiveCoupling } from '@aleph-ai/tinyaleph/physics';
+
+// adaptiveCoupling(baseCoupling, lyapunovExponent, gain):
+console.log(adaptiveCoupling(1.0, -0.2));  // 1.5 - Stable: increase
+console.log(adaptiveCoupling(1.0, 0.2));   // 0.5 - Chaotic: decrease
+console.log(adaptiveCoupling(1.0, 0.05));  // 1.0 - Marginal: maintain
 ```
 
 ---
@@ -361,7 +362,7 @@ dθᵢ/dt = ωᵢ + K Σⱼ Aᵢⱼ sin(θⱼ - θᵢ)
 This enables **modular synchronization** that respects semantic neighborhoods:
 
 ```javascript
-const { NetworkKuramoto } = require('@aleph-ai/tinyaleph');
+import { NetworkKuramoto } from '@aleph-ai/tinyaleph';
 
 // Create with custom adjacency
 const network = new NetworkKuramoto(frequencies, adjacency, 0.5);
@@ -393,7 +394,7 @@ dKᵢⱼ/dt = ε(cos(θⱼ - θᵢ) - Kᵢⱼ)
 **"Concepts that sync together link together"**
 
 ```javascript
-const { AdaptiveKuramoto } = require('@aleph-ai/tinyaleph');
+import { AdaptiveKuramoto } from '@aleph-ai/tinyaleph';
 
 // Create with learning rate
 const adaptive = new AdaptiveKuramoto(frequencies, 0.3, 0.02);
@@ -424,7 +425,7 @@ dθᵢ/dt = ωᵢ + (K/N) Σⱼ sin(θⱼ - θᵢ - α)
 Creates **chimera states**—where some oscillators synchronize while others don't:
 
 ```javascript
-const { SakaguchiKuramoto } = require('@aleph-ai/tinyaleph');
+import { SakaguchiKuramoto } from '@aleph-ai/tinyaleph';
 
 // Create with phase lag
 const sakaguchi = new SakaguchiKuramoto(frequencies, 0.5, Math.PI/4);
@@ -456,7 +457,7 @@ Creates small-world networks with:
 - **Short path length** (random long-range shortcuts)
 
 ```javascript
-const { SmallWorldKuramoto } = require('@aleph-ai/tinyaleph');
+import { SmallWorldKuramoto } from '@aleph-ai/tinyaleph';
 
 // k = neighbors per side, p = rewiring probability
 // p=0: ring lattice, p=1: random graph
@@ -493,12 +494,12 @@ dθᵢ^(a)/dt = [internal coupling] + Σ_b G_ab r^(b) sin(ψ^(b) - θᵢ^(a))
 Models multi-agent alignment or hierarchical organization:
 
 ```javascript
-const {
+import {
   KuramotoModel,
   MultiSystemCoupling,
   createHierarchicalCoupling,
   createPeerCoupling
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph';
 
 // Manual creation
 const system1 = new KuramotoModel(frequencies, 0.4);

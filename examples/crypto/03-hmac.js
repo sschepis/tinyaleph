@@ -8,7 +8,7 @@
  * - Uses a shared secret key
  */
 
-const { CryptographicBackend } = require('../../modular');
+import { CryptographicBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

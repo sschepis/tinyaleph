@@ -14,14 +14,14 @@ The symbolic AI system provides:
 ## Quick Start
 
 ```javascript
-const { 
+import { 
   inferWithResonance,
   inferMostResonant,
   getSymbol,
   createCompound,
   symbolDatabase,
   resonanceSignature
-} = require('./core');
+} from '@aleph-ai/tinyaleph/core';
 
 // Infer symbols from text with resonance ranking
 const symbols = inferWithResonance('The hero fought the shadow in the temple');
@@ -85,7 +85,7 @@ const symbols = symbolDatabase.decode(signature);
 ### Basic Inference
 
 ```javascript
-const { inferSymbol, inferSymbols } = require('./core');
+const { inferSymbol, inferSymbols } from '@aleph-ai/tinyaleph/core';
 
 // Direct match
 inferSymbol('warrior');
@@ -105,7 +105,7 @@ inferSymbol('brave protagonist');
 The key innovation: using ResoFormer attention to rank symbols by how well they "harmonize" together.
 
 ```javascript
-const { inferWithResonance } = require('./core');
+const { inferWithResonance } from '@aleph-ai/tinyaleph/core';
 
 const text = 'The hero fought the shadow in the temple of fire';
 const results = inferWithResonance(text);
@@ -138,7 +138,7 @@ const { weights } = resonantAttention(query, keys, values);  // Apply attention
 Find symbols that resonate with existing context:
 
 ```javascript
-const { inferMostResonant, getSymbol } = require('./core');
+const { inferMostResonant, getSymbol } from '@aleph-ai/tinyaleph/core';
 
 // Build context
 const context = [
@@ -161,7 +161,7 @@ const bow = inferMostResonant('bow', context);
 ### Pre-built Compounds
 
 ```javascript
-const { getCompound, compoundBuilder } = require('./core');
+const { getCompound, compoundBuilder } from '@aleph-ai/tinyaleph/core';
 
 const greekWarrior = getCompound('greek_warrior');
 console.log(`${greekWarrior.unicode} - ${greekWarrior.meaning}`);
@@ -175,7 +175,7 @@ console.log(`${greekWarrior.unicode} - ${greekWarrior.meaning}`);
 ### Creating Compounds
 
 ```javascript
-const { createCompound, compoundBuilder } = require('./core');
+const { createCompound, compoundBuilder } from '@aleph-ai/tinyaleph/core';
 
 // Create a new compound
 const fireMage = createCompound('fire_mage',
@@ -192,7 +192,7 @@ console.log(`Internal harmony: ${resonance.toFixed(4)}`);
 ### Cultural Variants
 
 ```javascript
-const { compoundBuilder } = require('./core');
+const { compoundBuilder } from '@aleph-ai/tinyaleph/core';
 
 // Create Norse variant of Greek warrior
 const norseWarrior = compoundBuilder.createCulturalVariant(
@@ -208,7 +208,7 @@ const norseWarrior = compoundBuilder.createCulturalVariant(
 For narratives and temporal ordering:
 
 ```javascript
-const { createSequence, getSequence } = require('./core');
+const { createSequence, getSequence } from '@aleph-ai/tinyaleph/core';
 
 // Pre-built: hero's journey
 const journey = getSequence('heros_journey');
@@ -236,12 +236,12 @@ where φ_bonus = 0.3 if |ratio - φ| < 0.1
 ### Usage
 
 ```javascript
-const { 
+import { 
   calculateResonance,
   findGoldenPairs,
   resonanceSignature,
   ResonanceCalculator
-} = require('./core');
+} from '@aleph-ai/tinyaleph/core';
 
 // Calculate resonance between primes
 calculateResonance(3, 5);  // → 0.9 (Fibonacci pair!)
@@ -276,7 +276,7 @@ const matrix = calc.calculateMatrix(primes);
 Simple NER-like extraction before inference:
 
 ```javascript
-const { extractEntities, extractAndInfer } = require('./core');
+const { extractEntities, extractAndInfer } from '@aleph-ai/tinyaleph/core';
 
 const text = 'The hero John traveled to the ancient temple';
 

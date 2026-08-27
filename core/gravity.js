@@ -365,17 +365,29 @@ class SymbolicGravity {
 
 /**
  * GravitonField - Spin-2 bosonic field from non-Abelian dynamics
- * 
- * From book.pdf Eq. 6.2:
- * ∂_t Ψ₁ = γ(Ψ₁ × Ψ₁)
- * 
- * The cross-product in field space generates spin-2 structure.
+ *
+ * SIMPLIFIED MODEL (honest contract):
+ * The book's equation ∂_t Ψ = γ(Ψ × Ψ) is identically zero for a single
+ * complex 3-vector field (the cross product is antisymmetric, so
+ * Ψ × Ψ ≡ 0). This simplified model replaces it with two non-trivial
+ * terms:
+ *  - a chirality term γ(Ψ × Ψ*) (vanishes only for real fields), and
+ *  - a small fixed-axis perturbation γ(Ψ × e_seed),
+ * so the evolution is non-trivial but is NOT claimed to reproduce any
+ * gravitational equation of motion.
  */
 class GravitonField {
   constructor(options = {}) {
     this.gamma = options.gamma || 0.1; // Coupling constant
     this.dt = options.dt || 0.01;
     this.time = 0;
+    
+    // Fixed seed axes for the non-trivial perturbation term
+    this.seedAxes = [
+      new Complex(0, 1),
+      new Complex(1, 0),
+      new Complex(0, -1)
+    ];
     
     // Field components (3-vector in internal space)
     this.field = [
@@ -412,14 +424,22 @@ class GravitonField {
   }
   
   /**
-   * Single time step evolution
-   * ∂_t Ψ = γ(Ψ × Ψ)
+   * Single time step evolution (simplified model)
+   *
+   * ∂_t Ψ ≈ γ(Ψ × Ψ* + Ψ × e_seed)
+   *
+   * The literal equation ∂_t Ψ = γ(Ψ × Ψ) is identically zero, so the
+   * chirality term Ψ × Ψ* and the fixed-axis perturbation are used so
+   * the dynamics are non-trivial. See the class docstring.
    */
   step() {
-    const cross = this.crossProduct(this.field, this.field);
+    const conj = this.field.map(f => f.conj());
+    const chirality = this.crossProduct(this.field, conj);
+    const perturbation = this.crossProduct(this.field, this.seedAxes);
     
     for (let i = 0; i < 3; i++) {
-      this.field[i] = this.field[i].add(cross[i].scale(this.gamma * this.dt));
+      const d = chirality[i].add(perturbation[i]).scale(this.gamma * this.dt);
+      this.field[i] = this.field[i].add(d);
     }
     
     this.time += this.dt;

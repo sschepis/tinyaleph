@@ -72,10 +72,81 @@ class LambdaExpr {
     }
     
     /**
-     * Alpha-equivalence check
+     * Alpha-equivalence check (capture-avoiding renaming comparison)
+     *
+     * e₁ ≡_α e₂ iff e₂ can be obtained from e₁ by consistently renaming
+     * bound variables. Implemented over the AST with a binding map:
+     * bound variables are compared through the map; free variables must
+     * match by name and must not be shadowed by any binding on the other
+     * side.
+     *
+     * @param {LambdaExpr} other - Expression to compare against
+     * @returns {boolean} True if alpha-equivalent
      */
     alphaEquals(other) {
-        return this.toString() === other.toString();
+        return LambdaExpr._alphaEquals(this, other, new Map());
+    }
+    
+    /**
+     * Recursive alpha-equivalence with a binding environment.
+     * env: Map<nameInThis, nameInOther> for currently bound variables.
+     * @private
+     */
+    static _alphaEquals(e1, e2, env) {
+        if (e1.constructor !== e2.constructor) return false;
+        
+        if (e1 instanceof VarExpr) {
+            // Bound on this side: must be bound to the same name on the other side
+            if (env.has(e1.name)) {
+                return env.get(e1.name) === e2.name;
+            }
+            // Free on this side: the other side must carry the same free name
+            // (i.e. not shadowed by any binding in the other term)
+            for (const mapped of env.values()) {
+                if (mapped === e2.name) return false;
+            }
+            return e1.name === e2.name;
+        }
+        
+        if (e1 instanceof ConstExpr) {
+            return e1.value === e2.value;
+        }
+        
+        if (e1 instanceof LamExpr) {
+            // Parameter type annotations must agree (when present)
+            const paramTypesMatch =
+                (e1.paramType == null && e2.paramType == null) ||
+                (e1.paramType != null && e2.paramType != null &&
+                 JSON.stringify(e1.paramType) === JSON.stringify(e2.paramType));
+            if (!paramTypesMatch) return false;
+            
+            const inner = new Map(env);
+            inner.set(e1.param, e2.param);
+            return LambdaExpr._alphaEquals(e1.body, e2.body, inner);
+        }
+        
+        if (e1 instanceof AppExpr) {
+            return LambdaExpr._alphaEquals(e1.func, e2.func, env) &&
+                   LambdaExpr._alphaEquals(e1.arg, e2.arg, env);
+        }
+        
+        if (e1 instanceof PairExpr) {
+            return LambdaExpr._alphaEquals(e1.left, e2.left, env) &&
+                   LambdaExpr._alphaEquals(e1.right, e2.right, env);
+        }
+        
+        if (e1 instanceof ImplExpr) {
+            return LambdaExpr._alphaEquals(e1.antecedent, e2.antecedent, env) &&
+                   LambdaExpr._alphaEquals(e1.consequent, e2.consequent, env);
+        }
+        
+        if (e1 instanceof PrimOpExpr) {
+            return e1.op === e2.op &&
+                   LambdaExpr._alphaEquals(e1.left, e2.left, env) &&
+                   LambdaExpr._alphaEquals(e1.right, e2.right, env);
+        }
+        
+        return false;
     }
 }
 

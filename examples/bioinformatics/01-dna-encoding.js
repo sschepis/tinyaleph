@@ -11,7 +11,7 @@
  *   U (Uracil)   → 5   (RNA only, replaces T)
  */
 
-const { BioinformaticsBackend } = require('../../modular');
+import { BioinformaticsBackend } from '../../index.js';
 
 // Nucleotide prime mapping
 const NUCLEOTIDE_PRIMES = { A: 7, T: 2, G: 11, C: 3, U: 5 };

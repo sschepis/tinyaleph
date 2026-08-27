@@ -56,7 +56,6 @@ High-level orchestration:
 
 - **AlephEngine** - Unified computation engine
 - **createEngine** - Factory function for engine creation
-- **registerBackend** - Backend registration system
 
 ### [Symbolic AI Module](./05-symbolic-ai.md)
 
@@ -67,18 +66,18 @@ Symbol inference and resonance attention:
 - **CompoundBuilder** - Multi-symbol concept composition
 - **ResonanceCalculator** - Golden ratio-based harmony measurement
 
-### [Formal Semantics Module](./06-formal-semantics.md)
+### Formal Semantics (see [Core Module](./01-core.md))
 
 Formal type system and reduction semantics:
 
-- **Types** - NounTerm, AdjTerm, ChainTerm, FusionTerm, SentenceTerm
+- **Types** - NounTerm, AdjTerm, ChainTerm, FusionTerm, SeqTerm
 - **TypeChecker** - Type inference and checking
 - **ReductionSystem** - Small-step reduction with ⊕ operators
 - **Translator** - τ translation to λ-calculus
 - **LambdaEvaluator** - β-reduction and normalization
 - **Semantics** - Model-theoretic interpretation
 
-### [Enochian Module](./07-enochian.md)
+### Enochian Vocabulary (see [Core Module](./01-core.md))
 
 The angelic language system:
 
@@ -97,20 +96,20 @@ The angelic language system:
 
 ```javascript
 // Full import
-const aleph = require('./modular');
+import * as aleph from '@aleph-ai/tinyaleph';
 
-// Destructured import
-const { 
+// Named imports
+import {
   createEngine,
   SemanticBackend,
   CryptographicBackend,
   ScientificBackend
-} = require('./modular');
+} from '@aleph-ai/tinyaleph';
 
 // Individual modules
-const { SedenionState, cayleyDickson } = require('./core/hypercomplex');
-const { createOscillator } = require('./physics/oscillator');
-const { kuramotoStep } = require('./physics/kuramoto');
+import { Hypercomplex } from '@aleph-ai/tinyaleph';
+import { Oscillator } from '@aleph-ai/tinyaleph/physics';
+import { KuramotoModel } from '@aleph-ai/tinyaleph/physics';
 ```
 
 ### Common Patterns

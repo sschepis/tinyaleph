@@ -8,7 +8,7 @@
  * - Negative: stable, trajectories converge
  */
 
-const Lyapunov = require('../../physics/lyapunov');
+import * as Lyapunov from '../../physics/lyapunov.js';
 
 console.log('TinyAleph Lyapunov Exponents Example');
 console.log('====================================\n');

@@ -10,6 +10,7 @@ import {
   LegendreSymbol,
   PowerResidueSymbol,
   RedeiSymbol,
+  redeiDirectionalSymbol,
   ArithmeticMilnorInvariant,
   MultipleResidueSymbol,
   ArithmeticLinkKernel,
@@ -68,6 +69,10 @@ describe('LegendreSymbol', () => {
 
     it('should throw for p = 2', () => {
       assert.throws(() => LegendreSymbol.compute(3, 2));
+    });
+
+    it('should throw a clear error for duplicate-2 input', () => {
+      assert.throws(() => LegendreSymbol.compute(2, 2), /odd prime/);
     });
   });
 
@@ -195,6 +200,24 @@ describe('RedeiSymbol', () => {
         assert.ok('reason' in result);
       }
     });
+
+    it('should expose the renamed redeiDirectionalSymbol method', () => {
+      const directional = RedeiSymbol.redeiDirectionalSymbol(5, 13, 17);
+      const aliased = RedeiSymbol.compute(5, 13, 17);
+      assert.ok('computed' in directional);
+      assert.strictEqual(directional.value, aliased.value);
+      assert.strictEqual(directional.computed, aliased.computed);
+      assert.strictEqual(directional.directional, true);
+      assert.strictEqual(directional.approximate, true);
+      assert.strictEqual(aliased.deprecated, true);
+    });
+
+    it('should export the module-level redeiDirectionalSymbol function', () => {
+      const result = redeiDirectionalSymbol(5, 13, 17);
+      assert.ok('value' in result);
+      assert.strictEqual(result.directional, true);
+      assert.strictEqual(result.approximate, true);
+    });
   });
 
   describe('computeCouplingTensor', () => {
@@ -252,6 +275,27 @@ describe('ArithmeticMilnorInvariant', () => {
       const result = milnor.compute([0]); // Only 1 index
       assert.strictEqual(result.computed, false);
     });
+
+    it('should mark Massey fallback as approximate, not computed', () => {
+      // All pairwise Legendre symbols are +1, so the triadic invariant
+      // falls through to the Massey heuristic. 11 ≢ 1 (mod 4) also makes
+      // the classical Rédei condition fail.
+      const primes = [5, 11, 19];
+      const milnor = new ArithmeticMilnorInvariant(primes);
+      const mu3 = milnor.compute([0, 1, 2]);
+      assert.strictEqual(mu3.computed, false);
+      assert.strictEqual(mu3.approximate, true);
+      assert.strictEqual(mu3.method, 'massey_approx');
+    });
+
+    it('should mark Fox-derivative fallback as approximate, not computed', () => {
+      const primes = [5, 7, 11, 13];
+      const milnor = new ArithmeticMilnorInvariant(primes);
+      const fox = milnor._computeFoxDerivative([0, 1, 2, 3]);
+      assert.strictEqual(fox.computed, false);
+      assert.strictEqual(fox.approximate, true);
+      assert.strictEqual(fox.method, 'fox_derivative_approx');
+    });
   });
 
   describe('getAllInvariants', () => {
@@ -306,6 +350,13 @@ describe('ArithmeticLinkKernel', () => {
       const primes = [4, 5, 6, 7, 8, 11];
       const alk = new ArithmeticLinkKernel(primes);
       assert.strictEqual(alk.r, 3); // Only 5, 7, 11
+    });
+
+    it('should compute metadata from the filtered prime set', () => {
+      const primes = [4, 5, 6, 7, 8, 11];
+      const alk = new ArithmeticLinkKernel(primes);
+      assert.strictEqual(alk.metadata.primeProduct, 5 * 7 * 11);
+      assert.strictEqual(alk.metadata.primeSum, 5 + 7 + 11);
     });
 
     it('should accept options', () => {

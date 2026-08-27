@@ -9,7 +9,7 @@ The symbolic AI module provides symbol inference, cultural tagging, compound bui
 Singleton database containing 184+ emoji symbols with prime assignments.
 
 ```javascript
-const { symbolDatabase, SymbolDatabase } = require('./core');
+import { symbolDatabase, SymbolDatabase } from '@aleph-ai/tinyaleph/core';
 ```
 
 #### Symbol Structure
@@ -125,7 +125,7 @@ const stats = symbolDatabase.getCategoryStats();
 Engine for inferring symbols from natural language text.
 
 ```javascript
-const { semanticInference, SemanticInference } = require('./core');
+import { semanticInference, SemanticInference } from '@aleph-ai/tinyaleph/core';
 ```
 
 #### InferenceResult Structure
@@ -236,7 +236,7 @@ This uses ResoFormer's attention mechanism:
 Build multi-symbol concepts through composition.
 
 ```javascript
-const { compoundBuilder, CompoundBuilder } = require('./core');
+import { compoundBuilder, CompoundBuilder } from '@aleph-ai/tinyaleph/core';
 ```
 
 #### CompoundSymbol Structure
@@ -364,7 +364,7 @@ const norseWarrior = compoundBuilder.createCulturalVariant(
 Calculate prime pair resonance based on golden ratio theory.
 
 ```javascript
-const { ResonanceCalculator, calculateResonance } = require('./core');
+import { ResonanceCalculator, calculateResonance } from '@aleph-ai/tinyaleph/core';
 ```
 
 #### Theory
@@ -457,10 +457,10 @@ const clusters = resonanceCalculator.findClusters([2, 3, 5, 7, 11, 13], 0.5);
 
 ## Convenience Functions
 
-### Exported from `core/index.js`
+### Exported from `@aleph-ai/tinyaleph/core`
 
 ```javascript
-const {
+import {
   // Symbol Database
   getSymbol,
   getSymbolByPrime,
@@ -492,9 +492,8 @@ const {
   calculateResonance,
   findGoldenPairs,
   resonanceSignature,
-  ResonanceCalculator,
-  GOLDEN_RATIO
-} = require('./core');
+  ResonanceCalculator
+} from '@aleph-ai/tinyaleph/core';
 ```
 
 ---
@@ -504,7 +503,7 @@ const {
 The symbolic AI uses ResoFormer primitives for resonance attention:
 
 ```javascript
-const { SparsePrimeState, resonantAttention, resonanceScore } = require('./core/rformer');
+import { SparsePrimeState, resonantAttention, resonanceScore } from '@aleph-ai/tinyaleph/core';
 
 // Convert symbol to sparse prime state
 function symbolToState(symbol) {
@@ -535,13 +534,13 @@ const { output, weights } = resonantAttention(query, keys, values);
 ### Full Pipeline Example
 
 ```javascript
-const {
+import {
   inferWithResonance,
   inferMostResonant,
   createCompound,
   calculateResonance,
   getSymbol
-} = require('./core');
+} from '@aleph-ai/tinyaleph/core';
 
 // 1. Infer symbols from narrative
 const text = 'The hero descended into the dark cave seeking the golden treasure';

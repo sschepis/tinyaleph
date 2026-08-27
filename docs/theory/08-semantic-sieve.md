@@ -161,7 +161,13 @@ lake = [2, 5, 7, 13]  // Now distinct from ocean
 ```javascript
 class Sieve {
   constructor() {
-    this.data = require('./data.json');
+    // Semantic data: prime list, ontology, and vocabulary registries
+    // (mirrors the structure of the repo's data.json)
+    this.data = {
+      primes: [2, 3, 5, 7, 11, 13],
+      ontology: {},
+      vocabulary: {}
+    };
     
     // Initialize registries
     const usedPrimes = [

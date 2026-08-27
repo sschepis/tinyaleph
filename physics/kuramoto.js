@@ -40,6 +40,13 @@ class KuramotoModel extends OscillatorBank {
     this.tick(dt);
   }
   
+  /**
+   * Kuramoto order parameter r = |(1/N) Σ a_j e^{iθj}|
+   *
+   * Amplitude-weighted sum normalized by the oscillator count N.
+   * Note: meanPhase() normalizes by the amplitude sum Σa instead.
+   * Returns 0 for an empty bank.
+   */
   orderParameter() {
     let sx = 0, sy = 0;
     for (const osc of this.oscillators) {
@@ -47,6 +54,7 @@ class KuramotoModel extends OscillatorBank {
       sy += osc.amplitude * Math.sin(osc.phase);
     }
     const N = this.oscillators.length;
+    if (N === 0) return 0;
     return Math.sqrt((sx/N)**2 + (sy/N)**2);
   }
   

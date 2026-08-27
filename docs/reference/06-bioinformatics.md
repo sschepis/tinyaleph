@@ -15,11 +15,14 @@ The bioinformatics module encodes biological sequences (DNA, RNA, proteins) as p
 ## Installation
 
 ```javascript
-const { 
+import {
     BioinformaticsBackend,
     DNACircuit,
-    ANDGate, ORGate, NOTGate, NANDGate
-} = require('@aleph-ai/tinyaleph');
+    ANDGate, ORGate, NOTGate
+} from '@aleph-ai/tinyaleph';
+import { bioinformatics } from '@aleph-ai/tinyaleph/backends';
+// Advanced DNA computing pieces live on the bioinformatics namespace:
+const { NANDGate } = bioinformatics;
 ```
 
 ## BioinformaticsBackend
@@ -235,10 +238,11 @@ const result = backend.dock(ligand, receptor);
 The complete 64-codon genetic code is implemented:
 
 ```javascript
-const { GENETIC_CODE } = require('@aleph-ai/tinyaleph/backends/bioinformatics/genetic-code');
+import { bioinformatics } from '@aleph-ai/tinyaleph/backends';
+const { STANDARD_GENETIC_CODE } = bioinformatics;
 
-console.log(GENETIC_CODE['AUG']); // 'M' (Methionine - Start)
-console.log(GENETIC_CODE['UAA']); // '*' (Stop)
+console.log(STANDARD_GENETIC_CODE['AUG']); // 'M' (Methionine - Start)
+console.log(STANDARD_GENETIC_CODE['UAA']); // '*' (Stop)
 ```
 
 ## DNA Computing
@@ -321,7 +325,9 @@ const result = circuit.evaluate();
 ### DNA Strand Classes
 
 ```javascript
-const { DNAStrand, DNADuplex, StrandDisplacementReaction } = require('@aleph-ai/tinyaleph');
+import { DNAStrand } from '@aleph-ai/tinyaleph';
+import { bioinformatics } from '@aleph-ai/tinyaleph/backends';
+const { DNADuplex, StrandDisplacementReaction } = bioinformatics;
 
 // Create strands
 const strand1 = new DNAStrand('ATGC', { toehold: 'AAA' });
@@ -341,7 +347,8 @@ const result = reaction.react();
 Advanced seesaw-style DNA logic gate.
 
 ```javascript
-const { SeesawGate } = require('@aleph-ai/tinyaleph');
+import { bioinformatics } from '@aleph-ai/tinyaleph/backends';
+const { SeesawGate } = bioinformatics;
 
 const gate = new SeesawGate({
     name: 'seesaw1',
@@ -393,13 +400,13 @@ result.contactMap[i][j] = true;  // Residues i,j in contact
 Create a bioinformatics-configured engine:
 
 ```javascript
-const { createEngine } = require('@aleph-ai/tinyaleph');
+import { createEngine } from '@aleph-ai/tinyaleph';
 
 // These all work:
 const engine = createEngine('bioinformatics');
-const engine = createEngine('bio');
-const engine = createEngine('dna');
-const engine = createEngine('protein');
+const engine2 = createEngine('bio');
+const engine3 = createEngine('dna');
+const engine4 = createEngine('protein');
 
 // Process biological sequences
 const result = engine.run('ATGCGATCGATCGATCG');
@@ -473,7 +480,7 @@ console.log('Contact count:', result.contactMap.filter(row =>
 ### DNA Circuit
 
 ```javascript
-const { DNACircuit, ANDGate, ORGate, NOTGate } = require('@aleph-ai/tinyaleph');
+import { DNACircuit, ANDGate, ORGate, NOTGate } from '@aleph-ai/tinyaleph';
 
 // Build (A AND B) OR (NOT C)
 const circuit = new DNACircuit('logic');

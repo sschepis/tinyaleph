@@ -1476,7 +1476,7 @@ async function assayNonCommutative(core) {
 
 ```javascript
 // sentient.config.js
-module.exports = {
+export default {
     // PRSC parameters
     prsc: {
         speed: 1.0,

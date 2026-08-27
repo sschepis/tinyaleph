@@ -8,7 +8,7 @@
  * - Non-commutative multiplication
  */
 
-const { Hypercomplex } = require('../../modular');
+import { Hypercomplex } from '../../index.js';
 
 console.log('TinyAleph Quaternion Example');
 console.log('============================\n');

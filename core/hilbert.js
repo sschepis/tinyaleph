@@ -458,6 +458,9 @@ class EntropyDrivenEvolution {
    * Equation (8): P_collapse = 1 - e^(-∫S(t)dt)
    */
   evolveUntilCollapse(maxSteps = 1000) {
+    if (!Number.isFinite(this.dt) || this.dt <= 0) {
+      throw new RangeError('evolveUntilCollapse requires a positive dt');
+    }
     for (let i = 0; i < maxSteps; i++) {
       this.step();
       
@@ -1014,6 +1017,9 @@ class ResonantFragment {
  */
 function pAdicNorm(x, p) {
   if (x === 0) return 0;
+  if (!Number.isFinite(x) || !Number.isInteger(p) || p < 2) {
+    throw new RangeError('pAdicNorm requires a finite x and an integer p >= 2');
+  }
   
   let power = 0;
   let n = Math.abs(Math.floor(x));
@@ -1036,6 +1042,9 @@ function pAdicNorm(x, p) {
  */
 function pAdicValuation(x, p) {
   if (x === 0) return Infinity;
+  if (!Number.isFinite(x) || !Number.isInteger(p) || p < 2) {
+    throw new RangeError('pAdicValuation requires a finite x and an integer p >= 2');
+  }
   
   let power = 0;
   let n = Math.abs(Math.floor(x));
@@ -1257,11 +1266,12 @@ function jacobiSymbol(n, m) {
     throw new Error('Jacobi symbol denominator must be positive and odd');
   }
   
+  if (m === 1) return 1;
+  
   n = ((n % m) + m) % m;  // Reduce n mod m
   
   if (n === 0) return 0;
   if (n === 1) return 1;
-  if (m === 1) return 1;
   
   // Factor out powers of 2 from n
   let twos = 0;

@@ -1387,7 +1387,7 @@ case 'eavesdrop':
 `apps/sentient/lib/learning/config.js`:
 
 ```javascript
-module.exports = {
+export default {
     learner: {
         iterationInterval: 30000,     // 30 seconds between iterations
         reflectionInterval: 300000,   // 5 minutes between reflections

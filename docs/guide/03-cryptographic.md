@@ -11,10 +11,10 @@ Aleph's cryptographic backend leverages **hypercomplex arithmetic** to create se
 ## Creating a Cryptographic Engine
 
 ```javascript
-const { createEngine, CryptographicBackend } = require('./modular');
+import { createEngine, CryptographicBackend } from '@aleph-ai/tinyaleph';
 
 // Load configuration
-const config = require('./data.json');
+const config = { dimension: 16 };
 
 // Create engine
 const engine = createEngine('cryptographic', config);

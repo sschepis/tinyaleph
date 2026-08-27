@@ -7,10 +7,10 @@
  * Higher coherence = stronger binding affinity.
  */
 
-const { BioinformaticsBackend } = require('../../modular');
+import { BioinformaticsBackend } from '../../index.js';
 
 // Import encoding functions directly for protein encoding
-const encoding = require('../../backends/bioinformatics/encoding');
+import * as encoding from '../../backends/bioinformatics/encoding.js';
 
 // ===========================================
 // SETUP

@@ -17,11 +17,9 @@
 
 'use strict';
 
-const {
-    CRTReconstructor,
+import { CRTReconstructor,
     HomologyLoss,
-    DEFAULT_PRIMES_SMALL
-} = require('../../core/crt-homology');
+    DEFAULT_PRIMES_SMALL } from '../../core/crt-homology.js';
 
 console.log('=== Homology Loss Example ===\n');
 

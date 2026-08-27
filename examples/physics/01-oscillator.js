@@ -8,8 +8,8 @@
  * - Emergence of collective behavior
  */
 
-const { Oscillator } = require('../../physics/oscillator');
-const { KuramotoModel } = require('../../physics/kuramoto');
+import { Oscillator } from '../../physics/oscillator.js';
+import { KuramotoModel } from '../../physics/kuramoto.js';
 
 console.log('TinyAleph Coupled Oscillators Example');
 console.log('=====================================\n');

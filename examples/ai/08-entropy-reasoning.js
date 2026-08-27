@@ -10,7 +10,7 @@
  * - Detecting when more information is needed
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

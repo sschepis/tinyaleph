@@ -697,7 +697,7 @@ class CachedLLMProvider {
     constructor(provider, cache, options = {}) {
         this.provider = provider;
         this.cache = cache || new PromptCache(options.cache);
-        this.defaultTTL = options.defaultTTL || 3600000;
+        this.defaultTTL = options.defaultTTL || this.cache.defaultTTL || 3600000;
         this.enableBatching = options.enableBatching ?? false;
     }
     

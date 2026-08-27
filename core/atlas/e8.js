@@ -106,36 +106,33 @@ export class E8RootSystem {
   }
 
   /**
-   * Get the 8 simple roots (Standard basis).
-   * Scaled by 2.
+   * Get the 8 simple roots of E8 in the standard Dynkin-diagram convention.
+   *
+   * α_i = e_i − e_{i+1} for i = 1..7,  α_8 = e_7 + e_8
+   *
+   * These are in the STANDARD normalization (not the ×2 scaling used for
+   * the 240 stored roots), so plain dot products give the standard E8
+   * Cartan matrix directly: ⟨α_i, α_i⟩ = 2, adjacent pairs −1, else 0.
+   *
+   * @returns {Int8Array[]} Exactly 8 roots with entries in {−1, 0, +1}
    */
   getSimpleRoots() {
     const simple = [];
-    
-    // α₁ through α₆: e_i - e_{i+1} (scaled by 2)
-    for (let i = 0; i < 6; i++) {
-        const v = new Int8Array(8);
-        v[i] = 2;
-        v[i+1] = -2;
-        simple.push(v);
+
+    // α_i = e_i − e_{i+1} for i = 1..7
+    for (let i = 0; i < 7; i++) {
+      const v = new Int8Array(8);
+      v[i] = 1;
+      v[i + 1] = -1;
+      simple.push(v);
     }
-    
-    // α₇ = e₆ - e₇ (scaled by 2)
-    const v6 = new Int8Array(8);
-    v6[5] = 2;
-    v6[6] = -2;
-    simple.push(v6);
-    
-    // α₈ = e₇ + e₈ (scaled by 2)
-    const a7 = new Int8Array(8);
-    a7[6] = 2;
-    a7[7] = 2;
-    simple.push(a7);
-    
-    // α₉ = ½(-1, -1, ..., -1) (scaled by 2 → all -1)
-    const a8 = new Int8Array(8).fill(-1);
+
+    // α_8 = e_7 + e_8
+    const a8 = new Int8Array(8);
+    a8[6] = 1;
+    a8[7] = 1;
     simple.push(a8);
-    
+
     return simple;
   }
 }

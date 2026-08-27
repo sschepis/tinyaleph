@@ -13,10 +13,24 @@ import { estimateLyapunov, adaptiveCoupling, classifyStability } from '../physic
 import { collapseProbability, shouldCollapse, bornMeasurement } from '../physics/collapse.js';
 
 class AlephEngine {
+  /**
+   * @param {object} backend - Domain backend providing encode/decode/transforms
+   * @param {object} [options={}] - Engine options:
+   *   - baseCoupling (0.3): Kuramoto coupling strength
+   *   - collapseCoherence (0.7), collapseEntropy (1.8): collapse thresholds
+   *   - maxTransformSteps (5): symbolic reasoning search depth
+   *   - entropyThreshold (0.5): reasoning termination threshold
+   *   - maxEvolutionSteps (100), coherenceThreshold (0.6),
+   *     amplitudeThreshold (0.1), sampleWindow (10), dt (0.016):
+   *     field evolution parameters
+   *   - maxHistory (200): cap on recorded run history
+   *
+   * Note: the former `dampingRate` and `stableCoherence` options were dead
+   * (never read) and have been removed.
+   */
   constructor(backend, options = {}) {
     this.backend = backend;
     this.options = {
-      dampingRate: 0.02,
       baseCoupling: 0.3,
       collapseCoherence: 0.7,
       collapseEntropy: 1.8,
@@ -26,9 +40,10 @@ class AlephEngine {
       maxEvolutionSteps: 100,     // Max timesteps to evolve
       coherenceThreshold: 0.6,    // Min order parameter for coherent emission
       amplitudeThreshold: 0.1,    // Min amplitude to consider a prime "active"
-      stableCoherence: 0.85,      // Order parameter indicating stable state
       sampleWindow: 10,           // Keep best N frames
       dt: 0.016,
+      // Cap on recorded run history
+      maxHistory: 200,
       ...options
     };
     
@@ -51,7 +66,7 @@ class AlephEngine {
     this.coherenceValue = 0;
     this.lyapunov = 0;
     this.collapseIntegral = 0;
-    this.stability = 'MARGINAL';
+    this.stability = 'marginal';
   }
   
   /**
@@ -122,19 +137,20 @@ class AlephEngine {
           maxDifferential = differential;
           bestDifferentialFrame = frame;
         }
-        
-        // Keep only frames with good response
-        if (this.frames.length > this.options.sampleWindow) {
-          this.frames.sort((a, b) => b.differential - a.differential);
-          this.frames = this.frames.slice(0, this.options.sampleWindow);
-        }
       }
       
       // Stop if we found a strong coherent input-response
       if (differential > 1.0 && order > this.options.coherenceThreshold &&
-          this.stability !== 'CHAOTIC') {
+          this.stability !== 'chaotic') {
         break;
       }
+    }
+    
+    // Keep only the best frames by differential response
+    // (hoisted out of the loop to avoid re-sorting on every push)
+    if (this.frames.length > this.options.sampleWindow) {
+      this.frames.sort((a, b) => b.differential - a.differential);
+      this.frames = this.frames.slice(0, this.options.sampleWindow);
     }
     
     // 5. SELECT best frame by differential (not just order)
@@ -191,6 +207,11 @@ class AlephEngine {
       fieldBased: result.fieldBased
     });
     
+    // Cap history to prevent unbounded growth
+    if (this.history.length > this.options.maxHistory) {
+      this.history.splice(0, this.history.length - this.options.maxHistory);
+    }
+    
     return result;
   }
   
@@ -240,8 +261,9 @@ class AlephEngine {
     this.lyapunov = estimateLyapunov(this.oscillators.oscillators);
     this.stability = classifyStability(this.lyapunov);
     
-    // Adapt coupling based on stability
-    this.oscillators.K = adaptiveCoupling(this.options.baseCoupling, this.lyapunov);
+    // Adapt coupling based on stability (explicit 3-arg legacy mode:
+    // baseCoupling + Lyapunov exponent, with default gain)
+    this.oscillators.K = adaptiveCoupling(this.options.baseCoupling, this.lyapunov, 0.5);
     
     // Advance oscillators
     this.oscillators.tick(dt);
@@ -316,7 +338,8 @@ class AlephEngine {
    * Check if state should collapse
    */
   checkCollapse() {
-    const prob = collapseProbability(this.collapseIntegral, this.lyapunov);
+    const rawProb = collapseProbability(this.collapseIntegral, this.lyapunov);
+    const prob = Number.isFinite(rawProb) ? Math.min(1, Math.max(0, rawProb)) : 0;
     
     if (shouldCollapse(this.coherenceValue, this.entropy, prob, {
       minCoherence: this.options.collapseCoherence,

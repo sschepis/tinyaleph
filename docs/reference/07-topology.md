@@ -1,257 +1,158 @@
 # Topology Module Reference
 
-The topology module implements topological invariants and physical constant derivations from the 108bio.pdf paper "Twist Eigenstates and Topological Morphogenesis".
+The arithmetic topology layer implements link invariants and prime-resonant
+coupling kernels derived from the "Twist Eigenstates and Topological
+Morphogenesis" (108bio.pdf) paper.
+
+> **Note:** The paper-specific helper objects (`TWIST_108`, `Knot`,
+> `PhysicalConstants`, `GaugeSymmetry`, `OBSERVER_HIERARCHY`,
+> `FreeEnergyDynamics`) live in the internal modules `core/prime.js` and
+> `core/topology.js` and are **not part of the published package API**. This
+> reference documents the public topology surface exported from
+> `@aleph-ai/tinyaleph`.
 
 ## Core Concepts
 
 ### The 108 Invariant
 
-The number 108 = 2² × 3³ plays a fundamental role as the minimal closed-form twist configuration:
+The number 108 = 2² × 3³ plays a fundamental role as the minimal closed-form
+twist configuration. The public API exposes the prime twist angles directly:
 
 ```javascript
-const { TWIST_108 } = require('@aleph-ai/tinyaleph/core/prime');
+import { primeToAngle } from '@aleph-ai/tinyaleph';
 
-console.log(TWIST_108.value);      // 108
-console.log(TWIST_108.binary);     // 4 (2²)
-console.log(TWIST_108.ternary);    // 27 (3³)
-console.log(TWIST_108.mod30Boundary); // 29 (prime sieve)
+// Twist angle for a prime p is 2π/p radians:
+console.log(primeToAngle(2) * 180 / Math.PI);  // 180 degrees
+console.log(primeToAngle(3) * 180 / Math.PI);  // 120 degrees
+console.log(primeToAngle(5) * 180 / Math.PI);  // 72 degrees
 
-// Check if a number resonates with 108
-console.log(TWIST_108.resonates(216)); // true (multiple of 108)
-console.log(TWIST_108.resonates(100)); // false
-
-// Get twist angle for a prime
-console.log(TWIST_108.twistAngle(2));  // 180 degrees
-console.log(TWIST_108.twistAngle(3));  // 120 degrees
-console.log(TWIST_108.twistAngle(5));  // 72 degrees
+// 108 = 2² × 3³: the minimal closed twist configuration
+const is108Resonant = (n) => n % 108 === 0;
+console.log(is108Resonant(216)); // true (multiple of 108)
+console.log(is108Resonant(100)); // false
 ```
 
-### Knot Invariants
+### Arithmetic Link Invariants
 
-Mathematical knots with topological invariants for deriving physical constants:
+The `AlexanderModule` computes Alexander polynomials, signatures, and fitting
+ideals for prime sets (arithmetic links in restricted-ramification Galois
+theory):
 
 ```javascript
-const { Knot, TREFOIL, FIGURE_EIGHT, STANDARD_KNOTS } = require('@aleph-ai/tinyaleph/core/topology');
+import { AlexanderModule } from '@aleph-ai/tinyaleph';
 
-// The Trefoil knot (3₁) - fundamental stable structure
-console.log(TREFOIL.name);        // 'Trefoil'
-console.log(TREFOIL.notation);    // '3_1'
-console.log(TREFOIL.crossings);   // 3
-console.log(TREFOIL.sticks);      // 6
-console.log(TREFOIL.bridge);      // 2
-console.log(TREFOIL.unknotting);  // 1
+// Prime set S = {2, 3, 5, 7} - the "arithmetic link"
+const module = new AlexanderModule([2, 3, 5, 7]);
 
-// Trefoil complexity: T = s·c - b + u = 6×3 - 2 + 1 = 17
-console.log(TREFOIL.complexity()); // 17
+// Alexander polynomial (in t):
+console.log(module.alexanderPolynomial);
+// "1 + 2t - 4t^2 + 2t^3 + t^4"
 
-// Mass ratio derivation: 17 × 108 = 1836
-console.log(TREFOIL.deriveMassRatio()); // 1836
+// Signature and fitting degrees:
+const signature = module.signature();
+console.log(signature.primes);          // [2, 3, 5, 7]
+console.log(signature.field);           // 'Q'
+console.log(signature.fittingDegrees);  // per-degree Fitting ideal data
 
-// Create custom knot
-const myKnot = new Knot({
-    name: 'Custom',
-    notation: 'X_1',
-    crossings: 5,
-    sticks: 8,
-    bridge: 2,
-    unknotting: 2
-});
-console.log(myKnot.complexity()); // 8×5 - 2 + 2 = 40
+// Crowell sequence (group-theoretic data):
+const seq = module.crowellSequence();
+
+// Compute a Fitting ideal for a specific minor:
+const ideal = module.computeFittingIdeal(0);
 ```
 
-## Physical Constants
+### Arithmetic Link Kernel (ALK)
 
-### Derived Constants
-
-The `PhysicalConstants` class derives fundamental constants from topological invariants:
+The ALK packages arithmetic topology invariants as coupling tensors for
+prime-resonant operator dynamics:
 
 ```javascript
-const { PhysicalConstants } = require('@aleph-ai/tinyaleph/core/topology');
+import { ArithmeticLinkKernel } from '@aleph-ai/tinyaleph';
 
-// Proton-electron mass ratio
-const massRatio = PhysicalConstants.protonElectronRatio();
-console.log(massRatio.derived);        // 1836
-console.log(massRatio.experimental);   // 1836.15267343
-console.log(massRatio.relativeError);  // ~0.00008
-console.log(massRatio.formula);        // '17 × 108 = 1836'
+// ALK(S; ℓ, m) for prime set S
+const alk = new ArithmeticLinkKernel([3, 5, 7], { ell: 2, e: 1 });
 
-// Fine structure constant inverse
-const alpha = PhysicalConstants.fineStructureInverse();
-console.log(alpha.derived);        // 137
-console.log(alpha.experimental);   // 137.035999084
-console.log(alpha.relativeError);  // ~0.00026
-console.log(alpha.formula);        // '108 + 29 = 137'
+// Pairwise coupling matrix J:
+const J = alk.J;
 
-// Higgs mass
-const higgs = PhysicalConstants.higgsMass();
-console.log(higgs.derived);        // 125 (GeV)
-console.log(higgs.experimental);   // 125.25
-console.log(higgs.formula);        // '5³ = 125'
+// Triadic coupling tensor K⁽³⁾:
+const K3 = alk.K3;
 
-// Get all constants
-const all = PhysicalConstants.all();
+// Higher-order couplings:
+const Kn = alk.getKn(4);
 
-// Validate framework
-const validation = PhysicalConstants.validate();
-console.log(validation.overallValid); // true
+// Borromean triples among the primes:
+const triples = alk.findBorromeanTriples();
+
+// Build the full Hamiltonian from the kernel:
+const H = alk.buildHamiltonian();
 ```
 
-## Gauge Symmetry
+### Borromean Detection
 
-### Standard Model from 108
-
-The factorization 108 = 2² × 3³ generates the Standard Model gauge group:
-
-```javascript
-const { GaugeSymmetry } = require('@aleph-ai/tinyaleph/core/topology');
-
-// SU(3) color symmetry from 3³ = 27
-const su3 = GaugeSymmetry.su3();
-console.log(su3.name);        // 'SU(3)'
-console.log(su3.type);        // 'Color'
-console.log(su3.generator);   // 27
-console.log(su3.twistAngle);  // 120 (degrees)
-
-// SU(2) weak symmetry from 2² = 4
-const su2 = GaugeSymmetry.su2();
-console.log(su2.twistAngle);  // 180 (degrees)
-
-// U(1) electromagnetic from full 108
-const u1 = GaugeSymmetry.u1();
-console.log(u1.twistAngle);   // 360 (degrees)
-
-// Full Standard Model
-const sm = GaugeSymmetry.standardModel();
-console.log(sm.name);         // 'SU(3) × SU(2) × U(1)'
-
-// Decompose any number
-const decomp = GaugeSymmetry.decompose(216);
-console.log(decomp.su3Strength);    // 27
-console.log(decomp.su2Strength);    // 8
-console.log(decomp.is108Resonant);  // true
-```
-
-## Observer Hierarchy
-
-### Multi-Scale Observers
-
-From the paper's Table 1, observers at different scales:
+Primes form Borromean triples when pairwise Legendre symbols are all +1 but
+the triple has no common quadratic residue pattern:
 
 ```javascript
-const { OBSERVER_HIERARCHY, getObserverLevel, observerCapacity } = require('@aleph-ai/tinyaleph/core/topology');
+import { findBorromeanPrimes, quickBorromeanCheck } from '@aleph-ai/tinyaleph';
 
-// Access hierarchy
-console.log(OBSERVER_HIERARCHY);
-// [
-//   { scale: 'Quantum', constituentOscillators: 'Wavefunctions', ... },
-//   { scale: 'Molecular', ... },
-//   { scale: 'Biological', ... },
-//   { scale: 'Cognitive', ... },
-//   { scale: 'Planetary', ... },
-//   { scale: 'Cosmic', ... }
-// ]
+// Quick check for a candidate triple:
+const result = quickBorromeanCheck(3, 5, 7);
+console.log(result.possible);       // false
+console.log(result.reason);         // 'Pairwise Legendre not all +1'
+console.log(result.legendreSymbols); // { l12, l23, l31 }
 
-// Get specific level
-const cognitive = getObserverLevel('cognitive');
-console.log(cognitive.typicalComplexity);  // 1000
-console.log(cognitive.observableBehavior); // 'Awareness and thought'
-
-// Calculate observer capacity
-// C_obs = α·N_osc·K̄·τ⁻¹
-const capacity = observerCapacity(
-    1000,   // oscillator count
-    0.5,    // mean coupling
-    0.1,    // coherence time
-    1.0     // scaling constant
-);
-console.log(capacity); // 5000
-```
-
-## Free Energy Dynamics
-
-### Cubic FEP Dynamics
-
-The consciousness model from Section 4.2:
-
-```javascript
-const { FreeEnergyDynamics } = require('@aleph-ai/tinyaleph/core/topology');
-
-// Create dynamics: dψ/dt = αψ + βψ² + γψ³
-const fep = new FreeEnergyDynamics(0.1, -0.5, -0.1);
-
-// Compute derivative at state ψ
-console.log(fep.derivative(0.5));  // Rate of change
-
-// Single step evolution
-const newPsi = fep.step(0.5, 0.01);
-
-// Find fixed points (attractors)
-const fixedPts = fep.fixedPoints();
-for (const pt of fixedPts) {
-    console.log(`ψ=${pt.value}: ${pt.stability}`);
-}
-
-// Compute potential V(ψ)
-const potential = fep.potential(0.5);
-
-// Simulate trajectory
-const trajectory = fep.simulate(0.3, 10, 0.01);
-for (const point of trajectory.slice(0, 5)) {
-    console.log(`t=${point.t.toFixed(2)}: ψ=${point.psi.toFixed(3)}`);
-}
-
-// Check stability at a point
-console.log(fep.stabilityAt(0.5)); // 'stable' | 'unstable' | 'marginal'
+// Scan a prime set for Borromean triples:
+const found = findBorromeanPrimes([3, 5, 7, 11, 13, 17], 10);
 ```
 
 ## API Reference
 
-### TWIST_108
+### `AlexanderModule(primes, options)`
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `value` | number | 108 |
-| `binary` | number | 4 (2²) |
-| `ternary` | number | 27 (3³) |
-| `mod30Boundary` | number | 29 |
-| `resonates(n)` | function | Check if n is multiple of 108 |
-| `twistAngle(p)` | function | Get 360/p degrees |
-| `totalTwist(primes)` | function | Sum of twist angles |
-| `isTwistClosed(primes)` | function | Check if total twist is multiple of 360 |
+| Member | Type | Description |
+|--------|------|-------------|
+| `alexanderPolynomial` | string | Alexander polynomial in t |
+| `signature()` | object | Signature + Fitting degree data |
+| `crowellSequence()` | array | Crowell sequence |
+| `computeFittingIdeal(k)` | object | k-th Fitting ideal |
+| `getAllFittingIdeals()` | Map | All computed Fitting ideals |
+| `toJSON()` | object | Full invariant descriptor |
 
-### Knot Class
+### `ArithmeticLinkKernel(primes, options)`
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `complexity()` | number | T = s·c - b + u |
-| `deriveMassRatio()` | number | T × 108 |
-| `isPrimeKnot()` | boolean | True if knot is prime |
-| `genusLowerBound()` | number | (c - b + 1) / 2 |
-| `toJSON()` | object | Full knot descriptor |
+| Member | Type | Description |
+|--------|------|-------------|
+| `J` | matrix | Pairwise coupling |
+| `getCoupling(i, j)` | number | Pair coupling value |
+| `K3` | tensor | Triadic couplings |
+| `getTriadicCoupling(i, j, k)` | number | Triple coupling value |
+| `getKn(n)` | tensor | n-ary coupling |
+| `findBorromeanTriples()` | array | Borromean triples in S |
+| `isBorromean(triple)` | boolean | Borromean test |
+| `buildHamiltonian()` | matrix | Full operator Hamiltonian |
 
-### PhysicalConstants
+### Borromean Helpers
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `protonElectronRatio()` | object | 17 × 108 = 1836 |
-| `fineStructureInverse()` | object | 108 + 29 = 137 |
-| `higgsMass()` | object | 5³ = 125 GeV |
-| `all()` | object | All derived constants |
-| `validate()` | object | Validation results |
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `quickBorromeanCheck(p1, p2, p3)` | object | Candidate triple test |
+| `findBorromeanPrimes(primes, max)` | array | Scan set for triples |
 
-### FreeEnergyDynamics
+## Internal Modules (not exported)
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `derivative(psi)` | number | dψ/dt at psi |
-| `step(psi, dt)` | number | Euler step |
-| `fixedPoints()` | array | Fixed point analysis |
-| `potential(psi)` | number | V(ψ) |
-| `simulate(psi0, duration, dt)` | array | Full trajectory |
-| `stabilityAt(psi)` | string | Stability classification |
+The following paper-derived helpers remain internal implementation details
+(see `core/topology.js` and `core/prime.js` in the source repository):
+
+- `TWIST_108` - the 108 invariant descriptor
+- `Knot`, `TREFOIL`, `FIGURE_EIGHT`, `STANDARD_KNOTS` - knot descriptors
+- `PhysicalConstants` - derived physical constants (e.g. 17 × 108 = 1836)
+- `GaugeSymmetry` - Standard Model gauge decomposition
+- `OBSERVER_HIERARCHY` - multi-scale observer table
+- `FreeEnergyDynamics` - cubic free-energy dynamics
 
 ## Related Modules
 
-- **[Core Prime](./01-core.md)** - Prime utilities including TWIST_108
+- **[Core Prime](./01-core.md)** - Prime utilities
 - **[Physics](./02-physics.md)** - Oscillator dynamics
-- **[Collective Intelligence](./08-collective.md)** - Observer Scale Manager
+- **[Observer](./08-observer.md)** - Observer hierarchy implementation

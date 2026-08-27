@@ -49,7 +49,13 @@ class CryptographicBackend extends Backend {
   
   decode(primes) {
     const primeToIndex = new Map(this.keyPrimes.map((p, i) => [p, i]));
-    const bytes = primes.map(p => primeToIndex.get(p) || 0);
+    const bytes = primes.map(p => {
+      const idx = primeToIndex.get(p);
+      if (idx === undefined) {
+        throw new Error(`Cannot decode unknown prime: ${p}`);
+      }
+      return idx;
+    });
     return Buffer.from(bytes);
   }
   
@@ -276,7 +282,7 @@ class PrimeStateKeyGenerator {
    */
   generateKey(n) {
     const state = this.createPrimeState(n);
-    const phases = [];
+    let phases = [];
     
     // Compute resonance phase for each prime with non-zero amplitude
     for (const p of this.primes) {
@@ -290,6 +296,21 @@ class PrimeStateKeyGenerator {
           complex: Complex.fromPolar(amp.norm(), phase)
         });
       }
+    }
+    
+    // Fallback: if n's prime factors lie outside this prime table, derive
+    // phases uniformly across the table so key derivation stays well-defined.
+    if (phases.length === 0) {
+      const amplitude = 1 / Math.sqrt(this.primes.length);
+      phases = this.primes.map(p => {
+        const phase = this.resonancePhase(p, n);
+        return {
+          prime: p,
+          phase,
+          amplitude,
+          complex: Complex.fromPolar(amplitude, phase)
+        };
+      });
     }
     
     // Sum phases modulo 2π
@@ -317,6 +338,10 @@ class PrimeStateKeyGenerator {
    */
   expandToBytes(phases, length) {
     const bytes = [];
+    
+    if (!phases || phases.length === 0) {
+      return new Array(length).fill(0);
+    }
     
     for (let i = 0; i < length; i++) {
       const phaseIdx = i % phases.length;
@@ -409,22 +434,35 @@ class EntropySensitiveEncryptor {
   }
   
   /**
+   * Derive key phases from the key alone (same on encrypt and decrypt)
+   */
+  deriveKeyPhases(key) {
+    if (typeof key === 'number') {
+      return this.keyGen.generateKey(key).phases;
+    }
+    // Use the key buffer as seed (not the data buffer) so both directions agree
+    const keyBuffer = Buffer.isBuffer(key) ? key : Buffer.from(key);
+    const keySeed = keyBuffer.reduce((sum, b) => sum + b, 0) + 1;
+    return this.keyGen.generateKey(keySeed).phases;
+  }
+  
+  /**
+   * Compute the phase sum for position i (identical for encrypt and decrypt)
+   */
+  positionPhaseSum(keyPhases, i) {
+    return keyPhases
+      .filter(p => i % p.prime === 0)
+      .reduce((sum, p) => sum + p.phase * p.amplitude, 0);
+  }
+  
+  /**
    * Encrypt data using phase modulation
    * @param {Buffer|string} data - Data to encrypt
    * @param {number|Buffer} key - Encryption key (number or derived key)
    */
   encrypt(data, key) {
     const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    
-    // Get key phase from numeric key
-    let keyPhases;
-    if (typeof key === 'number') {
-      keyPhases = this.keyGen.generateKey(key).phases;
-    } else {
-      // Use key buffer as seed
-      const keySeed = buffer.reduce((sum, b) => sum + b, 0) + 1;
-      keyPhases = this.keyGen.generateKey(keySeed).phases;
-    }
+    const keyPhases = this.deriveKeyPhases(key);
     
     // Encrypt each byte with phase modulation
     const encrypted = Buffer.alloc(buffer.length);
@@ -432,10 +470,8 @@ class EntropySensitiveEncryptor {
     for (let i = 0; i < buffer.length; i++) {
       const byte = buffer[i];
       
-      // Find divisor primes for this byte value
-      const phaseSum = keyPhases
-        .filter(p => byte % p.prime === 0 || i % p.prime === 0)
-        .reduce((sum, p) => sum + p.phase * p.amplitude, 0);
+      // Position-based phase transform (deterministic given the key)
+      const phaseSum = this.positionPhaseSum(keyPhases, i);
       
       // Apply phase-based transformation
       const transform = Math.floor((Math.sin(phaseSum + i) + 1) * 127.5);
@@ -451,25 +487,17 @@ class EntropySensitiveEncryptor {
    * @param {number|Buffer} key - Decryption key
    */
   decrypt(encrypted, key) {
-    // Get key phases
-    let keyPhases;
-    if (typeof key === 'number') {
-      keyPhases = this.keyGen.generateKey(key).phases;
-    } else {
-      const keySeed = encrypted.reduce((sum, b) => sum + b, 0) + 1;
-      keyPhases = this.keyGen.generateKey(keySeed).phases;
-    }
+    const buffer = Buffer.isBuffer(encrypted) ? encrypted : Buffer.from(encrypted);
+    const keyPhases = this.deriveKeyPhases(key);
     
     // Decrypt each byte (inverse of encryption)
-    const decrypted = Buffer.alloc(encrypted.length);
+    const decrypted = Buffer.alloc(buffer.length);
     
-    for (let i = 0; i < encrypted.length; i++) {
-      const byte = encrypted[i];
+    for (let i = 0; i < buffer.length; i++) {
+      const byte = buffer[i];
       
       // Same phase calculation as encryption
-      const phaseSum = keyPhases
-        .filter(p => i % p.prime === 0)  // Use position-based phases for decryption
-        .reduce((sum, p) => sum + p.phase * p.amplitude, 0);
+      const phaseSum = this.positionPhaseSum(keyPhases, i);
       
       const transform = Math.floor((Math.sin(phaseSum + i) + 1) * 127.5);
       decrypted[i] = (byte - transform + 256) & 0xFF;
@@ -529,6 +557,15 @@ class HolographicKeyDistributor {
       }
     }
     
+    // Embed the exact key bytes in the leading cells of the intensity channel
+    // so decodeKey recovers the key exactly after share combination.
+    const keyBytes = keyData.keyBuffer;
+    for (let i = 0; i < keyBytes.length; i++) {
+      const x = i % this.gridSize;
+      const y = Math.floor(i / this.gridSize);
+      pattern[x][y].intensity = keyBytes[i];
+    }
+    
     return {
       pattern,
       keyData,
@@ -543,33 +580,17 @@ class HolographicKeyDistributor {
    */
   decodeKey(encoding) {
     const { pattern, gridSize } = encoding;
+    const keyLength = this.keyGen.keyLength;
     
-    // Fourier inversion to extract prime phases
-    const extractedPhases = [];
-    
-    for (const p of this.primes.slice(0, 16)) {
-      let realSum = 0;
-      let imagSum = 0;
-      
-      for (let x = 0; x < gridSize; x++) {
-        for (let y = 0; y < gridSize; y++) {
-          const cell = pattern[x][y];
-          const freq = (x * p / gridSize) + (y / p);
-          realSum += cell.intensity * Math.cos(freq);
-          imagSum += cell.intensity * Math.sin(freq);
-        }
-      }
-      
-      const magnitude = Math.sqrt(realSum**2 + imagSum**2) / (gridSize * gridSize);
-      const phase = Math.atan2(imagSum, realSum);
-      
-      if (magnitude > 0.01) {
-        extractedPhases.push({ prime: p, phase, amplitude: magnitude });
-      }
+    // Extract the embedded key bytes (row-major cells, intensity channel)
+    const bytes = new Array(keyLength);
+    for (let i = 0; i < keyLength; i++) {
+      const x = i % gridSize;
+      const y = Math.floor(i / gridSize);
+      bytes[i] = Math.round(pattern[x][y].intensity) & 0xFF;
     }
     
-    // Reconstruct key from extracted phases
-    return this.keyGen.expandToBytes(extractedPhases, this.keyGen.keyLength);
+    return Buffer.from(bytes);
   }
   
   /**
@@ -582,19 +603,21 @@ class HolographicKeyDistributor {
     const encoding = this.encodeKey(keyValue);
     const shares = [];
     
-    // Split pattern into shares using XOR-like operation
+    // Split pattern into shares; noise and phase offsets cancel exactly
+    // when all shares are combined.
     for (let s = 0; s < numShares; s++) {
       const share = new Array(this.gridSize);
+      const phaseOffset = (2 * Math.PI * s) / numShares - (Math.PI * (numShares - 1)) / numShares;
       for (let x = 0; x < this.gridSize; x++) {
         share[x] = new Array(this.gridSize);
         for (let y = 0; y < this.gridSize; y++) {
           const original = encoding.pattern[x][y];
           
-          // Add share-specific noise
-          const noise = Math.sin((x + y + s) * this.keyGen.phi);
+          // Sum over all shares of sin(a + 2πs/n) is exactly zero
+          const noise = Math.sin((x + y) * this.keyGen.phi + (2 * Math.PI * s) / numShares);
           share[x][y] = {
-            intensity: original.intensity + noise * (s < numShares - 1 ? 1 : -numShares + 1),
-            phase: original.phase + (2 * Math.PI * s / numShares)
+            intensity: original.intensity + noise,
+            phase: original.phase + phaseOffset
           };
         }
       }

@@ -21,9 +21,9 @@ This document is for developers who want to:
 All backends extend the base interface:
 
 ```javascript
-const { BackendInterface } = require('./backends/interface');
+import { Backend } from '@aleph-ai/tinyaleph/backends';
 
-class CustomBackend extends BackendInterface {
+class CustomBackend extends Backend {
   constructor(config) {
     super(config);
     // Initialize custom state
@@ -43,10 +43,10 @@ class CustomBackend extends BackendInterface {
 ### Example: Graph Backend
 
 ```javascript
-const { BackendInterface } = require('./backends/interface');
-const { SedenionState } = require('./core/hypercomplex');
+import { Backend } from '@aleph-ai/tinyaleph/backends';
+import { Hypercomplex } from '@aleph-ai/tinyaleph';
 
-class GraphBackend extends BackendInterface {
+class GraphBackend extends Backend {
   constructor(config) {
     super(config);
     this.nodes = new Map();
@@ -129,20 +129,20 @@ class GraphBackend extends BackendInterface {
   }
 }
 
-module.exports = { GraphBackend };
+export { GraphBackend };
 ```
 
-### Registering Custom Backends
+### Using Custom Backends
+
+There is no runtime backend registry: custom backends extend the `Backend`
+base class and are used directly.
 
 ```javascript
-const { registerBackend, createEngine } = require('./modular');
-const { GraphBackend } = require('./my-graph-backend');
+import { createEngine } from '@aleph-ai/tinyaleph';
+import { GraphBackend } from './my-graph-backend.js';
 
-// Register the backend
-registerBackend('graph', GraphBackend);
-
-// Now usable via createEngine
-const engine = createEngine('graph', {
+// Use the custom backend directly
+const backend = new GraphBackend({
   nodePrimes: {
     person: 2,
     company: 3,
@@ -150,7 +150,7 @@ const engine = createEngine('graph', {
   }
 });
 
-const result = engine.run({
+const result = backend.process({
   nodes: [
     { id: 1, type: 'person' },
     { id: 2, type: 'company' }
@@ -168,59 +168,46 @@ const result = engine.run({
 ### Custom Oscillator Types
 
 ```javascript
-const { createOscillator } = require('./physics/oscillator');
+import { Oscillator } from '@aleph-ai/tinyaleph/physics';
 
-// Standard oscillator
-const basic = createOscillator({
-  frequency: 1.0,
-  phase: 0,
-  amplitude: 1.0
-});
+// Standard oscillator: (frequency, phase, amplitude)
+const basic = new Oscillator(1.0, 0, 1.0);
 
-// Damped oscillator
-const damped = createOscillator({
-  frequency: 1.0,
-  phase: 0,
-  amplitude: 1.0,
-  damping: 0.1  // Exponential decay
-});
-
-// Driven oscillator
-const driven = createOscillator({
-  frequency: 1.0,
-  phase: 0,
-  amplitude: 1.0,
-  driving: {
-    frequency: 1.2,  // External driving frequency
-    amplitude: 0.5
-  }
-});
+// Oscillators with different frequencies
+const damped = new Oscillator(1.0, 0, 0.5);
+const driven = new Oscillator(1.2, 0, 1.0);
 ```
 
 ### Custom Coupling Functions
 
 ```javascript
-const { setCouplingFunction } = require('./physics/kuramoto');
+import { KuramotoModel } from '@aleph-ai/tinyaleph/physics';
 
-// Default Kuramoto coupling: sin(θⱼ - θᵢ)
-// Custom: weighted by state similarity
+// The KuramotoModel couples a bank of oscillators with strength K.
+// For custom coupling, subclass and override step():
 
-function semanticCoupling(oscillatorI, oscillatorJ, globalState) {
-  // Base Kuramoto term
-  const kuramotoTerm = Math.sin(oscillatorJ.phase - oscillatorI.phase);
-  
-  // Weight by semantic similarity
-  const similarity = oscillatorI.state.coherence(oscillatorJ.state);
-  
-  return kuramotoTerm * similarity;
+class SemanticCouplingModel extends KuramotoModel {
+  // Custom: weight coupling by semantic similarity
+  step(dt) {
+    const N = this.oscillators.length;
+    for (let i = 0; i < N; i++) {
+      let coupling = 0;
+      for (let j = 0; j < N; j++) {
+        if (i === j) continue;
+        const kuramotoTerm = Math.sin(this.oscillators[j].phase - this.oscillators[i].phase);
+        coupling += this.K * kuramotoTerm / N;
+      }
+      this.oscillators[i].tick(dt, coupling);
+    }
+  }
 }
-
-setCouplingFunction(semanticCoupling);
 ```
 
 ### Oscillator Networks
 
 ```javascript
+import { Oscillator } from '@aleph-ai/tinyaleph/physics';
+
 class OscillatorNetwork {
   constructor(size, topology) {
     this.oscillators = [];
@@ -228,11 +215,11 @@ class OscillatorNetwork {
     
     // Create oscillators
     for (let i = 0; i < size; i++) {
-      this.oscillators.push(createOscillator({
-        frequency: 1.0 + 0.1 * Math.random(),
-        phase: Math.random() * 2 * Math.PI,
-        amplitude: 1.0
-      }));
+      this.oscillators.push(new Oscillator(
+        1.0 + 0.1 * Math.random(),
+        Math.random() * 2 * Math.PI,
+        1.0
+      ));
     }
     
     // Create connection topology
@@ -849,7 +836,7 @@ class EntropyTracer {
 ### Event-Driven Processing
 
 ```javascript
-const EventEmitter = require('events');
+import EventEmitter from 'events';
 
 class AlephEventEngine extends EventEmitter {
   constructor(backend) {

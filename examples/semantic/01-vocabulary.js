@@ -9,7 +9,7 @@
  * - Semantic relationships emerge from mathematical structure
  */
 
-const { SemanticBackend } = require('../../modular');
+import { SemanticBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

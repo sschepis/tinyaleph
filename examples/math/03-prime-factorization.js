@@ -8,7 +8,7 @@
  * - Unique factorization enables decoding
  */
 
-const { SemanticBackend } = require('../../modular');
+import { SemanticBackend } from '../../index.js';
 
 console.log('TinyAleph Prime Factorization Example');
 console.log('=====================================\n');

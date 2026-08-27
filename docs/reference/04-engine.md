@@ -24,7 +24,7 @@ new AlephEngine(backend, config)
 
 **Example:**
 ```javascript
-const { AlephEngine, SemanticBackend } = require('./modular');
+import { AlephEngine, SemanticBackend } from '@aleph-ai/tinyaleph';
 
 const backend = new SemanticBackend(config);
 const engine = new AlephEngine(backend, {
@@ -387,7 +387,7 @@ engine.resetMetrics()
 Create engine with specified backend.
 
 ```javascript
-const { createEngine } = require('./modular');
+import { createEngine } from '@aleph-ai/tinyaleph';
 
 const engine = createEngine(type, config);
 ```
@@ -419,19 +419,21 @@ const scienceEngine = createEngine('scientific', {
 
 ### createEngineWithBackend(backend, config)
 
-Create engine with pre-built backend.
+> **Removed.** There is no separate `createEngineWithBackend` factory. To use a
+> pre-built backend, construct an `AlephEngine` directly with the backend
+> instance:
 
 ```javascript
-const { createEngineWithBackend, SemanticBackend } = require('./modular');
+import { AlephEngine, SemanticBackend } from '@aleph-ai/tinyaleph';
 
 const backend = new SemanticBackend(fullConfig);
-const engine = createEngineWithBackend(backend, {
+const engine = new AlephEngine(backend, {
   coupling: 0.2
 });
 ```
 
 **Parameters:**
-- `backend` (BackendInterface): Backend instance
+- `backend` (Backend): Backend instance
 - `config` (Object): Engine configuration
 
 **Returns:** AlephEngine

@@ -66,6 +66,9 @@ export function extendedGCDBigInt(a, b) {
  * @returns {number|null} The modular inverse, or null if no inverse exists
  */
 export function modInverse(a, m) {
+  if (!Number.isInteger(a) || !Number.isInteger(m)) {
+    throw new RangeError('modInverse requires integer inputs');
+  }
   a = ((a % m) + m) % m;  // Normalize to positive
   const { gcd, x } = extendedGCD(a, m);
   
@@ -195,7 +198,10 @@ export function areCoprimeBI(a, b) {
  * @returns {number} GCD of a and b
  */
 export function gcd(a, b) {
-  return extendedGCD(a, b).gcd;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) {
+    throw new RangeError('gcd requires integer inputs');
+  }
+  return Math.abs(extendedGCD(a, b).gcd);
 }
 
 /**

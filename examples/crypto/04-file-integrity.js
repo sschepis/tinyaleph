@@ -8,7 +8,7 @@
  * - Recompute and compare to detect changes
  */
 
-const { CryptographicBackend } = require('../../modular');
+import { CryptographicBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

@@ -1,5 +1,9 @@
 # AlephChat: Hybrid LLM/TinyAleph Chat Client Design
 
+> **Status: legacy.** The standalone `apps/aleph-chat` CJS app has been retired.
+> Its components live on in the Sentient app, re-exported from
+> `apps/sentient/lib/chat.js`. This document is kept for architectural reference.
+
 ## Overview
 
 AlephChat is a conversational AI system that combines the neural language generation of a local LLM (via LMStudio) with TinyAleph's deterministic semantic processing. The system transparently learns new vocabulary and adapts to the user's communication style while maintaining semantic coherence through hypercomplex embeddings.
@@ -350,8 +354,10 @@ class ConceptGraph {
 
 ## File Structure
 
+Legacy layout of the retired standalone app:
+
 ```
-aleph-chat/
+apps/aleph-chat/            # Retired — components now re-exported by apps/sentient/lib/chat.js
 ├── index.js                 # Main entry point & CLI
 ├── lib/
 │   ├── core.js              # AlephSemanticCore
@@ -437,8 +443,8 @@ aleph-chat/
 ## Configuration
 
 ```javascript
-// aleph-chat.config.js
-module.exports = {
+// chat.config.js
+export default {
     lmstudio: {
         baseUrl: 'http://localhost:1234/v1',
         model: 'local-model',

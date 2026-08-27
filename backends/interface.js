@@ -59,7 +59,7 @@ class Backend {
    * @returns {object[]} Array of transform specifications
    */
   getTransforms() { 
-    return this.config.transforms || []; 
+    return this.transforms ?? this.config.transforms ?? []; 
   }
   
   /**
@@ -68,6 +68,14 @@ class Backend {
    */
   getPrimes() { 
     return this.config.primes; 
+  }
+  
+  /**
+   * Get backend dimension
+   * @returns {number} Dimension of the state space
+   */
+  getDimension() {
+    return this.dimension;
   }
   
   /**
@@ -84,6 +92,19 @@ class Backend {
    */
   getName() {
     return this.constructor.name;
+  }
+  
+  /**
+   * Merge configuration overrides into this backend (additive)
+   * @param {object} overrides - Config values to shallow-merge
+   * @returns {Backend} This backend (for chaining)
+   */
+  configure(overrides = {}) {
+    Object.assign(this.config, overrides);
+    if (typeof overrides.dimension === 'number') {
+      this.dimension = overrides.dimension;
+    }
+    return this;
   }
 }
 

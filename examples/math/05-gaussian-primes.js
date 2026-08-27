@@ -8,7 +8,7 @@
  * - Related to sums of two squares
  */
 
-const { Hypercomplex } = require('../../modular');
+import { Hypercomplex } from '../../index.js';
 
 console.log('TinyAleph Gaussian Primes Example');
 console.log('==================================\n');

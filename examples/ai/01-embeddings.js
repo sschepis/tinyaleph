@@ -9,7 +9,7 @@
  * - Order-preserving (word order affects the result)
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

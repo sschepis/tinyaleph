@@ -8,7 +8,7 @@
  * - Cannot be undone
  */
 
-const { ScientificBackend, Hypercomplex } = require('../../modular');
+import { ScientificBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

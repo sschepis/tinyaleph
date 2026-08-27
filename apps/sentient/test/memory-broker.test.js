@@ -7,10 +7,17 @@
  * @module test/memory-broker.test
  */
 
-const { describe, it, before, after, beforeEach } = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const path = require('path');
+import { describe, it, before, after, beforeEach } from 'node:test';
+import * as assert from 'node:assert';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+import * as __ns0____lib_memory_broker_js from '../lib/memory-broker.js';
+import * as __ns1__________observer_prsc_js from '../../../observer/prsc.js';
+import * as __ns2___mocks_mock_llm_js from './mocks/mock-llm.js';
 
 // ============================================================================
 // IMPORT TESTS - Verify PRSC doesn't import SMF directly
@@ -108,7 +115,7 @@ describe('MemoryBroker Interface', () => {
         SMFBroker,
         createBroker,
         createSMFBroker
-    } = require('../lib/memory-broker.js');
+    } = __ns0____lib_memory_broker_js;
     
     describe('InMemoryBroker', () => {
         let broker;
@@ -456,8 +463,8 @@ describe('MemoryBroker Interface', () => {
 // ============================================================================
 
 describe('PRSC with MemoryBroker Integration', () => {
-    const { PRSCLayer } = require('../../../observer/prsc.js');
-    const { createSMFBroker } = require('../lib/memory-broker.js');
+    const { PRSCLayer } = __ns1__________observer_prsc_js;
+    const { createSMFBroker } = __ns0____lib_memory_broker_js;
     
     it('should run PRSC oscillator without SMF import', () => {
         // Create a PRSC layer - it should work without any SMF dependency
@@ -543,7 +550,7 @@ describe('PRSC with MemoryBroker Integration', () => {
 // ============================================================================
 
 describe('Mock LLM Mode for CI', () => {
-    const { MockLLMClient, fixtures } = require('./mocks/mock-llm.js');
+    const { MockLLMClient, fixtures } = __ns2___mocks_mock_llm_js;
     
     it('should provide echo mock', async () => {
         const client = fixtures.echo();

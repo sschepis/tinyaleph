@@ -7,11 +7,10 @@
  * - Wisdom aggregation (weighted voting)
  */
 
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert');
+import { describe, it, beforeEach } from 'node:test';
+import * as assert from 'node:assert';
 
-const {
-    DSNNode,
+import { DSNNode,
     LocalField,
     PRRCChannel,
     CoherentCommitProtocol,
@@ -20,11 +19,9 @@ const {
     GlobalMemoryField,
     SEMANTIC_DOMAINS,
     FIRST_100_PRIMES,
-    generateNodeId
-} = require('../lib/network');
+    generateNodeId } from '../lib/network.js';
 
-const { SedenionMemoryField } = require('../lib/smf');
-const { AtomicTerm, ChainTerm, FusionTerm, SemanticObject } = require('../lib/prime-calculus');
+import { SedenionMemoryField } from '../lib/smf.js';
 
 // ============================================================================
 // NODE SPECIALIZATION TESTS

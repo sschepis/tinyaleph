@@ -208,4 +208,59 @@ describe('Hypercomplex', () => {
       assert.strictEqual(c.dim, 16);
     });
   });
+
+  describe('inversion for dim >= 16', () => {
+    it('should throw for inverse() on sedenions (dim 16)', () => {
+      const s = Hypercomplex.basis(16, 0, 1);
+      assert.throws(() => s.inverse(), /dimension 16/);
+    });
+
+    it('should throw for inverse() on pathions (dim 32)', () => {
+      const p = Hypercomplex.basis(32, 0, 1);
+      assert.throws(() => p.inverse(), /dimension 32/);
+    });
+
+    it('should still return valid inverse for quaternions (dim 4)', () => {
+      const h = Hypercomplex.fromArray([2, 0, 0, 0]);
+      const inv = h.inverse();
+      assert.ok(Math.abs(h.mul(inv).c[0] - 1) < 0.0001);
+    });
+  });
+
+  describe('powInt with large exponents', () => {
+    it('should return identity for q^0', () => {
+      const q = Hypercomplex.fromArray([1, 2, 3, 4]);
+      const r = q.powInt(0);
+      assert.ok(Math.abs(r.c[0] - 1) < 1e-10);
+      for (let i = 1; i < 4; i++) {
+        assert.ok(Math.abs(r.c[i]) < 1e-10);
+      }
+    });
+
+    it('should not corrupt exponents >= 2^31 (int32 coercion)', () => {
+      // Scalar slightly above 1: q^n stays finite and far from identity.
+      // int32 truncation of the exponent would return the identity (1).
+      const q = Hypercomplex.fromReal(4, 1.0000001);
+      const r31 = q.powInt(2 ** 31);
+      const r32 = q.powInt(2 ** 32);
+      assert.ok(Number.isFinite(r31.c[0]));
+      assert.ok(Number.isFinite(r32.c[0]));
+      assert.ok(r31.c[0] > 1e50, `q^(2^31) should be far from identity, got ${r31.c[0]}`);
+      assert.ok(r32.c[0] > 1e100, `q^(2^32) should be far from identity, got ${r32.c[0]}`);
+      for (let i = 1; i < 4; i++) {
+        assert.ok(Math.abs(r31.c[i]) < 1e-6);
+        assert.ok(Math.abs(r32.c[i]) < 1e-6);
+      }
+    });
+
+    it('should keep odd exponents non-identity', () => {
+      // (-1)^(2^31+1) = -1 (odd exponent)
+      const q = Hypercomplex.fromReal(4, -1);
+      const odd = q.powInt(2 ** 31 + 1);
+      assert.ok(Math.abs(odd.c[0] + 1) < 1e-10, '(-1)^(2^31+1) must be -1');
+      // (-1)^(2^31) = +1 (even exponent)
+      const even = q.powInt(2 ** 31);
+      assert.ok(Math.abs(even.c[0] - 1) < 1e-10, '(-1)^(2^31) must be +1');
+    });
+  });
 });

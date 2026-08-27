@@ -5,14 +5,12 @@
  * naturally harmonic relationships between primes based on the golden ratio.
  */
 
-const {
-  ResonanceCalculator,
+import { ResonanceCalculator,
   resonanceSignature,
   findFibonacciSequences,
   PHI,
   calculateResonance,
-  findGoldenPairs
-} = require('../core');
+  findGoldenPairs } from '../core/index.js';
 
 console.log('='.repeat(60));
 console.log('Golden Ratio Resonance Calculator');

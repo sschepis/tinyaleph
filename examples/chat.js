@@ -4,17 +4,21 @@
  * 
  * Updated to use modular architecture.
  */
-const readline = require('readline');
-const fs = require('fs');
-const path = require('path');
-const { createEngine, SemanticBackend } = require('../modular');
+import * as readline from 'readline';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'node:url';
+import { createEngine, SemanticBackend } from '../index.js';
+import data from '../data.json' with { type: 'json' };
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
 const semanticConfig = {
   dimension: 16,
-  vocabulary: require('../data.json').vocabulary,
-  ontology: require('../data.json').ontology || {},
-  transforms: require('../data.json').transforms || []
+  vocabulary: data.vocabulary,
+  ontology: data.ontology || {},
+  transforms: data.transforms || []
 };
 
 const engine = createEngine('semantic', semanticConfig);
@@ -25,8 +29,7 @@ fs.watchFile(DATA_FILE, (curr, prev) => {
   if (curr.mtime !== prev.mtime) {
     console.log('\n[System] data.json changed. Reloading...');
     try {
-      delete require.cache[require.resolve('../data.json')];
-      const newData = require('../data.json');
+      const newData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
       
       // Create new backend with updated vocabulary
       const newBackend = new SemanticBackend({

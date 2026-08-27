@@ -12,16 +12,14 @@ console.log('Testing Whitepaper Components...\n');
 
 // Test 1: Prime Calculus Kernel
 console.log('=== Test 1: Prime Calculus Kernel ===');
-const {
-    NounTerm,
+import { NounTerm,
     AdjTerm,
     ChainTerm,
     FusionTerm,
     PrimeCalculusEvaluator,
     PrimeCalculusVerifier,
     PrimeCalculusBuilder,
-    SemanticObject
-} = require('./lib/prime-calculus');
+    SemanticObject } from './lib/prime-calculus.js';
 
 try {
     // Create basic terms
@@ -66,8 +64,7 @@ try {
 
 // Test 2: Enochian Packet Layer
 console.log('=== Test 2: Enochian Packet Layer ===');
-const {
-    ENOCHIAN_PRIMES,
+import { ENOCHIAN_PRIMES,
     twistAngle,
     totalTwist,
     isTwistClosed,
@@ -75,8 +72,7 @@ const {
     EnochianPacket,
     EnochianEncoder,
     EnochianDecoder,
-    EnochianPacketBuilder
-} = require('./lib/enochian');
+    EnochianPacketBuilder } from './lib/enochian.js';
 
 try {
     console.log(`  Enochian primes: ${ENOCHIAN_PRIMES}`);
@@ -124,8 +120,7 @@ try {
 
 // Test 3: Distributed Sentience Network
 console.log('=== Test 3: Distributed Sentience Network ===');
-const {
-    LocalField,
+import { LocalField,
     Proposal,
     ProposalLog,
     GlobalMemoryField,
@@ -133,8 +128,7 @@ const {
     PRRCChannel,
     NetworkSynchronizer,
     DSNNode,
-    generateNodeId
-} = require('./lib/network');
+    generateNodeId } from './lib/network.js';
 
 try {
     // Generate node ID
@@ -200,7 +194,7 @@ try {
 
 // Test 4: Resolang Integration
 console.log('=== Test 4: Resolang Integration ===');
-const { initResolang, createPipeline, ResolangSMF } = require('./lib/resolang');
+import { initResolang, createPipeline, ResolangSMF } from './lib/resolang.js';
 
 (async () => {
     try {

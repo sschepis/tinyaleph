@@ -5,13 +5,11 @@
  * that generates gauge symmetries and physical constants.
  */
 
-const {
-    TWIST_108,
+import { TWIST_108,
     twistAngle,
     totalTwist,
     isTwistClosed,
-    findClosingPrimes
-} = require('../../core/prime');
+    findClosingPrimes } from '../../core/prime.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('  The 108 Invariant: Minimal Closed-Form Twist Configuration');

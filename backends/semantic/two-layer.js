@@ -205,6 +205,20 @@ class TwoLayerEngine {
     const words = [];
     const usedWords = new Set();
     
+    // Surface bias engine: expose current word biases to the selection scorer
+    const activeSurface = this.surfaces.current();
+    const engineWordBiases = {};
+    if (activeSurface) {
+      for (const candidates of activeSurface.primeToWords.values()) {
+        for (const candidate of candidates) {
+          engineWordBiases[candidate.word] = this.biasEngine.getBias(
+            candidate.word,
+            this.surfaces.contextStack
+          );
+        }
+      }
+    }
+    
     for (let i = 0; i < orderedPrimes.length; i++) {
       const primes = orderedPrimes[i];
       
@@ -212,6 +226,7 @@ class TwoLayerEngine {
       const biasOptions = {
         ...options,
         contexts: this.surfaces.contextStack,
+        wordBiases: { ...engineWordBiases, ...(options.wordBiases || {}) },
         avoid: options.avoidRepetition ? [...usedWords] : []
       };
       
@@ -337,14 +352,34 @@ class TwoLayerEngine {
   
   /**
    * Bias toward words related to recent conversation
+   * Boosts candidates whose primes appeared in recent history, creating
+   * topical coherence. Returns the number of boosted words.
    */
   applyConversationalBias() {
     const recentPrimes = this.getRecentPrimes();
+    if (recentPrimes.size === 0) return 0;
     
-    for (const [prime, weight] of recentPrimes) {
-      // Find words with this prime and boost them slightly
-      // This creates topical coherence
+    let boosted = 0;
+    
+    for (const surface of this.surfaces.surfaces.values()) {
+      for (const candidates of surface.primeToWords.values()) {
+        for (const candidate of candidates) {
+          let weight = 0;
+          for (const p of candidate.primes) {
+            weight += recentPrimes.get(p) || 0;
+          }
+          
+          if (weight > 0) {
+            // Slight boost, capped at 2x
+            const boost = Math.min(1 + weight * 0.1, 2.0);
+            this.biasEngine.setTemporaryBias(candidate.word, boost);
+            boosted++;
+          }
+        }
+      }
     }
+    
+    return boosted;
   }
   
   /**

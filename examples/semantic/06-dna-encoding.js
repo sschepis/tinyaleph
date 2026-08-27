@@ -9,7 +9,7 @@
  * - Sense/antisense duality
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP
@@ -170,9 +170,9 @@ console.log('  - Dual representation (sense + antisense)');
 console.log('  - Reading frames (6 offset encodings)');
 console.log('  - Codons (triplet groupings)');
 
-console.log('\nCombined state norm: ' + dnaResult.combined.norm().toFixed(4));
+console.log('\nCombined state norm: ' + dnaResult.sixFrame.norm().toFixed(4));
 console.log('Number of codons: ' + dnaResult.codons.length);
-console.log('Frames available: ' + Object.keys(dnaResult.frames).join(', '));
+console.log('Frames available: ' + dnaResult.frames.length);
 
 // ===========================================
 // PRACTICAL APPLICATION: ROBUST MATCHING
@@ -199,13 +199,13 @@ for (var d = 0; d < documents.length; d++) {
     var docDna = backend.dnaEncode(doc);
     
     // Compare using combined states
-    var combinedSim = similarity(queryDna.combined, docDna.combined);
+    var combinedSim = similarity(queryDna.sixFrame, docDna.sixFrame);
     
     // Compare sense-to-sense
-    var senseSim = similarity(queryDna.dual.sense, docDna.dual.sense);
+    var senseSim = similarity(queryDna.sense, docDna.sense);
     
     // Compare sense-to-antisense (for reversed order matches)
-    var crossSim = similarity(queryDna.dual.sense, docDna.dual.antisense);
+    var crossSim = similarity(queryDna.sense, docDna.antisense);
     
     var maxSim = Math.max(combinedSim, senseSim, crossSim);
     

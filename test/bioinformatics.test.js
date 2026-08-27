@@ -489,3 +489,28 @@ describe('createEngine integration', () => {
     assert.ok('entropy' in result);
   });
 });
+// ============================================================================
+// Base Backend Interface Regression Tests
+// ============================================================================
+
+describe('BioinformaticsBackend base interface', () => {
+  test('exposes the full base method surface', () => {
+    const backend = new BioinformaticsBackend();
+    for (const method of ['getName', 'getAxes', 'getPrimes', 'getDimension', 'getTransforms', 'applyTransform', 'encode', 'decode']) {
+      assert.strictEqual(typeof backend[method], 'function', `missing ${method}`);
+    }
+    assert.strictEqual(typeof backend.getName(), 'string');
+    assert.ok(Array.isArray(backend.getPrimes()));
+    assert.ok(Array.isArray(backend.getTransforms()));
+    assert.strictEqual(backend.getDimension(), backend.dimension);
+  });
+
+  test('supports additive configure() merging', () => {
+    const backend = new BioinformaticsBackend({ dimension: 24 });
+    const returned = backend.configure({ dimension: 32, customFlag: true });
+    assert.strictEqual(returned, backend);
+    assert.strictEqual(backend.getDimension(), 32);
+    assert.strictEqual(backend.config.customFlag, true);
+    assert.ok(backend.getPrimes().length > 0);
+  });
+});

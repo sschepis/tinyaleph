@@ -9,13 +9,11 @@
  * - Fusion canonicalization
  */
 
-const {
-    N, A, FUSE, CHAIN,
+import { N, A, FUSE, CHAIN,
     ReductionSystem, ResonancePrimeOperator, NextPrimeOperator,
     isNormalForm, isReducible, termSize,
     FusionCanonicalizer, NormalFormVerifier,
-    demonstrateStrongNormalization, testLocalConfluence
-} = require('../../core');
+    demonstrateStrongNormalization, testLocalConfluence } from '../../core/index.js';
 
 console.log('=== Reduction Semantics and Strong Normalization ===\n');
 

@@ -352,21 +352,22 @@ For logical consistency, preserve these invariants:
 Aleph implements QMF concepts through:
 
 ### Hypercomplex States
-The `SedenionState` class generalizes quaternions to 16 dimensions (sedenions contain quaternions as a subspace):
+The `Hypercomplex` class generalizes quaternions to 16 dimensions (sedenions contain quaternions as a subspace):
 
 ```javascript
-const { SedenionState } = require('./core/hypercomplex');
+import { Hypercomplex } from '@aleph-ai/tinyaleph';
 
 // Create quaternion-like state (first 4 components)
-const q = new SedenionState([w, x, y, z, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+const q = new Hypercomplex(16);
+q.c[0] = w; q.c[1] = x; q.c[2] = y; q.c[3] = z;
 ```
 
 ### Non-Commutative Multiplication
-The `multiply()` method respects non-commutativity:
+The `mul()` method respects non-commutativity:
 
 ```javascript
-const q1q2 = q1.multiply(q2);
-const q2q1 = q2.multiply(q1);
+const q1q2 = q1.mul(q2);
+const q2q1 = q2.mul(q1);
 // q1q2 ≠ q2q1 in general
 ```
 
@@ -374,11 +375,10 @@ const q2q1 = q2.multiply(q1);
 Physics module provides entropy and stability:
 
 ```javascript
-const { computeEntropy } = require('./physics/entropy');
-const { lyapunov } = require('./physics/lyapunov');
+import { estimateLyapunov } from '@aleph-ai/tinyaleph/physics';
 
-const entropy = computeEntropy(state);
-const stability = lyapunov(entropyTrajectory);
+const entropy = state.entropy();
+const stability = estimateLyapunov(entropyTrajectory);
 ```
 
 ### Semantic Encoding

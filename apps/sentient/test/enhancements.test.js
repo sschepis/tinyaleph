@@ -9,11 +9,22 @@
  * - Mock LLM behavior
  */
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import * as assert from 'node:assert';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
+import * as __ns0____lib_binary_serializer from '../lib/binary-serializer.js';
+import * as __ns1____lib_snapshot_integrity from '../lib/snapshot-integrity.js';
+import * as __ns2____lib_memory_broker from '../lib/memory-broker.js';
+import * as __ns3____lib_transport_index from '../lib/transport/index.js';
+import * as __ns4___mocks_mock_llm from './mocks/mock-llm.js';
+import * as __ns5____lib_learning_prompt_cache from '../lib/learning/prompt-cache.js';
+import * as __ns6____lib_error_handler from '../lib/error-handler.js';
+import * as __ns7____lib_profiler from '../lib/profiler.js';
+import * as __ns8____lib_tools_file_editor_transaction from '../lib/tools/file-editor/transaction.js';
+import * as __ns9____lib_secure_config from '../lib/secure-config.js';
 
 // ============================================================================
 // TEST UTILITIES
@@ -42,7 +53,7 @@ async function cleanupTempDir() {
 // ============================================================================
 
 describe('BinarySerializer', async () => {
-    const { BinarySerializer, MsgPackEncoder, MsgPackDecoder } = require('../lib/binary-serializer');
+    const { BinarySerializer, MsgPackEncoder, MsgPackDecoder } = __ns0____lib_binary_serializer;
     
     it('should encode and decode primitive types', () => {
         // Test various types
@@ -133,7 +144,7 @@ describe('BinarySerializer', async () => {
 // ============================================================================
 
 describe('SnapshotIntegrity', async () => {
-    const { SnapshotIntegrityManager } = require('../lib/snapshot-integrity');
+    const { SnapshotIntegrityManager } = __ns1____lib_snapshot_integrity;
     let manager;
     
     beforeEach(async () => {
@@ -223,7 +234,7 @@ describe('SnapshotIntegrity', async () => {
 // ============================================================================
 
 describe('MemoryBroker', async () => {
-    const { InMemoryBroker, FileBroker, CachingBroker, SMFBroker } = require('../lib/memory-broker');
+    const { InMemoryBroker, FileBroker, CachingBroker, SMFBroker } = __ns2____lib_memory_broker;
     
     describe('InMemoryBroker', () => {
         let broker;
@@ -344,7 +355,7 @@ describe('MemoryBroker', async () => {
 // ============================================================================
 
 describe('Transport', async () => {
-    const { MemoryTransport, TransportFactory, TransportState } = require('../lib/transport/index');
+    const { MemoryTransport, TransportFactory, TransportState } = __ns3____lib_transport_index;
     
     it('should create paired memory transports', async () => {
         const [a, b] = TransportFactory.createMemoryPair();
@@ -399,7 +410,7 @@ describe('Transport', async () => {
 // ============================================================================
 
 describe('MockLLM', async () => {
-    const { MockLLMClient, fixtures, waitForRequests } = require('./mocks/mock-llm');
+    const { MockLLMClient, fixtures, waitForRequests } = __ns4___mocks_mock_llm;
     
     it('should echo prompts', async () => {
         const client = fixtures.echo();
@@ -478,8 +489,8 @@ describe('MockLLM', async () => {
 // ============================================================================
 
 describe('PromptCache', async () => {
-    const { PromptCache, CachedLLMProvider } = require('../lib/learning/prompt-cache');
-    const { MockLLMClient } = require('./mocks/mock-llm');
+    const { PromptCache, CachedLLMProvider } = __ns5____lib_learning_prompt_cache;
+    const { MockLLMClient } = __ns4___mocks_mock_llm;
     
     it('should cache identical prompts', async () => {
         const cache = new PromptCache({ maxSize: 100 });
@@ -533,7 +544,7 @@ describe('PromptCache', async () => {
 // ============================================================================
 
 describe('ErrorHandler', async () => {
-    const { ErrorHandler, SentientError, NetworkError, withErrorHandling } = require('../lib/error-handler');
+    const { ErrorHandler, SentientError, NetworkError, withErrorHandling } = __ns6____lib_error_handler;
     
     it('should normalize errors to SentientError', () => {
         const handler = new ErrorHandler();
@@ -601,10 +612,10 @@ describe('ErrorHandler', async () => {
 // ============================================================================
 
 describe('Profiler', async () => {
-    const { OscillatorProfiler, Timer, Histogram } = require('../lib/profiler');
+    const { OscillatorProfiler, Timer, Histogram } = __ns7____lib_profiler;
     
     it('should record tick timing', () => {
-        const profiler = new OscillatorProfiler();
+        const profiler = new OscillatorProfiler({ monitorMemory: false });
         
         profiler.startTick();
         // Simulate work
@@ -632,7 +643,8 @@ describe('Profiler', async () => {
     
     it('should detect bottlenecks', () => {
         const profiler = new OscillatorProfiler({
-            enabled: true
+            enabled: true,
+            monitorMemory: false
         });
         profiler.bottleneckThresholds.tick = 1; // Very low threshold
         
@@ -650,7 +662,7 @@ describe('Profiler', async () => {
     });
     
     it('should generate formatted report', () => {
-        const profiler = new OscillatorProfiler();
+        const profiler = new OscillatorProfiler({ monitorMemory: false });
         
         for (let i = 0; i < 10; i++) {
             profiler.startTick();
@@ -670,7 +682,7 @@ describe('Profiler', async () => {
 // ============================================================================
 
 describe('FileTransaction', async () => {
-    const { FileTransaction, TransactionState, executeAtomic } = require('../lib/tools/file-editor/transaction');
+    const { FileTransaction, TransactionState, executeAtomic } = __ns8____lib_tools_file_editor_transaction;
     
     beforeEach(async () => {
         await setupTempDir();
@@ -744,7 +756,7 @@ describe('FileTransaction', async () => {
 // ============================================================================
 
 describe('SecureConfig', async () => {
-    const { SecureConfig, encryptCredential, decryptCredential } = require('../lib/secure-config');
+    const { SecureConfig, encryptCredential, decryptCredential } = __ns9____lib_secure_config;
     
     beforeEach(async () => {
         await setupTempDir();

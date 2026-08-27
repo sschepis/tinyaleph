@@ -16,10 +16,10 @@ Aleph's scientific backend provides **quantum-inspired computation** through hyp
 ## Creating a Scientific Engine
 
 ```javascript
-const { createEngine, ScientificBackend } = require('./modular');
+import { createEngine, ScientificBackend } from '@aleph-ai/tinyaleph';
 
 // Load configuration
-const config = require('./data.json');
+const config = { dimension: 16 };
 
 // Create engine
 const engine = createEngine('scientific', config);
@@ -141,30 +141,21 @@ console.log('Entropy trajectory:', trajectory.slice(0, 10));
 ### Oscillator Dynamics
 
 ```javascript
-const { createOscillator } = require('./physics/oscillator');
+import { KuramotoModel } from '@aleph-ai/tinyaleph/physics';
 
-// Create coupled oscillators
-const oscillators = [];
-for (let i = 0; i < 10; i++) {
-  oscillators.push(createOscillator({
-    frequency: 1.0 + 0.1 * Math.random(),
-    phase: Math.random() * 2 * Math.PI,
-    amplitude: 1.0
-  }));
-}
+// Create a bank of coupled oscillators
+const model = new KuramotoModel(
+  Array.from({ length: 10 }, () => 1.0 + 0.1 * Math.random()),
+  0.1   // coupling strength
+);
 
-// Evolve with Kuramoto coupling
-const { kuramotoStep } = require('./physics/kuramoto');
-
+// Evolve the coupled system
 for (let t = 0; t < 1000; t++) {
-  kuramotoStep(oscillators, 0.1, 0.01);  // coupling, dt
+  model.step(0.01);  // dt
 }
 
-// Check synchronization
-const phases = oscillators.map(o => o.phase);
-const phaseVariance = variance(phases);
-console.log('Phase variance:', phaseVariance);
-// Low variance indicates synchronization
+// Check synchronization via the order parameter
+const r = model.orderParameter();  // 1.0 = fully synchronized
 ```
 
 ---
@@ -174,19 +165,17 @@ console.log('Phase variance:', phaseVariance);
 ### State Collapse
 
 ```javascript
-const { collapse } = require('./physics/collapse');
+import { partialCollapse } from '@aleph-ai/tinyaleph/physics';
 const backend = new ScientificBackend(config);
 
 // Create superposition
 const superposition = backend.createRandomState();
 console.log('Before collapse - entropy:', superposition.entropy());
 
-// Collapse toward target
-const target = backend.createState([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-const collapsed = collapse(superposition, target, 0.8);  // 80% collapse
+// Collapse toward basis state index 0
+const collapsed = partialCollapse(superposition, 0, 0.8);  // 80% collapse
 
 console.log('After collapse - entropy:', collapsed.entropy());
-console.log('Coherence with target:', collapsed.coherence(target));
 ```
 
 ### Measurement Operators
@@ -270,18 +259,16 @@ console.log('P(11):', measureCorrelation(bell, z1, z1));
 ### Lyapunov Exponents
 
 ```javascript
-const { lyapunov } = require('./physics/lyapunov');
+import { estimateLyapunov, classifyStability } from '@aleph-ai/tinyaleph/physics';
 const backend = new ScientificBackend(config);
 
 // Calculate stability of trajectory
 function analyzeStability(trajectory) {
-  const exponent = lyapunov(trajectory);
-  
+  const exponent = estimateLyapunov(trajectory);
+
   return {
     exponent,
-    stable: exponent < 0,
-    chaotic: exponent > 0,
-    marginal: Math.abs(exponent) < 0.01
+    classification: classifyStability(exponent)
   };
 }
 
@@ -300,7 +287,7 @@ console.log('Stability analysis:', stability);
 ### Entropy Dynamics
 
 ```javascript
-const { computeEntropy } = require('./physics/entropy');
+import { shannonEntropy } from '@aleph-ai/tinyaleph/physics';
 const backend = new ScientificBackend(config);
 
 // Track entropy over evolution
@@ -309,7 +296,7 @@ function entropyEvolution(initial, steps, perturbation) {
   let state = initial;
   
   for (let i = 0; i < steps; i++) {
-    entropies.push(computeEntropy(state));
+    entropies.push(shannonEntropy(state));
     
     // Apply small perturbation
     const noise = backend.createRandomState().scale(perturbation);

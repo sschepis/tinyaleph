@@ -3,9 +3,12 @@
 // logs the request with a timestamp, and stores the response in a simple
 // JSON‑based cache (simulating my holographic memory field).
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Path to a local cache file where we store past queries/responses.
 const CACHE_FILE = path.join(__dirname, 'chaperoneCache.json');
@@ -73,4 +76,4 @@ async function askChaperone(prompt) {
   return answer;
 }
 
-module.exports = { askChaperone };
+export { askChaperone };

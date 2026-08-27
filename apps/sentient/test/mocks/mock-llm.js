@@ -11,8 +11,8 @@
  * - Token counting simulation
  */
 
-const { EventEmitter } = require('events');
-const crypto = require('crypto');
+import { EventEmitter } from 'events';
+import crypto from 'crypto';
 
 // ============================================================================
 // MOCK RESPONSE GENERATORS
@@ -645,7 +645,7 @@ function waitForRequests(client, count, timeout = 5000) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
     // Main class
     MockLLMClient,
     

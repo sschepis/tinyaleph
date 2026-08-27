@@ -5,7 +5,7 @@
  * where quantum gates activate only on specific tick boundaries.
  */
 
-const { TickGate } = require('../../apps/sentient/lib/hqe');
+import { TickGate } from '../../observer/index.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('  Tick-Only HQE Gating');
@@ -21,119 +21,65 @@ console.log('   • Reduced noise sensitivity');
 console.log('   • Synchronized multi-gate operations');
 console.log('   • Hardware-friendly implementation\n');
 
-// Create tick gates
+// Create tick gates in different modes
 console.log('2. Creating Tick Gates\n');
 
 const gates = [
-    new TickGate({ period: 4, phase: 0, name: 'G0' }),
-    new TickGate({ period: 4, phase: 1, name: 'G1' }),
-    new TickGate({ period: 4, phase: 2, name: 'G2' }),
-    new TickGate({ period: 4, phase: 3, name: 'G3' }),
+    new TickGate({ mode: 'strict', minTickInterval: 1, name: 'strict' }),
+    new TickGate({ mode: 'adaptive', coherenceThreshold: 0.6, name: 'adaptive' }),
+    new TickGate({ mode: 'free', name: 'free' }),
 ];
 
-console.log('   Created 4 gates with period=4, different phases:\n');
 for (const gate of gates) {
-    console.log(`   • ${gate.name}: period=${gate.period}, phase=${gate.phase}`);
+    console.log(`   • ${gate.mode} gate: threshold=${gate.coherenceThreshold}, minInterval=${gate.minTickInterval}ms`);
 }
 
 // Tick simulation
 console.log('\n3. Tick Simulation\n');
-console.log('   Simulating 12 ticks, showing which gates are open:\n');
+console.log('   Without any tick events, checking shouldProcess:\n');
 
-console.log('   ┌──────┬──────┬──────┬──────┬──────┐');
-console.log('   │ Tick │  G0  │  G1  │  G2  │  G3  │');
-console.log('   ├──────┼──────┼──────┼──────┼──────┤');
+console.log('   ┌──────────┬──────────────┬───────────────┬─────────────────────────────┐');
+console.log('   │ Mode     │ Coherence    │ Passes?       │ Reason                      │');
+console.log('   ├──────────┼──────────────┼───────────────┼─────────────────────────────┤');
 
-for (let tick = 0; tick < 12; tick++) {
-    const states = gates.map(g => g.isOpen(tick) ? '  ●  ' : '  ○  ');
-    console.log(`   │ ${tick.toString().padStart(4)} │${states.join('│')}│`);
+for (const gate of gates) {
+    const r1 = gate.shouldProcess({ coherence: 0.9 });
+    console.log(`   │ ${gate.mode.padEnd(8)} │ 0.9          │ ${r1.shouldPass ? 'Yes' : 'No '}           │ ${r1.reason.padEnd(27)} │`);
 }
-console.log('   └──────┴──────┴──────┴──────┴──────┘');
+console.log('   └──────────┴──────────────┴───────────────┴─────────────────────────────┘');
 
-// Gate application
-console.log('\n4. Gate Application\n');
+console.log('\n   The strict gate blocks everything until an explicit tick;');
+console.log('   adaptive gates open on high coherence; free mode never gates.\n');
 
-const inputState = { amplitude: 1.0, phase: 0 };
-const operation = (state) => ({
-    amplitude: state.amplitude * 0.9,
-    phase: state.phase + Math.PI / 4
-});
+// Explicit ticks
+console.log('4. Explicit Tick Events\n');
+const strictGate = gates[0];
+console.log('   Registering 3 explicit ticks on the strict gate:\n');
 
-console.log('   Applying gate operation through tick sequence:\n');
-console.log(`   Input state: amplitude=${inputState.amplitude}, phase=${inputState.phase.toFixed(3)}`);
+console.log('   ┌───────┬────────────────┬───────────────────────────┐');
+console.log('   │ Tick  │ Operation      │ Gate Decision             │');
+console.log('   ├───────┼────────────────┼───────────────────────────┤');
 
-let currentState = { ...inputState };
-const gate = gates[0];
-
-console.log('\n   ┌──────┬─────────────┬───────────────┬───────────────┐');
-console.log('   │ Tick │ Gate Open?  │ Amplitude     │ Phase         │');
-console.log('   ├──────┼─────────────┼───────────────┼───────────────┤');
-
-for (let tick = 0; tick < 8; tick++) {
-    const open = gate.isOpen(tick);
-    if (open) {
-        currentState = gate.apply(currentState, operation, tick);
-    }
-    const status = open ? 'Yes ●' : 'No  ○';
-    console.log(`   │ ${tick.toString().padStart(4)} │ ${status.padEnd(11)} │ ${currentState.amplitude.toFixed(6).padStart(13)} │ ${currentState.phase.toFixed(6).padStart(13)} │`);
+for (let i = 0; i < 3; i++) {
+    strictGate.tick();
+    const r = strictGate.shouldProcess({ coherence: 0.1 });
+    console.log(`   │ ${i + 1}     │ apply(gate)    │ ${r.shouldPass ? 'Pass  ✓' : 'Block ✗'} (${r.reason})           │`);
+    const r2 = strictGate.shouldProcess({ coherence: 0.1 });
+    console.log(`   │       │ (again)        │ ${r2.shouldPass ? 'Pass  ✓' : 'Block ✗'} (${r2.reason})           │`);
 }
-console.log('   └──────┴─────────────┴───────────────┴───────────────┘');
+console.log('   └───────┴────────────────┴───────────────────────────┘');
 
-// Multiple coordinated gates
-console.log('\n5. Coordinated Multi-Gate Operations\n');
+console.log('\n   Each explicit tick permits exactly one operation;');
+console.log('   subsequent operations are gated until the next tick.\n');
 
-console.log('   Multiple gates can be coordinated for complex operations:');
-console.log('   • Sequential: G0 → G1 → G2 → G3');
-console.log('   • Parallel: All gates at same phase');
-console.log('   • Interleaved: Even/odd tick separation\n');
-
-const seqGate = new TickGate({ period: 8, phase: 0, name: 'Prepare' });
-const midGate = new TickGate({ period: 8, phase: 2, name: 'Process' });
-const endGate = new TickGate({ period: 8, phase: 4, name: 'Measure' });
-
-console.log('   Sequential pipeline (period=8):');
-console.log('   ┌──────┬──────────┬──────────┬──────────┐');
-console.log('   │ Tick │ Prepare  │ Process  │ Measure  │');
-console.log('   ├──────┼──────────┼──────────┼──────────┤');
-
-for (let tick = 0; tick < 8; tick++) {
-    const prep = seqGate.isOpen(tick) ? '    ●   ' : '    ○   ';
-    const proc = midGate.isOpen(tick) ? '    ●   ' : '    ○   ';
-    const meas = endGate.isOpen(tick) ? '    ●   ' : '    ○   ';
-    console.log(`   │ ${tick.toString().padStart(4)} │${prep}│${proc}│${meas}│`);
+// Gate statistics
+console.log('5. Gate Statistics\n');
+for (const gate of gates) {
+    const stats = gate.getStats();
+    console.log(`   • ${gate.mode} gate: ${stats.passedCount} passed, ${stats.gatedCount} gated (ratio=${stats.gateRatio.toFixed(2)})`);
 }
-console.log('   └──────┴──────────┴──────────┴──────────┘');
 
-// Prime-period gates
-console.log('\n6. Prime-Period Gates\n');
-
-console.log('   Using prime periods avoids synchronization artifacts:');
-
-const primeGates = [
-    new TickGate({ period: 3, phase: 0, name: 'P3' }),
-    new TickGate({ period: 5, phase: 0, name: 'P5' }),
-    new TickGate({ period: 7, phase: 0, name: 'P7' }),
-];
-
-console.log('\n   Prime periods (3, 5, 7):');
-console.log('   ┌──────┬──────┬──────┬──────┬─────────────┐');
-console.log('   │ Tick │  P3  │  P5  │  P7  │ All Open    │');
-console.log('   ├──────┼──────┼──────┼──────┼─────────────┤');
-
-for (let tick = 0; tick < 15; tick++) {
-    const p3 = primeGates[0].isOpen(tick);
-    const p5 = primeGates[1].isOpen(tick);
-    const p7 = primeGates[2].isOpen(tick);
-    const allOpen = p3 && p5 && p7 ? 'Yes (LCM=105)' : '';
-    
-    const s3 = p3 ? '  ●  ' : '  ○  ';
-    const s5 = p5 ? '  ●  ' : '  ○  ';
-    const s7 = p7 ? '  ●  ' : '  ○  ';
-    console.log(`   │ ${tick.toString().padStart(4)} │${s3}│${s5}│${s7}│ ${allOpen.padEnd(11)} │`);
-}
-console.log('   └──────┴──────┴──────┴──────┴─────────────┘');
-
-console.log('\n   Prime periods ensure gates rarely align simultaneously,');
-console.log('   reducing interference and providing temporal isolation.');
-
-console.log('\n═══════════════════════════════════════════════════════════════\n');
+console.log('\n═══════════════════════════════════════════════════════════════');
+console.log('  Key takeaway: HQE operations run only on valid tick events,');
+console.log('  making discrete semantic updates deterministic.');
+console.log('═══════════════════════════════════════════════════════════════');

@@ -11,10 +11,10 @@ Semantic computing treats **concepts as the fundamental data type**. Instead of 
 ## Creating a Semantic Engine
 
 ```javascript
-const { createEngine, SemanticBackend } = require('./modular');
+import { createEngine, SemanticBackend } from '@aleph-ai/tinyaleph';
 
 // Load full configuration
-const config = require('./data.json');
+const config = { dimension: 16 };
 
 // Create engine
 const engine = createEngine('semantic', config);
@@ -205,22 +205,20 @@ console.log('Axis 0 primes:', axisPrimes);
 
 ## Two-Layer Processing
 
-For sophisticated vocabulary handling, use the TwoLayerEngine:
+For sophisticated vocabulary handling, separate meaning from surface form.
+The internal two-layer engine (`backends/semantic/two-layer.js`) is not part of
+the published API; the public `SemanticBackend` exposes the same meaning
+encoding:
 
 ```javascript
-const { TwoLayerEngine } = require('./backends/semantic/two-layer');
+import { SemanticBackend } from '@aleph-ai/tinyaleph';
 
-const engine = new TwoLayerEngine({
-  core: config
-});
+const backend = new SemanticBackend({ dimension: 16 });
 
 // Process with meaning and surface separation
-const result = engine.process('love is truth');
+const meaning = backend.textToOrderedState('love is truth');
 
-console.log('Meaning (primes):', result.meaning.primes);
-console.log('Meaning (entropy):', result.meaning.entropy);
-console.log('Surface (words):', result.surface.words);
-console.log('Surface (register):', result.surface.register);
+console.log('Meaning (primes):', meaning.primes);
 ```
 
 ### Register Translation
@@ -265,7 +263,7 @@ console.log('Technical:', technical);
 ### Concept Clustering
 
 ```javascript
-const { createEngine, SemanticBackend } = require('./modular');
+import { createEngine, SemanticBackend } from '@aleph-ai/tinyaleph';
 
 function clusterConcepts(words, backend) {
   const states = words.map(w => ({

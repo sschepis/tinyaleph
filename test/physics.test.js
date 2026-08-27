@@ -28,9 +28,11 @@ import {
   collapseToIndex,
   bornMeasurement,
   partialCollapse,
-  applyDecoherence
+  applyDecoherence,
+  ALKKuramotoModel
 } from '../physics/index.js';
 import { Hypercomplex } from '../core/hypercomplex.js';
+import { ArithmeticLinkKernel } from '../core/arithmetic-link-kernel.js';
 
 describe('Oscillator', () => {
   describe('construction', () => {
@@ -231,6 +233,12 @@ describe('KuramotoModel', () => {
     const weighted = kuramoto.getWeightedAmplitudes();
     assert.strictEqual(weighted.length, 2);
   });
+
+  it('should return 0 for order parameter of an empty bank', () => {
+    const kuramoto = new KuramotoModel([]);
+    assert.strictEqual(kuramoto.orderParameter(), 0);
+    assert.strictEqual(kuramoto.meanPhase(), 0);
+  });
 });
 
 describe('Entropy Functions', () => {
@@ -251,6 +259,18 @@ describe('Entropy Functions', () => {
       const probs = [1, 1, 1, 1];
       const entropy = shannonEntropy(probs);
       assert.ok(typeof entropy === 'number');
+    });
+
+    it('should throw TypeError on non-finite entries', () => {
+      assert.throws(() => shannonEntropy([NaN, 0.5]), TypeError);
+      assert.throws(() => shannonEntropy([0.5, Infinity]), TypeError);
+      assert.throws(() => shannonEntropy([0.5, -Infinity]), TypeError);
+    });
+
+    it('should compute correct entropy for [NaN-free] mixed distribution', () => {
+      // Guard against the old behavior where NaN entries were silently skipped
+      const entropy = shannonEntropy([0.5, 0.5]);
+      assert.strictEqual(entropy, 1);
     });
   });
 
@@ -299,6 +319,17 @@ describe('Entropy Functions', () => {
       const kl = relativeEntropy(p, q);
       assert.ok(kl >= 0);
     });
+
+    it('should return Infinity when p has support where q is zero', () => {
+      const p = [0.5, 0.5];
+      const q = [1, 0];
+      const kl = relativeEntropy(p, q);
+      assert.strictEqual(kl, Infinity);
+    });
+
+    it('should throw TypeError for non-finite q entries', () => {
+      assert.throws(() => relativeEntropy([0.5, 0.5], [0.5, NaN]), TypeError);
+    });
   });
 });
 
@@ -329,19 +360,26 @@ describe('Lyapunov Functions', () => {
   });
 
   describe('classifyStability', () => {
-    it('should classify negative exponent as STABLE', () => {
+    it('should classify negative exponent as stable', () => {
       const result = classifyStability(-0.5);
-      assert.strictEqual(result, 'STABLE');
+      assert.strictEqual(result, 'stable');
     });
 
-    it('should classify positive exponent as CHAOTIC', () => {
+    it('should classify positive exponent as chaotic', () => {
       const result = classifyStability(0.5);
-      assert.strictEqual(result, 'CHAOTIC');
+      assert.strictEqual(result, 'chaotic');
     });
 
-    it('should classify near-zero as MARGINAL', () => {
+    it('should classify near-zero as marginal', () => {
       const result = classifyStability(0.05);
-      assert.strictEqual(result, 'MARGINAL');
+      assert.strictEqual(result, 'marginal');
+    });
+
+    it('should only ever return lowercase classifications', () => {
+      for (const lambda of [-10, -1, -0.5, -1e-9, 0, 0.05, 0.49, 0.5, 1, 10]) {
+        const result = classifyStability(lambda);
+        assert.ok(['stable', 'marginal', 'chaotic'].includes(result));
+      }
     });
   });
 
@@ -356,6 +394,27 @@ describe('Lyapunov Functions', () => {
       const base = 0.3;
       const adapted = adaptiveCoupling(base, 1.5);
       assert.ok(adapted < base);
+    });
+
+    it('should use explicit base+lyapunov mode when gain is supplied (3 args)', () => {
+      // Chaotic (positive λ): weaken coupling
+      assert.strictEqual(adaptiveCoupling(0.3, 0.5, 0.5), 0.3 * (1 - 0.5));
+      // Stable (negative λ): strengthen coupling
+      assert.strictEqual(adaptiveCoupling(0.3, -0.5, 0.5), 0.3 * (1 + 0.5));
+      // Marginal (|λ| <= 0.1): unchanged
+      assert.strictEqual(adaptiveCoupling(0.3, 0.02, 0.5), 0.3);
+    });
+
+    it('should not misroute explicit base+lyapunov calls with λ in [0.05, 1]', () => {
+      // Both args lie in [0.05, 1]; the 3-arg call must NOT be treated as
+      // coherence mode (which would return lyapunov * (0.5 + baseCoupling)).
+      const result = adaptiveCoupling(0.3, 0.2, 0.5);
+      assert.strictEqual(result, 0.3 * (1 - 0.5));
+    });
+
+    it('should keep 2-arg coherence mode', () => {
+      const adapted = adaptiveCoupling(0.8, 0.3);
+      assert.strictEqual(adapted, 0.3 * (0.5 + 0.8));
     });
   });
 
@@ -389,6 +448,33 @@ describe('Collapse Functions', () => {
       const prob1 = collapseProbability(0.1);
       const prob2 = collapseProbability(0.5);
       assert.ok(prob2 > prob1);
+    });
+
+    it('should never return a probability above 1 or below 0', () => {
+      const inputs = [0, 0.1, 0.5, 1, 2, 5, 10, 100, 1e6];
+      for (const s of inputs) {
+        for (const lambda of [-10, -1, -0.5, 0, 0.5, 1, 10]) {
+          const p = collapseProbability(s, lambda);
+          assert.ok(p >= 0 && p <= 1, `collapseProbability(${s}, ${lambda}) = ${p}`);
+        }
+      }
+      // Object form with the 1.5 factor (negative lyapunov)
+      const objP = collapseProbability({ entropy: 100, coherence: 1, lyapunov: -1 });
+      assert.ok(objP >= 0 && objP <= 1, `object form p = ${objP}`);
+    });
+
+    it('should never return NaN for any input combination', () => {
+      const results = [
+        collapseProbability(NaN, -1),
+        collapseProbability(1, NaN),
+        collapseProbability({ entropy: NaN, coherence: 0.5, lyapunov: -1 }),
+        collapseProbability({ entropy: 1, coherence: NaN, lyapunov: -1 }),
+        collapseProbability({ entropy: Infinity, coherence: 1, lyapunov: -1 }),
+        collapseProbability(Hypercomplex.fromArray([NaN, 0.5, 0.5, 0.5]))
+      ];
+      for (const p of results) {
+        assert.ok(Number.isFinite(p), `expected finite probability, got ${p}`);
+      }
     });
   });
 
@@ -446,6 +532,26 @@ describe('Collapse Functions', () => {
       const result = bornMeasurement(state);
       assert.ok(result.index >= 0 && result.index < 4);
     });
+
+    it('should reject non-finite amplitudes and always return finite index/probability', () => {
+      const state = Hypercomplex.fromArray([NaN, 0.5, NaN, 0.5]);
+      const result = bornMeasurement(state);
+      assert.ok(Number.isFinite(result.probability));
+      assert.ok(Number.isInteger(result.index) && result.index >= 0);
+      assert.ok(result.index === 1 || result.index === 3);
+    });
+
+    it('should handle array input with NaN entries', () => {
+      const result = bornMeasurement([NaN, 1, NaN, NaN]);
+      assert.strictEqual(result.index, 1);
+      assert.strictEqual(result.probability, 1);
+    });
+
+    it('should handle fully non-finite input gracefully', () => {
+      const result = bornMeasurement([NaN, Infinity]);
+      assert.ok(Number.isInteger(result.index));
+      assert.ok(Number.isFinite(result.probability));
+    });
   });
 
   describe('partialCollapse', () => {
@@ -466,5 +572,29 @@ describe('Collapse Functions', () => {
       // Should still be normalized
       assert.ok(Math.abs(decohered.norm() - 1) < 0.0001);
     });
+  });
+});
+
+describe('ALKKuramotoModel with OscillatorBank', () => {
+  it('should construct from a real OscillatorBank', () => {
+    const bank = new OscillatorBank([1.0, 1.1, 0.9, 1.05]);
+    const alk = new ArithmeticLinkKernel([2, 3, 5, 7]);
+    const model = new ALKKuramotoModel(bank, alk);
+
+    assert.strictEqual(model.N, 4);
+    assert.strictEqual(model.bank, bank);
+    assert.strictEqual(model.omega[0], 1.0);
+    assert.strictEqual(model.omega[1], 1.1);
+  });
+
+  it('should produce a finite order parameter after stepping', () => {
+    const bank = new OscillatorBank([1.0, 1.1, 0.9, 1.05]);
+    const alk = new ArithmeticLinkKernel([2, 3, 5, 7]);
+    const model = new ALKKuramotoModel(bank, alk, { useTriadic: false });
+
+    for (let i = 0; i < 50; i++) model.step();
+
+    assert.ok(Number.isFinite(model.orderParameter()));
+    assert.ok(model.orderParameter() >= 0 && model.orderParameter() <= 1);
   });
 });

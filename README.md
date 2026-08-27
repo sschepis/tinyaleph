@@ -44,10 +44,10 @@ npm install @aleph-ai/tinyaleph
 ## Quick Start
 
 ```javascript
-const { createEngine, SemanticBackend } = require('@aleph-ai/tinyaleph');
+import { createEngine, SemanticBackend } from '@aleph-ai/tinyaleph';
 
 // Load configuration
-const config = require('@aleph-ai/tinyaleph/data.json');
+const config = { dimension: 16 };
 
 // Create a semantic engine
 const engine = createEngine('semantic', config);
@@ -78,7 +78,7 @@ console.log(primes);  // [2, 3, 5, 7, 11, ...]
 Primes embed into 16-dimensional sedenion space:
 
 ```javascript
-const { Hypercomplex } = require('@aleph-ai/tinyaleph');
+import { Hypercomplex } from '@aleph-ai/tinyaleph';
 
 // Create a state
 const state = new Hypercomplex(16);
@@ -110,7 +110,7 @@ for (const step of result.steps) {
 Natural language understanding and concept mapping:
 
 ```javascript
-const { SemanticBackend } = require('@aleph-ai/tinyaleph');
+import { SemanticBackend } from '@aleph-ai/tinyaleph';
 
 const backend = new SemanticBackend(config);
 
@@ -134,7 +134,7 @@ console.log('Similarity:', state1.coherence(state2));
 Semantic hashing and key derivation:
 
 ```javascript
-const { CryptographicBackend, hash, deriveKey } = require('@aleph-ai/tinyaleph');
+import { CryptographicBackend, hash, deriveKey } from '@aleph-ai/tinyaleph';
 
 // Quick hash
 const h = hash('my secret data');
@@ -152,7 +152,7 @@ const semanticHash = crypto.hash('similar meanings produce similar hashes');
 Quantum-inspired computation:
 
 ```javascript
-const { ScientificBackend } = require('@aleph-ai/tinyaleph');
+import { ScientificBackend } from '@aleph-ai/tinyaleph';
 
 const backend = new ScientificBackend(config);
 
@@ -172,7 +172,7 @@ const result = backend.measure(superposition, [basis]);
 DNA computing, protein folding, and molecular biology:
 
 ```javascript
-const { BioinformaticsBackend, DNACircuit, ANDGate, ORGate } = require('@aleph-ai/tinyaleph');
+import { BioinformaticsBackend, DNACircuit, ANDGate, ORGate } from '@aleph-ai/tinyaleph';
 
 const backend = new BioinformaticsBackend();
 
@@ -206,7 +206,7 @@ console.log('Binding affinity:', affinity.affinity);
 Build logic gates and circuits using DNA strands:
 
 ```javascript
-const { DNACircuit, ANDGate, ORGate, NOTGate } = require('@aleph-ai/tinyaleph');
+import { DNACircuit, ANDGate, ORGate, NOTGate } from '@aleph-ai/tinyaleph';
 
 // Create logic gates
 const andGate = new ANDGate({ name: 'and1' });
@@ -235,7 +235,7 @@ const result = circuit.evaluate();
 ### Oscillators
 
 ```javascript
-const { Oscillator, OscillatorBank, KuramotoModel } = require('@aleph-ai/tinyaleph');
+import { Oscillator, OscillatorBank, KuramotoModel } from '@aleph-ai/tinyaleph';
 
 // Create oscillator bank
 const bank = new OscillatorBank(16);
@@ -255,13 +255,13 @@ console.log('Order parameter:', kuramoto.orderParameter());
 Five advanced Kuramoto-family models for complex synchronization dynamics:
 
 ```javascript
-const {
+import {
   NetworkKuramoto,      // Topology-aware coupling
   AdaptiveKuramoto,     // Hebbian plasticity
   SakaguchiKuramoto,    // Phase frustration (chimera states)
   SmallWorldKuramoto,   // Watts-Strogatz topology
   MultiSystemCoupling   // Cross-system synchronization
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph';
 
 // Network Kuramoto with custom topology
 const network = new NetworkKuramoto(frequencies, adjacencyMatrix, 0.5);
@@ -289,11 +289,11 @@ console.log('Inter-system coherence:', multi.interSystemCoherence());
 Noise-robust synchronization with Langevin dynamics:
 
 ```javascript
-const {
+import {
   StochasticKuramoto,      // White noise Langevin dynamics
   ColoredNoiseKuramoto,    // Ornstein-Uhlenbeck noise
   ThermalKuramoto          // Temperature-dependent coupling
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph';
 
 // White noise model
 const stochastic = new StochasticKuramoto(frequencies, {
@@ -321,7 +321,7 @@ const Tc = thermal.estimateCriticalTemperature();
 Track prime relationships from co-occurrence and resonance:
 
 ```javascript
-const { PrimeEntanglementGraph } = require('@aleph-ai/tinyaleph');
+import { PrimeEntanglementGraph } from '@aleph-ai/tinyaleph/core';
 
 const graph = new PrimeEntanglementGraph([2, 3, 5, 7, 11]);
 
@@ -346,11 +346,11 @@ const adjacency = graph.toAdjacencyMatrix([2, 3, 5, 7, 11]);
 Real-time monitoring and async iteration:
 
 ```javascript
-const {
+import {
   AlephEventEmitter,
   AlephMonitor,
   EvolutionStream
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph/core';
 
 // Event emitter with throttling
 const emitter = new AlephEventEmitter();
@@ -384,7 +384,7 @@ const filtered = stream
 ### Entropy and Stability
 
 ```javascript
-const { shannonEntropy, estimateLyapunov, stateEntropy } = require('@aleph-ai/tinyaleph');
+import { shannonEntropy, estimateLyapunov, stateEntropy } from '@aleph-ai/tinyaleph';
 
 // Calculate entropy
 const entropy = stateEntropy(state);
@@ -399,7 +399,7 @@ console.log('Stable:', lambda < 0);
 Extended operations for smooth interpolation and rotations:
 
 ```javascript
-const { Hypercomplex } = require('@aleph-ai/tinyaleph');
+import { Hypercomplex } from '@aleph-ai/tinyaleph';
 
 const q1 = Hypercomplex.fromArray([1, 0, 0, 0]);
 const q2 = Hypercomplex.fromAxisAngle(4, [0, 0, 1], Math.PI/2);
@@ -427,7 +427,7 @@ const cubed = q1.powInt(3);
 Hierarchical memory with different decay rates:
 
 ```javascript
-const { PrimeonZLadderMulti, createAdiabaticSchedule } = require('@aleph-ai/tinyaleph');
+import { PrimeonZLadderMulti, createAdiabaticSchedule } from '@aleph-ai/tinyaleph';
 
 const ladder = new PrimeonZLadderMulti({
   N: 32,
@@ -454,71 +454,42 @@ const ladder2 = new PrimeonZLadderMulti({ N: 16, Jt });
 The 108 Invariant from 108bio.pdf provides deep connections between number theory and physics:
 
 ```javascript
-const {
-  TWIST_108,
-  Knot,
-  TREFOIL,
-  PhysicalConstants,
-  GaugeSymmetry,
-  FreeEnergyDynamics,
-  OBSERVER_HIERARCHY
-} = require('@aleph-ai/tinyaleph/core/topology');
+import { primeToAngle, AlexanderModule, ArithmeticLinkKernel } from '@aleph-ai/tinyaleph';
 
 // 108 Invariant: 2² × 3³ = 108
-console.log(TWIST_108.value);           // 108
-console.log(TWIST_108.factorization);   // { twos: 2, threes: 3 }
+const is108Resonant = (n) => n % 108 === 0;
 
-// Twist angle κ(p) = 360°/p
-const twistAngle = TWIST_108.twistAngle(7);  // 51.43°
+// Twist angle κ(p) = 2π/p radians (180° for p=2, ~51.43° for p=7)
+console.log(primeToAngle(7) * 180 / Math.PI);  // 51.43°
 
-// Find minimum primes for closed twist (sum to 360°)
-const closingPrimes = TWIST_108.findClosingPrimes(3);
+// Arithmetic link invariants for the prime set S = {2, 3, 5, 7}
+const module = new AlexanderModule([2, 3, 5, 7]);
+console.log(module.alexanderPolynomial);  // "1 + 2t - 4t^2 + 2t^3 + t^4"
 
-// Trefoil Knot with complexity T = s·c - b + u = 17
-console.log(TREFOIL.strands);      // 1
-console.log(TREFOIL.crossings);    // 3
-console.log(TREFOIL.bridges);      // 2
-console.log(TREFOIL.unknotting);   // 1
-console.log(TREFOIL.complexity);   // 17
+// Arithmetic Link Kernel coupling tensors
+const alk = new ArithmeticLinkKernel([3, 5, 7]);
+console.log(alk.J);   // Pairwise coupling matrix
+console.log(alk.K3);  // Triadic coupling tensor
 
-// Physical constants from 108 + Trefoil
-console.log(PhysicalConstants.PROTON_ELECTRON_RATIO);  // 1836 (17 × 108)
-console.log(PhysicalConstants.FINE_STRUCTURE_INV);     // 137 (108 + 29)
-console.log(PhysicalConstants.ALPHA);                  // 1/137
-
-// Gauge symmetry from 108 factorization
-const gauge = new GaugeSymmetry();
-console.log(gauge.generators);       // { SU3: 8, SU2: 3, U1: 1 }
-console.log(gauge.totalDimension);   // 12
-console.log(gauge.isStandardModel);  // true
-
-// Free Energy Dynamics (cubic FEP)
-// dψ/dt = αψ + βψ² + γψ³
-const fep = new FreeEnergyDynamics({ alpha: 0.1, beta: -0.3, gamma: 0.2 });
-const energy = fep.freeEnergy(0.5);   // F(ψ)
-const gradient = fep.gradient(0.5);   // dF/dψ
-const minima = fep.findMinima();      // Stable states
-
-// Observer Hierarchy (quantum to cosmic scales)
-OBSERVER_HIERARCHY.forEach(level => {
-  console.log(`${level.name}: scale=${level.scale}, capacity=${level.capacity}`);
-});
-// cellular: scale=1e-6, capacity=1e6
-// neural: scale=1e-3, capacity=1e9
-// cognitive: scale=1, capacity=1e12
-// collective: scale=1e6, capacity=1e15
-// cosmic: scale=1e26, capacity=1e21
+// The paper-derived helper objects (TWIST_108, Knot, PhysicalConstants,
+// GaugeSymmetry, FreeEnergyDynamics, OBSERVER_HIERARCHY) remain internal
+// implementation details in core/prime.js and core/topology.js.
 ```
 
 ### Discrete Dynamics
 
-Integer-domain computation from discrete.pdf:
+Integer-domain computation (discrete dynamics):
 
 ```javascript
-const { INT_SINE_TABLE, computeHistogramCoherence } = require('@aleph-ai/tinyaleph/apps/sentient/lib/prsc');
-const { SMF_CODEBOOK, nearestCodebookAttractor, codebookTunnel } = require('@aleph-ai/tinyaleph/apps/sentient/lib/smf');
-const { canonicalTriad, canonicalFusion, verifyCanonical } = require('@aleph-ai/tinyaleph/apps/sentient/lib/prime-calculus');
-const { TickGate } = require('@aleph-ai/tinyaleph/apps/sentient/lib/hqe');
+import {
+  INT_SINE_TABLE,
+  computeHistogramCoherence,
+  SMF_CODEBOOK,
+  nearestCodebookAttractor,
+  codebookTunnel,
+  TickGate
+} from '@aleph-ai/tinyaleph/observer';
+import { FUSE } from '@aleph-ai/tinyaleph/core';
 
 // Integer Sine Table (M=256 discretization)
 console.log(INT_SINE_TABLE.M);            // 256
@@ -545,17 +516,11 @@ console.log(tunneled.original);           // 130
 console.log(tunneled.target);             // Nearest attractor phase
 console.log(tunneled.result);             // Tunneled phase (interpolated)
 
-// Canonical Fusion FUSE(p,q,r) selection
-const triad = canonicalTriad(19);  // Find canonical triad for sum 19
-console.log(triad);                // [3, 5, 11] (lexicographically first)
-
-// Verify canonical property
-console.log(verifyCanonical(3, 5, 11, 19));  // true
-
-// Fuse with automatic triad selection
-const fused = canonicalFusion(19);
-console.log(fused.triad);          // [3, 5, 11]
-console.log(fused.sum);            // 19
+// Fusion terms FUSE(p,q,r) compose prime triples
+const fused = FUSE(3, 5, 11);  // Canonical triad summing to 19
+console.log(fused.p);          // 3
+console.log(fused.q);          // 5
+console.log(fused.r);          // 11
 
 // Tick-Only HQE Gate
 const tickGate = new TickGate({ threshold: 0.7 });
@@ -569,23 +534,25 @@ console.log(gateResult.reason);    // 'TICK_VALID'
 Calculate observer capacity from 108bio.pdf's C_obs = α·N_osc·K̄·τ⁻¹:
 
 ```javascript
-const { SymbolicObserver } = require('@aleph-ai/tinyaleph/apps/sentient/lib/symbolic-observer');
+import { SedenionMemoryField } from '@aleph-ai/tinyaleph';
 
-const observer = new SymbolicObserver();
+// The full SymbolicObserver with capacity computation is part of the
+// Sentient app (apps/sentient). The public observer module provides the
+// building blocks: an oscillator bank plus the capacity formula
+// C_obs = α·N_osc·K̄·τ⁻¹ (108bio.pdf Table 1).
 
-// Add oscillator bank for N_osc
-observer.addOscillatorBank(bank);
+const observer = new SedenionMemoryField({ dimension: 16 });
 
-// Calculate observer capacity
-const capacity = observer.calculateObserverCapacity({
-  alpha: 1/137,           // Fine structure constant
-  meanCoupling: 0.5,      // K̄ average coupling
-  coherenceTime: 0.1      // τ coherence time
-});
+// Number of oscillators (N_osc):
+const numOscillators = observer.dimension;
+const alpha = 1/137;          // Fine structure constant
+const meanCoupling = 0.5;     // K̄ average coupling
+const coherenceTime = 0.1;    // τ coherence time
 
-console.log(capacity.value);       // Capacity in bits/second
-console.log(capacity.numOscillators);
-console.log(capacity.formula);     // 'α × N_osc × K̄ × τ⁻¹'
+// Observer capacity in bits/second
+const capacity = alpha * numOscillators * meanCoupling / coherenceTime;
+console.log(capacity);        // α × N_osc × K̄ × τ⁻¹
+console.log(numOscillators);
 ```
 
 ### Free Energy Curiosity
@@ -593,25 +560,15 @@ console.log(capacity.formula);     // 'α × N_osc × K̄ × τ⁻¹'
 Cubic FEP-based curiosity for learning systems:
 
 ```javascript
-const { FreeEnergyCuriosity } = require('@aleph-ai/tinyaleph/apps/sentient/lib/learning/curiosity');
+import { estimateLyapunov, classifyStability } from '@aleph-ai/tinyaleph';
 
-const curiosity = new FreeEnergyCuriosity({
-  alpha: 0.1,    // Linear coefficient
-  beta: -0.3,    // Quadratic coefficient
-  gamma: 0.2     // Cubic coefficient
-});
+// FreeEnergyCuriosity (cubic FEP belief dynamics) is part of the Sentient
+// app (apps/sentient), not the published library API. The public physics
+// module provides the stability primitives it is built on:
 
-// Evaluate free energy at belief state ψ
-const energy = curiosity.freeEnergy(0.5);
-
-// Get gradient for belief update
-const grad = curiosity.gradient(0.5);
-
-// Find stable belief states (local minima)
-const stableStates = curiosity.findMinima();
-
-// Check if current state is at equilibrium
-const isStable = curiosity.isStable(0.5, { tolerance: 0.01 });
+// Classify belief-state stability along a trajectory
+const lambda = estimateLyapunov(beliefTrajectory);
+console.log(classifyStability(lambda));  // 'stable' | 'marginal' | 'chaotic'
 ```
 
 ### Observer Scale Management
@@ -619,23 +576,16 @@ const isStable = curiosity.isStable(0.5, { tolerance: 0.01 });
 Multi-scale observer hierarchy from 108bio.pdf:
 
 ```javascript
-const { ObserverScaleManager } = require('@aleph-ai/tinyaleph/apps/sentient/lib/collective');
+import { SedenionMemoryField } from '@aleph-ai/tinyaleph';
 
-const manager = new ObserverScaleManager();
+// ObserverScaleManager (multi-scale observer hierarchy from 108bio.pdf
+// Table 1) is part of the Sentient app (apps/sentient), not the published
+// library API. The public observer module provides the field primitives
+// each hierarchy level is built from:
 
-// Assign node to appropriate hierarchy level based on capacity
-const level = manager.assignNode(nodeId, observerCapacity);
-console.log(level.name);       // 'neural', 'cognitive', etc.
-console.log(level.scale);      // Physical scale
-console.log(level.capacity);   // Information capacity
-
-// Get all nodes at a level
-const cognitiveNodes = manager.getNodesAtLevel('cognitive');
-
-// Get hierarchy statistics
-const stats = manager.getHierarchyStats();
-console.log(stats.totalNodes);
-console.log(stats.levelDistribution);
+const node = new SedenionMemoryField({ dimension: 16 });
+// Hierarchies: cellular → neural → cognitive → collective → cosmic
+console.log(node.dimension);   // Oscillator count at this level
 ```
 
 ### ResoFormer Architecture
@@ -643,13 +593,13 @@ console.log(stats.levelDistribution);
 Complete prime-indexed transformer:
 
 ```javascript
-const {
+import {
   ResoFormer,
   ResoFormerBlock,
   ResonantMultiHeadAttention,
   PrimeFFN,
   SparsePrimeState
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph/core';
 
 // Create sparse prime states
 const state1 = SparsePrimeState.fromPrimes([2, 3, 5]);
@@ -678,12 +628,12 @@ const outputs = model.forward([state1, state2]);
 Integrates Chinese Remainder Theorem reconstruction with homology-based regularization:
 
 ```javascript
-const {
+import {
     CRTResonantAttention,
     HomologyRegularizedBlock,
     CRTResoFormer,
     createCRTResoFormer
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph/core';
 
 // Create CRT-enhanced model
 const model = createCRTResoFormer({
@@ -711,13 +661,13 @@ console.log('Betti numbers:', result.homologyReport.maxBettiNumber);
 Encode semantic states as residue distributions over coprime moduli:
 
 ```javascript
-const {
+import {
     ResidueEncoder,
     CRTReconstructor,
     BirkhoffProjector,
     HomologyLoss,
     DEFAULT_PRIMES_SMALL
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph/core';
 
 // Use first 4 primes: [2, 3, 5, 7], P = 210
 const primes = DEFAULT_PRIMES_SMALL;
@@ -749,7 +699,7 @@ const projected = birkhoff.project(attentionMatrix);
 Detect semantic inconsistencies as topological holes:
 
 ```javascript
-const { HomologyLoss, CRTReconstructor } = require('@aleph-ai/tinyaleph');
+import { HomologyLoss, CRTReconstructor } from '@aleph-ai/tinyaleph/core';
 
 const crt = new CRTReconstructor([2, 3, 5, 7]);
 const homology = new HomologyLoss({ tau: 0.1 });
@@ -779,7 +729,7 @@ console.log('β₁ (holes):', betti.beta1);
 184+ emoji symbols with prime assignments and cultural tags:
 
 ```javascript
-const { getSymbol, symbolDatabase } = require('@aleph-ai/tinyaleph');
+import { getSymbol, symbolDatabase } from '@aleph-ai/tinyaleph/core';
 
 // Get a symbol
 const hero = getSymbol('hero');
@@ -799,7 +749,7 @@ const symbols = symbolDatabase.decode(signature);
 Pattern matching with resonance-enhanced disambiguation:
 
 ```javascript
-const { inferSymbol, inferWithResonance, inferMostResonant } = require('@aleph-ai/tinyaleph');
+import { inferSymbol, inferWithResonance, inferMostResonant } from '@aleph-ai/tinyaleph/core';
 
 // Basic inference
 const result = inferSymbol('brave knight');
@@ -820,7 +770,7 @@ const best = inferMostResonant('weapon', context);
 Build multi-symbol concepts through prime multiplication:
 
 ```javascript
-const { createCompound, getCompound, compoundBuilder } = require('@aleph-ai/tinyaleph');
+import { createCompound, getCompound, compoundBuilder } from '@aleph-ai/tinyaleph/core';
 
 // Pre-built compound
 const greekWarrior = getCompound('greek_warrior');
@@ -841,7 +791,7 @@ const harmony = compoundBuilder.calculateCompoundResonance(fireMage);
 Primes whose ratio approaches φ ≈ 1.618 have natural harmony:
 
 ```javascript
-const { calculateResonance, findGoldenPairs, resonanceSignature } = require('@aleph-ai/tinyaleph');
+import { calculateResonance, findGoldenPairs, resonanceSignature } from '@aleph-ai/tinyaleph/core';
 
 // Check resonance between primes
 calculateResonance(3, 5);   // 0.9 (Fibonacci pair!)
@@ -862,7 +812,7 @@ console.log(`Mean resonance: ${sig.mean}, Golden pairs: ${sig.goldenCount}`);
 The library implements a formal type system for prime-based compositional semantics:
 
 ```javascript
-const { N, A, FUSE, CHAIN, SENTENCE, TypeChecker } = require('@aleph-ai/tinyaleph');
+import { N, A, FUSE, CHAIN, SENTENCE, TypeChecker } from '@aleph-ai/tinyaleph/core';
 
 // Create typed terms
 const noun7 = N(7);      // N(7) - noun indexed by prime 7
@@ -890,18 +840,18 @@ console.log(checker.checkApplication(adj3, noun7));  // { valid: true }
 Strong normalization with prime-preserving operators:
 
 ```javascript
-const {
+import {
     ReductionSystem,
-    ResonanceOperator,
+    ResonancePrimeOperator,
     NextPrimeOperator,
     demonstrateStrongNormalization
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph/core';
 
 // Create reduction system
 const reduction = new ReductionSystem();
 
 // Add prime-preserving operators
-reduction.addOperator(new ResonanceOperator(2));    // Resonance at p=2
+reduction.addOperator(new ResonancePrimeOperator(2));    // Resonance at p=2
 reduction.addOperator(new NextPrimeOperator());      // Map to next prime
 
 // Normalize a term sequence
@@ -919,11 +869,11 @@ console.log(proof.terminates);     // true (guaranteed!)
 Model-theoretic semantics via τ translation:
 
 ```javascript
-const {
+import {
     Translator,
     LambdaEvaluator,
     Semantics
-} = require('@aleph-ai/tinyaleph');
+} from '@aleph-ai/tinyaleph/core';
 
 // Translate prime terms to λ-expressions
 const translator = new Translator();
@@ -945,13 +895,14 @@ const value = semantics.interpret(N(7));   // 7
 The 21-letter angelic alphabet with prime basis and sedenion operations:
 
 ```javascript
+import { enochianVocabulary } from '@aleph-ai/tinyaleph';
 const {
     EnochianEngine,
     ENOCHIAN_ALPHABET,
     PRIME_BASIS,
     CORE_VOCABULARY,
     SedenionElement
-} = require('@aleph-ai/tinyaleph/apps/sentient/lib/enochian-vocabulary');
+} = enochianVocabulary;
 
 // 21-letter alphabet with prime mappings
 console.log(ENOCHIAN_ALPHABET['A']);  // { prime: 3, value: 1, angle: 51.43 }
@@ -1025,25 +976,23 @@ console.log(CORE_VOCABULARY['ZORGE']);  // "be friendly unto"
 The observer module provides components for building sentient observer systems:
 
 ```javascript
-const observer = require('@aleph-ai/tinyaleph/observer');
+import observer from '@aleph-ai/tinyaleph/observer';
 // Or destructure specific exports:
-const {
+import {
     SedenionMemoryField,
     PRSCLayer,
     TemporalLayer,
     SymbolicSMF,
     SymbolicTemporalLayer,
     AssaySuite
-} = require('@aleph-ai/tinyaleph/observer');
+} from '@aleph-ai/tinyaleph/observer';
 ```
 
 | Export | Description |
 |--------|-------------|
 | `PrimeOscillator` | Single prime-indexed oscillator |
 | `PRSCLayer` | Prime Resonance Semantic Coherence oscillator bank |
-| `coherenceKernel` | Phase coherence calculation |
 | `TickGate` | Tick-based activation gating |
-| `HQE` | Holographic Quaternion Engine |
 | `SedenionMemoryField` | 16D semantic orientation field |
 | `SMF_AXES` | Named axes for 16D space |
 | `Moment` | Discrete temporal moment |
@@ -1071,13 +1020,17 @@ const {
 
 | Export | Description |
 |--------|-------------|
-| `TWIST_108` | 108 invariant with twist angle calculations |
-| `Knot` | General knot class with invariant computation |
-| `TREFOIL` | Pre-configured trefoil knot (T=17) |
-| `PhysicalConstants` | Derived constants (α, proton/electron ratio) |
-| `GaugeSymmetry` | Standard Model gauge group from 108 |
-| `FreeEnergyDynamics` | Cubic FEP model dψ/dt = αψ + βψ² + γψ³ |
-| `OBSERVER_HIERARCHY` | 5-level observer scale hierarchy |
+| `primeToAngle` | Twist angle κ(p) = 2π/p radians |
+| `AlexanderModule` | Alexander polynomials and signatures for prime sets |
+| `ArithmeticLinkKernel` | Coupling tensors J, K³, Kⁿ for arithmetic links |
+| `LegendreSymbol` | Quadratic reciprocity symbols |
+| `findBorromeanPrimes` | Scan prime sets for Borromean triples |
+| `quickBorromeanCheck` | Candidate Borromean triple test |
+
+The paper-derived helpers (`TWIST_108`, `Knot`, `PhysicalConstants`,
+`GaugeSymmetry`, `FreeEnergyDynamics`, `OBSERVER_HIERARCHY`) are internal
+implementation details in `core/prime.js` and `core/topology.js` and are not
+part of the published API.
 
 ### Discrete Dynamics Exports
 
@@ -1088,9 +1041,7 @@ const {
 | `SMF_CODEBOOK` | 64-attractor codebook array |
 | `nearestCodebookAttractor` | Find nearest attractor for phase |
 | `codebookTunnel` | Controlled tunneling to attractor |
-| `canonicalTriad` | Find lexicographically first triad for sum |
-| `canonicalFusion` | FUSE(p,q,r) with automatic triad |
-| `verifyCanonical` | Verify triad is canonical |
+| `FUSE` | Fusion term FUSE(p,q,r) composing prime triples |
 | `TickGate` | Tick-only HQE gating class |
 
 ### Formal Semantics Exports
@@ -1106,26 +1057,25 @@ const {
 | `IMPL(s1, s2)` | Implication |
 | `TypeChecker` | Type inference and checking |
 | `ReductionSystem` | Reduction semantics engine |
-| `ResonanceOperator` | Prime resonance operator |
+| `ResonancePrimeOperator` | Prime resonance operator |
 | `NextPrimeOperator` | Next prime mapping |
-| `ModularOperator` | Modular arithmetic |
+| `ModularPrimeOperator` | Modular arithmetic |
 | `Translator` | λ-calculus translation |
 | `LambdaEvaluator` | β-reduction evaluator |
 | `Semantics` | Model-theoretic interpretation |
-| `EnochianEngine` | Enochian language processing |
-| `SedenionElement` | 16D hypercomplex operations |
+| `enochianVocabulary` | Enochian vocabulary namespace (`EnochianEngine`, `CORE_VOCABULARY`, …) |
 
 ### Sub-modules
 
 ```javascript
 // Direct module access
-const { core, physics, backends, engine } = require('@aleph-ai/tinyaleph');
+import { core, physics, backends, engine } from '@aleph-ai/tinyaleph';
 
 // Or import sub-modules directly
-const core = require('@aleph-ai/tinyaleph/core');
-const physics = require('@aleph-ai/tinyaleph/physics');
-const backends = require('@aleph-ai/tinyaleph/backends');
-const engine = require('@aleph-ai/tinyaleph/engine');
+import * as core from '@aleph-ai/tinyaleph/core';
+import * as physics from '@aleph-ai/tinyaleph/physics';
+import * as backends from '@aleph-ai/tinyaleph/backends';
+import * as engine from '@aleph-ai/tinyaleph/engine';
 ```
 
 ### New Physics Exports

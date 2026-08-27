@@ -8,7 +8,7 @@
  * - Related to exceptional Lie groups
  */
 
-const { Hypercomplex } = require('../../modular');
+import { Hypercomplex } from '../../index.js';
 
 console.log('TinyAleph Octonion Example');
 console.log('==========================\n');

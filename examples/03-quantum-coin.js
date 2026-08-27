@@ -10,7 +10,7 @@
  * - True quantum randomness
  */
 
-const { ScientificBackend, Hypercomplex } = require('../modular');
+import { ScientificBackend, Hypercomplex } from '../index.js';
 
 // ===========================================
 // SETUP

@@ -16,7 +16,7 @@ npm install
 ## Verify Installation
 
 ```bash
-node -e "const { createEngine } = require('./modular'); console.log('✓ Aleph ready')"
+node -e "import('@aleph-ai/tinyaleph').then(({ createEngine }) => console.log('✓ Aleph ready'))"
 ```
 
 ---
@@ -26,10 +26,10 @@ node -e "const { createEngine } = require('./modular'); console.log('✓ Aleph r
 Create a file `hello.js`:
 
 ```javascript
-const { createEngine } = require('./modular');
+import { createEngine } from '@aleph-ai/tinyaleph';
 
 // Load configuration with vocabulary and ontology
-const config = require('./data.json');
+const config = { dimension: 16 };
 
 // Create semantic engine
 const engine = createEngine('semantic', config);
@@ -86,8 +86,8 @@ Stability: STABLE
 ## Exploring Physics
 
 ```javascript
-const { createEngine } = require('./modular');
-const config = require('./data.json');
+import { createEngine } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const engine = createEngine('semantic', config);
 
@@ -109,8 +109,8 @@ console.log('Collapse probability:', physics.collapseProbability.toFixed(3));
 ## Multiple Queries
 
 ```javascript
-const { createEngine } = require('./modular');
-const config = require('./data.json');
+import { createEngine } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const engine = createEngine('semantic', config);
 
@@ -133,8 +133,8 @@ for (const query of queries) {
 ## Batch Processing
 
 ```javascript
-const { createEngine } = require('./modular');
-const config = require('./data.json');
+import { createEngine } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const engine = createEngine('semantic', config);
 
@@ -160,8 +160,8 @@ for (const result of results) {
 Watch the physics unfold without new input:
 
 ```javascript
-const { createEngine } = require('./modular');
-const config = require('./data.json');
+import { createEngine } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const engine = createEngine('semantic', config);
 
@@ -182,8 +182,8 @@ for (const state of states.slice(0, 10)) {
 ## Switching Backends
 
 ```javascript
-const { createEngine, CryptographicBackend } = require('./modular');
-const semanticConfig = require('./data.json');
+import { createEngine, CryptographicBackend } from '@aleph-ai/tinyaleph';
+const semanticConfig = { dimension: 16 };
 
 // Start with semantic
 const engine = createEngine('semantic', semanticConfig);
@@ -208,8 +208,8 @@ console.log('Crypto primes:', result.resultPrimes.slice(0, 5));
 You can use backends directly without the engine:
 
 ```javascript
-const { SemanticBackend } = require('./modular');
-const config = require('./data.json');
+import { SemanticBackend } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const backend = new SemanticBackend(config);
 
@@ -233,8 +233,8 @@ console.log('State entropy:', state.entropy().toFixed(3));
 ### Check Semantic Similarity
 
 ```javascript
-const { SemanticBackend } = require('./modular');
-const config = require('./data.json');
+import { SemanticBackend } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const backend = new SemanticBackend(config);
 
@@ -252,8 +252,8 @@ console.log('love vs economics:', similarity('love', 'economics').toFixed(3));
 ### Monitor Stability
 
 ```javascript
-const { createEngine } = require('./modular');
-const config = require('./data.json');
+import { createEngine } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const engine = createEngine('semantic', config);
 
@@ -273,8 +273,8 @@ if (result.stability === 'CHAOTIC') {
 ### Track Collapse Events
 
 ```javascript
-const { createEngine } = require('./modular');
-const config = require('./data.json');
+import { createEngine } from '@aleph-ai/tinyaleph';
+const config = { dimension: 16 };
 
 const engine = createEngine('semantic', config);
 

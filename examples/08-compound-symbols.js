@@ -5,8 +5,7 @@
  * cultural variants, and narrative sequences.
  */
 
-const {
-  CompoundBuilder,
+import { CompoundBuilder,
   CompoundSymbol,
   SymbolSequence,
   compoundBuilder,
@@ -15,8 +14,7 @@ const {
   createSequence,
   getSequence,
   symbolDatabase,
-  resonanceSignature
-} = require('../core');
+  resonanceSignature } from '../core/index.js';
 
 console.log('='.repeat(60));
 console.log('Compound Symbol Builder');
@@ -54,7 +52,7 @@ console.log('-'.repeat(40));
 
 // Fire Mage
 const fireMage = createCompound('fire_mage', 
-  ['magician', 'fire', 'staff'],
+  ['magician', 'fire', 'candle'],
   'Fire Mage - Wielder of flame magic',
   ['fantasy', 'magic', 'elemental']
 );
@@ -63,7 +61,7 @@ console.log(`    "${fireMage.meaning}"`);
 
 // Storm Lord
 const stormLord = createCompound('storm_lord',
-  ['ruler', 'thunder', 'lightning'],
+  ['ruler', 'thunder', 'storm'],
   'Storm Lord - Master of the tempest',
   ['mythology', 'weather', 'power']
 );
@@ -72,7 +70,7 @@ console.log(`    "${stormLord.meaning}"`);
 
 // Guardian Spirit - using valid symbols
 const guardianSpirit = createCompound('guardian_spirit',
-  ['guardian', 'shadow', 'sanctuary'],
+  ['guardian', 'shadow', 'temple'],
   'Guardian Spirit - Protective ancestor spirit',
   ['spiritual', 'protection', 'ancestors']
 );
@@ -111,7 +109,7 @@ console.log('-'.repeat(40));
 
 // Love story - using valid symbols
 const loveStory = createSequence('love_story',
-  ['lover', 'love', 'conflict', 'unity'],
+  ['lover', 'love', 'chaos', 'unity'],
   'narrative',
   'Classic love story arc'
 );
@@ -120,7 +118,7 @@ console.log(`  ${loveStory.id}: ${loveIcons}`);
 
 // Quest for knowledge
 const knowledgeQuest = createSequence('knowledge_quest',
-  ['scholar', 'path', 'library', 'sage', 'wisdom_concept'],
+  ['book', 'path', 'scroll', 'sage', 'wisdom'],
   'journey',
   'The pursuit of wisdom'
 );
@@ -161,7 +159,7 @@ console.log('-'.repeat(40));
 
 const base = getCompound('greek_warrior');
 if (base) {
-  const candidates = ['sun', 'moon_element', 'stars', 'thunder', 'gold', 'silver'];
+  const candidates = ['sun', 'moon', 'stars', 'thunder', 'gold', 'silver'];
   const best = compoundBuilder.findResonantAddition(base, candidates);
   
   console.log(`  Base: ${base.unicode} ${base.id}`);
@@ -191,7 +189,7 @@ console.log(`    tags: [${norseVariant.culturalTags.join(', ')}]`);
 const egyptianVariant = compoundBuilder.createCulturalVariant(
   'greek_warrior',
   'egyptian',
-  ['pyramid', 'sun'],
+  ['temple', 'sun'],
   'Egyptian warrior under Ra'
 );
 console.log(`  ${egyptianVariant.unicode} ${egyptianVariant.id}`);

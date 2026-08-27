@@ -34,12 +34,41 @@ class ScientificBackend extends Backend {
     };
     
     this.transforms = Object.values(this.quantumGates);
+    
+    // Canonical qubit-state encodings (all distinct so decode can invert exactly)
+    this.qubitMap = {
+      '|0⟩': [2],
+      '|1⟩': [3],
+      '|+⟩': [2, 3],
+      '|-⟩': [2, 5],
+      '|i⟩': [3, 5],
+      '|-i⟩': [3, 7],
+      '|00⟩': [2, 2],
+      '|01⟩': [2, 7],
+      '|10⟩': [3, 2],
+      '|11⟩': [3, 3],
+      '|Φ+⟩': [2, 3, 5, 7],    // Bell state
+      '|Φ-⟩': [2, 3, 5, 11],   // Bell state
+      '|Ψ+⟩': [2, 5, 7, 11],   // Bell state
+      '|Ψ-⟩': [3, 5, 7, 11]    // Bell state
+    };
+    
+    // Inverse lookup for decode (exact, order-sensitive)
+    this.qubitDecodeMap = new Map();
+    for (const [state, primes] of Object.entries(this.qubitMap)) {
+      this.qubitDecodeMap.set(primes.join(','), state);
+    }
   }
   
   encode(input) {
     // Handle various input types
     if (Array.isArray(input)) {
       return input.flatMap(q => this.qubitToPrimes(q));
+    }
+    
+    // Exact qubit-state match first (includes multi-qubit basis states like |00⟩)
+    if (typeof input === 'string' && Object.prototype.hasOwnProperty.call(this.qubitMap, input)) {
+      return this.qubitMap[input].slice();
     }
     
     // Parse ket notation |n⟩
@@ -62,23 +91,8 @@ class ScientificBackend extends Backend {
   }
   
   qubitToPrimes(qubit) {
-    const map = {
-      '|0⟩': [2],
-      '|1⟩': [3],
-      '|+⟩': [2, 3],
-      '|-⟩': [2, 5],
-      '|i⟩': [3, 5],
-      '|-i⟩': [3, 7],
-      '|00⟩': [2, 2],
-      '|01⟩': [2, 3],
-      '|10⟩': [3, 2],
-      '|11⟩': [3, 3],
-      '|Φ+⟩': [2, 3, 5, 7],    // Bell state
-      '|Φ-⟩': [2, 3, 5, 11],   // Bell state
-      '|Ψ+⟩': [2, 5, 7, 11],   // Bell state
-      '|Ψ-⟩': [3, 5, 7, 11]    // Bell state
-    };
-    return map[qubit] || [2];
+    const primes = this.qubitMap[qubit];
+    return primes ? primes.slice() : [2];
   }
   
   integerToPrimes(n) {
@@ -90,6 +104,16 @@ class ScientificBackend extends Backend {
   }
   
   decode(primes) {
+    // Exact inverse of the encoding map (order-sensitive for multi-qubit pairs)
+    const exact = this.qubitDecodeMap.get(primes.join(','));
+    if (exact) return exact;
+    
+    // Order-insensitive fallback for two-prime superpositions
+    if (primes.length === 2 && primes[0] !== primes[1]) {
+      const reversed = this.qubitDecodeMap.get([primes[1], primes[0]].join(','));
+      if (reversed) return reversed;
+    }
+    
     const has2 = primes.includes(2);
     const has3 = primes.includes(3);
     const has5 = primes.includes(5);
@@ -248,20 +272,31 @@ class ScientificBackend extends Backend {
    * Apply rotation gate with angle
    */
   rotate(inputPrimes, axis, angle) {
-    const state = this.primesToState(inputPrimes);
+    return this.rotateState(this.primesToState(inputPrimes), axis, angle);
+  }
+  
+  /**
+   * Apply a rotation gate to a state vector directly.
+   * Uses standard SO(2) rotation matrices (determinant 1, always invertible)
+   * and preserves components outside the rotation plane.
+   */
+  rotateState(state, axis, angle) {
     const result = Hypercomplex.zero(this.dimension);
+    for (let i = 0; i < this.dimension; i++) {
+      result.c[i] = state.c[i];
+    }
     
     const cos = Math.cos(angle / 2);
     const sin = Math.sin(angle / 2);
     
     if (axis === 'x') {
       result.c[0] = cos * state.c[0] - sin * state.c[1];
-      result.c[1] = -sin * state.c[0] + cos * state.c[1];
+      result.c[1] = sin * state.c[0] + cos * state.c[1];
     } else if (axis === 'y') {
       result.c[0] = cos * state.c[0] - sin * state.c[2];
       result.c[2] = sin * state.c[0] + cos * state.c[2];
     } else if (axis === 'z') {
-      result.c[0] = cos * state.c[0];
+      result.c[0] = state.c[0];
       result.c[1] = cos * state.c[1] - sin * state.c[2];
       result.c[2] = sin * state.c[1] + cos * state.c[2];
     }

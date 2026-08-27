@@ -13,7 +13,7 @@
 
 'use strict';
 
-const { BirkhoffProjector } = require('../../core/crt-homology');
+import { BirkhoffProjector } from '../../core/crt-homology.js';
 
 console.log('=== Birkhoff Polytope Attention Example ===\n');
 

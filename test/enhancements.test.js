@@ -141,6 +141,35 @@ describe('Stochastic Kuramoto Models', () => {
       assert.ok(Array.isArray(result.confidence95));
       assert.strictEqual(result.samples.length, 50);
     });
+
+    it('should keep phases and order parameter finite after many ticks', () => {
+      const frequencies = [1.0, 1.1, 0.9, 1.05, 1.0];
+      const model = new StochasticKuramoto(frequencies, {
+        coupling: 0.5,
+        noiseIntensity: 0.1
+      });
+
+      model.evolve(100, 0.01);
+
+      for (const osc of model.oscillators) {
+        assert.ok(Number.isFinite(osc.phase), `phase must be finite, got ${osc.phase}`);
+      }
+      assert.ok(Number.isFinite(model.orderParameter()));
+      assert.ok(model.orderParameter() >= 0 && model.orderParameter() <= 1);
+    });
+
+    it('should produce a finite order parameter with colored noise', () => {
+      const frequencies = [1.0, 1.1, 0.9, 1.05];
+      const model = new ColoredNoiseKuramoto(frequencies, {
+        coupling: 0.5,
+        noiseIntensity: 0.1,
+        correlationTime: 2.0
+      });
+
+      model.evolve(100, 0.01);
+
+      assert.ok(Number.isFinite(model.orderParameter()));
+    });
   });
   
   describe('ColoredNoiseKuramoto', () => {
@@ -164,6 +193,32 @@ describe('Stochastic Kuramoto Models', () => {
       // Expected variance = σ²τ/2
       const expected = 0.2 * 0.2 * 1.0 / 2;
       assert.strictEqual(model.getStationaryVariance(), expected);
+    });
+
+    it('should equilibrate to the documented stationary variance σ²τ/2', () => {
+      const tau = 4.0;
+      const sigma = 0.2;
+      const model = new ColoredNoiseKuramoto([1.0], {
+        correlationTime: tau,
+        noiseIntensity: sigma
+      });
+
+      // Burn in, then sample the OU process to estimate its stationary variance
+      for (let i = 0; i < 500; i++) model.updateColoredNoise(0, 0.1);
+      const samples = [];
+      for (let i = 0; i < 30000; i++) {
+        samples.push(model.updateColoredNoise(0, 0.1));
+      }
+      const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+      const variance = samples.reduce((sum, x) => sum + (x - mean) ** 2, 0) / samples.length;
+
+      // Without the √τ factor in the diffusion, the variance converges to
+      // σ²/2 (= 0.02) instead of σ²τ/2 (= 0.08)
+      const expected = sigma * sigma * tau / 2;
+      assert.ok(
+        Math.abs(variance - expected) < 0.02,
+        `OU variance ${variance} should be near σ²τ/2 = ${expected}`
+      );
     });
   });
   
@@ -189,6 +244,27 @@ describe('Stochastic Kuramoto Models', () => {
       // Critical temperature should be a valid number
       assert.ok(typeof Tc === 'number');
       // It could be NaN if frequency spread is 0, so just check it's a number
+    });
+
+    it('should estimate a finite critical temperature', () => {
+      const frequencies = [1.0, 1.1, 0.9, 1.05];
+      const model = new ThermalKuramoto(frequencies, { coupling: 0.5 });
+
+      const Tc = model.estimateCriticalTemperature();
+      assert.ok(Number.isFinite(Tc), `Tc must be finite, got ${Tc}`);
+      assert.ok(Tc > 0);
+    });
+
+    it('should produce a finite order parameter after many ticks', () => {
+      const frequencies = [1.0, 1.1, 0.9, 1.05];
+      const model = new ThermalKuramoto(frequencies, {
+        coupling: 0.5,
+        temperature: 1.0
+      });
+
+      model.evolve(100, 0.01);
+
+      assert.ok(Number.isFinite(model.orderParameter()));
     });
   });
 });

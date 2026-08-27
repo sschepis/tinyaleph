@@ -16,8 +16,7 @@
  * - Prime Resonant Graph Database
  */
 
-const {
-  // Quaternion algebra
+import { // Quaternion algebra
   Quaternion,
   
   // Sparse prime state
@@ -43,8 +42,7 @@ const {
   PRGraphMemory,
   
   // Operators
-  applyResonanceOperator
-} = require('../../modular');
+  applyResonanceOperator } from '../../index.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('              RESOFORMER DEMONSTRATION');

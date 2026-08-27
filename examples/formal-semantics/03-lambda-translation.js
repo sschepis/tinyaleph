@@ -8,11 +8,9 @@
  * - Operational/denotational agreement
  */
 
-const {
-    N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL,
+import { N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL,
     Translator, LambdaEvaluator, Semantics, ConceptInterpreter,
-    ConstExpr, LamExpr, VarExpr, AppExpr
-} = require('../../core');
+    ConstExpr, LamExpr, VarExpr, AppExpr } from '../../core/index.js';
 
 console.log('=== Lambda Calculus Translation ===\n');
 

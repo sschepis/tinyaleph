@@ -89,22 +89,41 @@ function estimateLyapunovFromTimeSeries(history, windowSize = 20) {
 /**
  * Classify stability based on Lyapunov exponent
  * @param {number} lyapunovExponent - The Lyapunov exponent
- * @returns {'STABLE'|'MARGINAL'|'CHAOTIC'} Stability classification
+ * @returns {'stable'|'marginal'|'chaotic'} Stability classification
  */
 function classifyStability(lyapunovExponent) {
-  if (lyapunovExponent < 0) return 'STABLE';       // Convergent (negative exponent)
-  if (lyapunovExponent < 0.5) return 'MARGINAL';   // Near-zero / weak divergence
-  return 'CHAOTIC';                                  // Strong divergence
+  if (lyapunovExponent < 0) return 'stable';       // Convergent (negative exponent)
+  if (lyapunovExponent < 0.5) return 'marginal';   // Near-zero / weak divergence
+  return 'chaotic';                                  // Strong divergence
 }
 
 /**
  * Compute adaptive coupling strength based on coherence or Lyapunov exponent
+ *
+ * Two calling conventions:
+ * - Explicit legacy mode (3 args): adaptiveCoupling(baseCoupling, lyapunovExponent, gain?)
+ *   Passed when the third argument is supplied; the base coupling is adapted
+ *   from the Lyapunov exponent (strengthened when stable, weakened when chaotic).
+ * - Coherence mode (2 args): adaptiveCoupling(coherence, baseStrength?)
+ *
  * @param {number} coherenceOrBase - Coherence value (0-1) or base coupling strength
  * @param {number} [baseStrengthOrLyapunov=0.3] - Base strength (for coherence mode) or Lyapunov exponent
  * @param {number} [gain=0.5] - Gain factor for legacy mode
  * @returns {number} Adapted coupling strength
  */
 function adaptiveCoupling(coherenceOrBase, baseStrengthOrLyapunov = 0.3, gain = 0.5) {
+  // Explicit legacy mode: adaptiveCoupling(baseCoupling, lyapunovExponent, gain)
+  // The third argument disambiguates, since base couplings and small Lyapunov
+  // exponents can both lie in [0.05, 1], making the 2-arg heuristic ambiguous.
+  if (arguments.length >= 3) {
+    const baseCoupling = coherenceOrBase;
+    const lyapunovExponent = baseStrengthOrLyapunov;
+    
+    if (lyapunovExponent < -0.1) return baseCoupling * (1 + gain);
+    if (lyapunovExponent > 0.1) return baseCoupling * (1 - gain);
+    return baseCoupling;
+  }
+  
   // If first arg is between 0 and 1 and second is small, treat as coherence mode
   // adaptiveCoupling(coherence, baseStrength?)
   if (coherenceOrBase >= 0 && coherenceOrBase <= 1 &&
@@ -117,7 +136,7 @@ function adaptiveCoupling(coherenceOrBase, baseStrengthOrLyapunov = 0.3, gain = 
     return baseStrength * (0.5 + coherence);
   }
   
-  // Legacy mode: adaptiveCoupling(baseCoupling, lyapunovExponent, gain?)
+  // Legacy mode: adaptiveCoupling(baseCoupling, lyapunovExponent)
   const baseCoupling = coherenceOrBase;
   const lyapunovExponent = baseStrengthOrLyapunov;
   

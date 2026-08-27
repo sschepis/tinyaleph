@@ -23,7 +23,7 @@
 /**
  * Golden ratio for axis distribution
  */
-import { isPrime, twistAngle, nthPrime } from './prime.js';
+import { isPrime, twistAngle, nthPrime, primesUpTo } from './prime.js';
 
 const PHI = (1 + Math.sqrt(5)) / 2;
 
@@ -82,33 +82,45 @@ class ModularAxisMapper extends AxisMapper {
  *
  * Maps each prime to a point on the unit sphere using the golden angle,
  * creating maximally uniform distribution (like sunflower seeds).
+ *
+ * map(p) is a PURE function: the sphere position is derived solely from
+ * p's position π(p) in the prime sequence (via primesUpTo), not from
+ * call history, so interleaved/repeated calls always agree.
  */
 class GoldenAxisMapper extends AxisMapper {
     constructor() {
         super();
-        this.primeIndex = new Map();
-        this.currentIndex = 0;
+        this._cache = new Map();
+    }
+    
+    /**
+     * Zero-based position of prime p in the prime sequence.
+     * @private
+     */
+    _primePosition(p) {
+        return primesUpTo(p).length - 1;
     }
     
     map(p) {
-        // Get or assign index for this prime
-        if (!this.primeIndex.has(p)) {
-            this.primeIndex.set(p, this.currentIndex++);
+        if (!this._cache.has(p)) {
+            const n = this._primePosition(p);
+            
+            // Golden angle in radians
+            const goldenAngle = 2 * Math.PI / (PHI * PHI);
+            
+            // Spherical coordinates using golden ratio (fixed total count
+            // derived from p itself so the mapping is order-independent)
+            const theta = goldenAngle * n;
+            const phi = Math.acos(1 - 2 * (n + 0.5) / (n + 2));
+            
+            this._cache.set(p, {
+                i: Math.sin(phi) * Math.cos(theta),
+                j: Math.sin(phi) * Math.sin(theta),
+                k: Math.cos(phi)
+            });
         }
-        const n = this.primeIndex.get(p);
         
-        // Golden angle in radians
-        const goldenAngle = 2 * Math.PI / (PHI * PHI);
-        
-        // Spherical coordinates using golden ratio
-        const theta = goldenAngle * n;
-        const phi = Math.acos(1 - 2 * (n + 0.5) / (this.currentIndex + 1));
-        
-        return {
-            i: Math.sin(phi) * Math.cos(theta),
-            j: Math.sin(phi) * Math.sin(theta),
-            k: Math.cos(phi)
-        };
+        return { ...this._cache.get(p) };
     }
 }
 

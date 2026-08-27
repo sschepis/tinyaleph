@@ -8,11 +8,9 @@
  * - Triadic fusion FUSE(p,q,r)
  */
 
-const {
-    N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL,
+import { N, A, FUSE, CHAIN, SENTENCE, SEQ, IMPL,
     NounTerm, AdjTerm, ChainTerm, FusionTerm,
-    TypeChecker
-} = require('../../core');
+    TypeChecker } from '../../core/index.js';
 
 console.log('=== Typed Terms in Prime-Indexed Semantic Calculi ===\n');
 

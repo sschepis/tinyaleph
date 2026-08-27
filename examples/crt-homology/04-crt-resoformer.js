@@ -12,14 +12,12 @@
 
 'use strict';
 
-const {
-    CRTResonantAttention,
+import { CRTResonantAttention,
     HomologyRegularizedBlock,
     CRTResoFormer,
-    createCRTResoFormer
-} = require('../../core/rformer-crt');
+    createCRTResoFormer } from '../../core/rformer-crt.js';
 
-const { SparsePrimeState } = require('../../core/rformer');
+import { SparsePrimeState } from '../../core/rformer.js';
 
 console.log('=== CRT-Enhanced ResoFormer Example ===\n');
 

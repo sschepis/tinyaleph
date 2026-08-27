@@ -8,7 +8,7 @@
  * - Used in Git, IPFS, and other systems
  */
 
-const { CryptographicBackend } = require('../../modular');
+import { CryptographicBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

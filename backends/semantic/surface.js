@@ -190,7 +190,8 @@ class Surface {
         const union = new Set([...targetSet, ...candidateSet]).size;
         const similarity = intersection / union;
         
-        const score = similarity * candidate.bias;
+        // Score includes bias, context boosts, and external word biases
+        const score = similarity * this.scoreCandidate(candidate, options);
         
         if (score > bestScore) {
           bestScore = score;
@@ -390,5 +391,7 @@ class BiasEngine {
     this.temporaryBiases.set(word, current * amount);
   }
 }
+
+export { Surface, SurfaceManager, BiasEngine };
 
 export default { Surface, SurfaceManager, BiasEngine };

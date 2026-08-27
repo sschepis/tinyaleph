@@ -1,0 +1,24 @@
+{
+  "name": "resonant-attention-benchmarks",
+  "version": "1.0.0",
+  "description": "Empirical benchmarks for Resonant Attention paper",
+  "main": "index.js",
+  "scripts": {
+    "benchmark": "node run-all.js",
+    "bench:time": "node bench-time.js",
+    "bench:memory": "node bench-memory.js",
+    "bench:compare": "node bench-comparison.js",
+    "bench:quality": "node bench-quality.js",
+    "plot": "node plot.js",
+    "reproduce": "node reproduce.js"
+  },
+  "keywords": [
+    "attention",
+    "benchmarks",
+    "resonant-attention",
+    "prime-semantics"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}

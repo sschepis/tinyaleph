@@ -8,7 +8,7 @@
  * - Has configurable output length
  */
 
-const { CryptographicBackend } = require('../../modular');
+import { CryptographicBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

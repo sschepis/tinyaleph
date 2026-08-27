@@ -4,10 +4,13 @@
  * Interactive menu-driven CLI to browse and run examples
  */
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
-const { spawn } = require('child_process');
+import * as fs from 'fs';
+import * as path from 'path';
+import * as readline from 'readline';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ANSI color codes
 const colors = {
@@ -83,16 +86,6 @@ const categories = {
             { file: '05-content-hash.js', name: 'Content Hash', desc: 'Content-addressable storage' }
         ]
     },
-    quantum: {
-        name: '🌌 Quantum Framework',
-        description: 'Prime prediction & quantum neural networks',
-        path: 'quantum',
-        examples: [
-            { file: '01-prime-hunter.js', name: 'Prime Hunter', desc: 'Scan for prime resonance' },
-            { file: '02-entanglement-demo.js', name: 'Entanglement Demo', desc: 'Quantum neural network demo' },
-            { file: '03-wave-analysis.js', name: 'Wave Analysis', desc: 'Visualize quantum waveforms' }
-        ]
-    },
     scientific: {
         name: '⚛️ Scientific Computing',
         description: 'Quantum computing simulation',
@@ -139,8 +132,10 @@ const categories = {
             { file: '01-oscillator.js', name: 'Oscillator', desc: 'Coupled oscillators' },
             { file: '02-lyapunov.js', name: 'Lyapunov', desc: 'Chaos and stability' },
             { file: '03-collapse.js', name: 'Collapse', desc: 'State collapse dynamics' },
-            { file: '04-kuramoto.js', name: 'Kuramoto', desc: 'Synchronization model' },
-            { file: '05-entropy.js', name: 'Entropy', desc: 'Information entropy' }
+            { file: '05-sync-models.js', name: 'Sync Models', desc: 'Extended synchronization models' },
+            { file: '05-entropy.js', name: 'Entropy', desc: 'Information entropy' },
+            { file: '06-primeon-ladder.js', name: 'Primeon Ladder', desc: 'Primeon Z-ladder dynamics' },
+            { file: '07-kuramoto-coupled-ladder.js', name: 'Kuramoto Ladder', desc: 'Kuramoto-coupled primeon ladder' }
         ]
     }
 };

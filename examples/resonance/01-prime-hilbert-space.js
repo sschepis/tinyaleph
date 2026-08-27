@@ -11,12 +11,10 @@
  * - Resonance operators (P̂, F̂, R̂, Ĉ)
  */
 
-const {
-  Complex,
+import { Complex,
   PrimeState,
   ResonanceOperators,
-  EntropyDrivenEvolution
-} = require('../../modular');
+  EntropyDrivenEvolution } from '../../index.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('           PRIME HILBERT SPACE DEMONSTRATION');

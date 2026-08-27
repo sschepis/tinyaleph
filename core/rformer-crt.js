@@ -56,6 +56,7 @@ class CRTResonantAttention {
    * @param {number} [config.numPrimes=4096] - Size of prime vocabulary
    * @param {number} [config.activeK=32] - Sparsity per state
    * @param {number} [config.sinkhornIterations=10] - Iterations for Birkhoff projection
+   * @param {number} [config.birkhoffTolerance=1e-10] - Numerical epsilon for Birkhoff projection
    * @param {number} [config.temperature=1.0] - Softmax temperature
    */
   constructor(config) {
@@ -70,10 +71,13 @@ class CRTResonantAttention {
     
     // CRT components
     this.crtReconstructor = new CRTReconstructor(this.moduli);
-    this.birkhoffProjector = new BirkhoffProjector({
-      maxIterations: config.sinkhornIterations || 10,
-      tolerance: config.birkhoffTolerance || 1e-3
-    });
+    // NOTE: BirkhoffProjector takes (iterations, epsilon) positionally.
+    // Passing an options object here would make the Sinkhorn loop a
+    // no-op and poison every entry with NaN (epsilon undefined).
+    this.birkhoffProjector = new BirkhoffProjector(
+      config.sinkhornIterations || 10,
+      config.birkhoffTolerance !== undefined ? config.birkhoffTolerance : 1e-10
+    );
     
     // Per-head weights [alpha, beta, gamma] for resonance scoring
     this.headWeights = config.headWeights || this._defaultHeadWeights();
@@ -214,8 +218,8 @@ class CRTResonantAttention {
     }
     
     // Project onto Birkhoff polytope (doubly-stochastic)
-    const birkhoffResult = this.birkhoffProjector.project(attentionMatrix);
-    const birkhoffMatrix = birkhoffResult && birkhoffResult.matrix ? birkhoffResult.matrix : null;
+    // project() returns the doubly-stochastic matrix directly.
+    const birkhoffMatrix = this.birkhoffProjector.project(attentionMatrix);
     
     // Extract query-specific weights (first row after projection)
     // For proper attention, use the scores projected through Birkhoff
@@ -225,7 +229,7 @@ class CRTResonantAttention {
     const blendFactor = 0.3;  // How much Birkhoff structure to incorporate
     const blendedWeights = softmaxWeights.map((w, i) => {
       // Safely access Birkhoff weights with full null checking
-      if (birkhoffMatrix && Array.isArray(birkhoffMatrix) && birkhoffMatrix.length > 0) {
+      if (Array.isArray(birkhoffMatrix) && birkhoffMatrix.length > 0) {
         const birkhoffRow = birkhoffMatrix[0];
         if (Array.isArray(birkhoffRow) && i < birkhoffRow.length && typeof birkhoffRow[i] === 'number') {
           return (1 - blendFactor) * w + blendFactor * birkhoffRow[i];
@@ -262,7 +266,7 @@ class CRTResonantAttention {
       result: result.normalize(), 
       birkhoffWeights: normalizedWeights, 
       residue,
-      convergenceInfo: birkhoffResult.convergenceInfo
+      convergenceInfo: null
     };
   }
   

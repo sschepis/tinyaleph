@@ -152,7 +152,6 @@ export const {
   
   // Prime Resonance Network - Non-local symbolic computing
   PHI,
-  PHI_CONJ,
   DELTA_S,
   QuaternionPrime,
   PrimeResonanceIdentity,
@@ -302,9 +301,6 @@ export const {
   enochian,
   enochianVocabulary,
   ENOCHIAN_ALPHABET,
-  ENOCHIAN_LETTER_PRIMES,
-  ENOCHIAN_VOCABULARY,
-  ENOCHIAN_CALLS,
   SedenionElement,
   TwistOperator,
   EnochianWord,

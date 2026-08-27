@@ -8,11 +8,10 @@
  * - Full agent flow
  */
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import * as assert from 'node:assert';
 
-const {
-    TaskStatus,
+import { TaskStatus,
     StepStatus,
     ComplexityIndicators,
     TaskStep,
@@ -21,8 +20,7 @@ const {
     ComplexityAnalyzer,
     StepExecutor,
     Agent,
-    createAgent
-} = require('../lib/agent');
+    createAgent } from '../lib/agent.js';
 
 describe('Agent Module', () => {
     

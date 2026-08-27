@@ -8,7 +8,7 @@
  * - Inspecting the resulting state
  */
 
-const { createEngine, SemanticBackend, Hypercomplex } = require('../modular');
+import { createEngine, SemanticBackend, Hypercomplex } from '../index.js';
 
 // ===========================================
 // SETUP

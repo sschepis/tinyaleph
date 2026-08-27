@@ -23,6 +23,7 @@ class SemanticBackend extends Backend {
     this.ontology = config.ontology || {};
     this.transforms = config.transforms || [];
     this.axes = config.axes || {};
+    this.config.axes = this.axes;
     this.corePrimes = new Set(config.corePrimes || [
       2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
       53, 59, 61, 67, 71, 73, 79, 83, 89, 97
@@ -57,9 +58,16 @@ class SemanticBackend extends Backend {
   }
   
   wordToPrimes(word) {
-    // Hash unknown words to primes based on character codes
+    // Hash unknown words to primes using a position-aware multiplicative hash.
+    // The position term keeps character order significant ('ab' !== 'ba') and
+    // the multiplicative term spreads distinct characters across the prime
+    // table, avoiding the collisions of charCodeAt % primes.length.
     const primes = this.config.primes;
-    return [...word].map(c => primes[c.charCodeAt(0) % primes.length]);
+    return [...word].map((c, i) => {
+      const code = c.charCodeAt(0);
+      const idx = (code * 31 + i * 17) % primes.length;
+      return primes[idx];
+    });
   }
   
   encode(text) {
@@ -254,9 +262,8 @@ class SemanticBackend extends Backend {
     const inputSet = new Set(inputPrimes);
     // Check if transform query primes are present
     if (!transform.q || !transform.q.some(p => inputSet.has(p))) return inputPrimes;
-    // Don't transform core primes
-    if (transform.q.some(p => this.corePrimes.has(p))) return inputPrimes;
-    // Apply replacement
+    // Apply replacement. Core primes are preserved in the output (never
+    // removed) but no longer block the transform from firing.
     const kept = inputPrimes.filter(p => this.corePrimes.has(p) || !transform.q.includes(p));
     return [...new Set([...kept, ...(transform.r || [])])];
   }

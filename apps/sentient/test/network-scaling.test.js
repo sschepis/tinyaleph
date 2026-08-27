@@ -11,13 +11,12 @@
  * - Fault tolerance
  */
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
-const { EventEmitter } = require('events');
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import * as assert from 'node:assert';
+import { EventEmitter } from 'events';
 
 // Import network components
-const {
-    DSNNode,
+import { DSNNode,
     LocalField,
     Proposal,
     ProposalLog,
@@ -25,20 +24,17 @@ const {
     CoherentCommitProtocol,
     PRRCChannel,
     NetworkSynchronizer,
-    generateNodeId
-} = require('../lib/network');
+    generateNodeId } from '../lib/network.js';
 
 // Import semantic components
-const { SedenionMemoryField, SMF_AXES } = require('../lib/smf');
-const { EntanglementLayer, EntangledPair, Phrase } = require('../lib/entanglement');
-const {
-    PrimeCalculusBuilder,
+import { SedenionMemoryField, SMF_AXES } from '../lib/smf.js';
+import { EntanglementLayer, EntangledPair, Phrase } from '../lib/entanglement.js';
+import { PrimeCalculusBuilder,
     PrimeCalculusEvaluator,
     SemanticObject,
     NounTerm,
     ChainTerm,
-    FusionTerm
-} = require('../lib/prime-calculus');
+    FusionTerm } from '../lib/prime-calculus.js';
 
 /**
  * Mock Transport for testing

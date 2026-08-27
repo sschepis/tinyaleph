@@ -6,15 +6,23 @@
 
 'use strict';
 
-const { describe, it } = require('node:test');
-const assert = require('node:assert');
+import { describe, it } from 'node:test';
+import * as assert from 'node:assert';
+
+import * as __ns0____lib_prsc from '../lib/prsc.js';
+import * as __ns1____lib_smf from '../lib/smf.js';
+import * as __ns2____lib_hqe from '../lib/hqe.js';
+import * as __ns3____lib_prime_calculus from '../lib/prime-calculus.js';
+import * as __ns4____lib_network from '../lib/network.js';
+import * as __ns5____lib_learning_curiosity from '../lib/learning/curiosity.js';
+import * as __ns6____lib_collective from '../lib/collective.js';
 
 // ============================================================================
 // INTEGER SINE TABLES TESTS (PRSC)
 // ============================================================================
 
 describe('Integer Sine Tables (PRSC)', () => {
-    const prsc = require('../lib/prsc');
+    const prsc = __ns0____lib_prsc;
     
     it('should export INT_SINE_M = 256', () => {
         assert.strictEqual(prsc.INT_SINE_M, 256);
@@ -54,7 +62,7 @@ describe('Integer Sine Tables (PRSC)', () => {
 // ============================================================================
 
 describe('Histogram Coherence (PRSC)', () => {
-    const { computeHistogramCoherence } = require('../lib/prsc');
+    const { computeHistogramCoherence } = __ns0____lib_prsc;
     
     it('should export computeHistogramCoherence function', () => {
         assert.strictEqual(typeof computeHistogramCoherence, 'function');
@@ -88,7 +96,7 @@ describe('Histogram Coherence (PRSC)', () => {
 // ============================================================================
 
 describe('Codebook Tunneling (SMF)', () => {
-    const smf = require('../lib/smf');
+    const smf = __ns1____lib_smf;
     
     describe('SMF_CODEBOOK', () => {
         it('should export SMF_CODEBOOK', () => {
@@ -153,7 +161,7 @@ describe('Codebook Tunneling (SMF)', () => {
 // ============================================================================
 
 describe('Tick-Only HQE Gating', () => {
-    const { TickGate } = require('../lib/hqe');
+    const { TickGate } = __ns2____lib_hqe;
     
     it('should export TickGate class', () => {
         assert.strictEqual(typeof TickGate, 'function');
@@ -201,7 +209,7 @@ describe('Tick-Only HQE Gating', () => {
 // ============================================================================
 
 describe('Canonical Fusion Selection (Prime Calculus)', () => {
-    const { PrimeCalculusBuilder } = require('../lib/prime-calculus');
+    const { PrimeCalculusBuilder } = __ns3____lib_prime_calculus;
     
     it('should export PrimeCalculusBuilder', () => {
         assert.ok(PrimeCalculusBuilder);
@@ -232,7 +240,7 @@ describe('Canonical Fusion Selection (Prime Calculus)', () => {
 // ============================================================================
 
 describe('Formalized Proposal Class (Network)', () => {
-    const { Proposal } = require('../lib/network');
+    const { Proposal } = __ns4____lib_network;
     
     it('should export Proposal class', () => {
         assert.strictEqual(typeof Proposal, 'function');
@@ -275,7 +283,7 @@ describe('Formalized Proposal Class (Network)', () => {
 // ============================================================================
 
 describe('Free Energy Curiosity (Curiosity Engine)', () => {
-    const { FreeEnergyCuriosity } = require('../lib/learning/curiosity');
+    const { FreeEnergyCuriosity } = __ns5____lib_learning_curiosity;
     
     it('should export FreeEnergyCuriosity class', () => {
         assert.strictEqual(typeof FreeEnergyCuriosity, 'function');
@@ -331,7 +339,7 @@ describe('Free Energy Curiosity (Curiosity Engine)', () => {
 // ============================================================================
 
 describe('Observer Scale Manager (Collective)', () => {
-    const { ObserverScaleManager, OBSERVER_HIERARCHY } = require('../lib/collective');
+    const { ObserverScaleManager, OBSERVER_HIERARCHY } = __ns6____lib_collective;
     
     it('should export ObserverScaleManager class', () => {
         assert.strictEqual(typeof ObserverScaleManager, 'function');

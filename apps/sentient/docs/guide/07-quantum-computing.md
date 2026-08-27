@@ -39,7 +39,7 @@ The predictive engine:
 
 ### Detecting Prime Resonance
 ```javascript
-const { WaveformAnalyzer } = require('../../lib/quantum/analyzer');
+import { WaveformAnalyzer } from '../../lib/quantum/analyzer.js';
 
 const analyzer = new WaveformAnalyzer();
 const results = analyzer.analyzeRange(10, 50);
@@ -53,8 +53,8 @@ results.forEach(r => {
 
 ### Training the QNN
 ```javascript
-const { QuantumNeuralNetwork } = require('../../lib/quantum/network');
-const { generateTrainingData } = require('../../lib/quantum/math');
+import { QuantumNeuralNetwork } from '../../lib/quantum/network.js';
+import { generateTrainingData } from '../../lib/quantum/math.js';
 
 const qnn = new QuantumNeuralNetwork();
 const data = generateTrainingData(10, 100);

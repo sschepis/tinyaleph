@@ -15,12 +15,10 @@
 
 'use strict';
 
-const {
-  KuramotoCoupledLadder,
+import { KuramotoCoupledLadder,
   createKuramotoLadder,
   runCollapsePressureExperiment,
-  kuramotoOrderParameter
-} = require('../../physics/kuramoto-coupled-ladder');
+  kuramotoOrderParameter } from '../../physics/kuramoto-coupled-ladder.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('       Kuramoto-Coupled Primeon Z-Ladder Example');

@@ -8,7 +8,7 @@
  * - Linear combinations create new vectors
  */
 
-const { Hypercomplex } = require('../../modular');
+import { Hypercomplex } from '../../index.js';
 
 console.log('TinyAleph Vector Spaces Example');
 console.log('================================\n');

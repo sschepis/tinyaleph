@@ -23,14 +23,17 @@
 
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const os = require('os');
-const readline = require('readline');
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
+import * as os from 'os';
+import * as readline from 'readline';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Import binary serializer from lib
-const { BinarySerializer } = require('../lib/binary-serializer');
+import { BinarySerializer } from '../lib/binary-serializer.js';
 
 // ============================================================================
 // CONFIGURATION

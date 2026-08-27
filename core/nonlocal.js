@@ -170,12 +170,22 @@ class PrimeEntangledPair {
   }
   
   /**
-   * Check if pair is still entangled
+   * Check if pair is still entangled.
+   *
+   * Uses an amplitude-spread criterion: both subsystems must carry at
+   * least two basis states with non-negligible amplitude (a genuine
+   * superposition), i.e. neither party has collapsed to a single
+   * basis state.
+   *
+   * @param {number} [threshold=1e-6] - Minimum amplitude norm for a
+   *   basis state to count toward the superposition spread
+   * @returns {boolean} True if both subsystems are in genuine superposition
    */
-  isEntangled() {
-    // Entangled if both have non-trivial superposition
-    const aSuper = this.stateA.dominant(2).length >= 2;
-    const bSuper = this.stateB.dominant(2).length >= 2;
+  isEntangled(threshold = 1e-6) {
+    const aAmps = this.stateA.dominant(2);
+    const bAmps = this.stateB.dominant(2);
+    const aSuper = aAmps.filter(d => d.amp > threshold).length >= 2;
+    const bSuper = bAmps.filter(d => d.amp > threshold).length >= 2;
     return aSuper && bSuper;
   }
   

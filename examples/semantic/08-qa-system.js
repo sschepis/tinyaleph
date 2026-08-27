@@ -8,7 +8,7 @@
  * - Extract and rank answers
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

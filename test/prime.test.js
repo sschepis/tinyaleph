@@ -43,6 +43,16 @@ describe('Prime utilities', () => {
     it('should handle large primes', () => {
       assert.strictEqual(isPrime(104729), true); // 10000th prime
     });
+
+    it('should return false for non-integer and non-finite inputs', () => {
+      assert.strictEqual(isPrime(NaN), false);
+      assert.strictEqual(isPrime(Infinity), false);
+      assert.strictEqual(isPrime(-Infinity), false);
+      assert.strictEqual(isPrime(4.5), false);
+      assert.strictEqual(isPrime(6.3), false);
+      assert.strictEqual(isPrime(-3), false);
+      assert.strictEqual(isPrime('7'), false);
+    });
   });
 
   describe('nthPrime', () => {
@@ -54,6 +64,13 @@ describe('Prime utilities', () => {
       assert.strictEqual(nthPrime(5), 11);
       assert.strictEqual(nthPrime(10), 29);
     });
+
+    it('should throw RangeError for n < 1 or non-integer n', () => {
+      assert.throws(() => nthPrime(0), RangeError);
+      assert.throws(() => nthPrime(-1), RangeError);
+      assert.throws(() => nthPrime(2.5), RangeError);
+      assert.throws(() => nthPrime(NaN), RangeError);
+    });
   });
 
   describe('primesUpTo', () => {
@@ -64,6 +81,17 @@ describe('Prime utilities', () => {
 
     it('should return empty for limit < 2', () => {
       assert.deepStrictEqual(primesUpTo(1), []);
+    });
+
+    it('should throw RangeError for non-integer limits', () => {
+      assert.throws(() => primesUpTo(10.5), RangeError);
+      assert.throws(() => primesUpTo(NaN), RangeError);
+      assert.throws(() => primesUpTo(Infinity), RangeError);
+    });
+
+    it('should return empty for negative integer limits', () => {
+      assert.deepStrictEqual(primesUpTo(-5), []);
+      assert.deepStrictEqual(primesUpTo(-1), []);
     });
   });
 
@@ -111,6 +139,15 @@ describe('Prime utilities', () => {
       assert.strictEqual(factors[2], 1);
       assert.strictEqual(factors[3], 1);
       assert.strictEqual(factors[5], 1);
+    });
+
+    it('should throw RangeError for values < 2 or non-integers', () => {
+      assert.throws(() => factorize(0), RangeError);
+      assert.throws(() => factorize(1), RangeError);
+      assert.throws(() => factorize(-5), RangeError);
+      assert.throws(() => factorize(2.5), RangeError);
+      assert.throws(() => factorize(NaN), RangeError);
+      assert.throws(() => factorize(Infinity), RangeError);
     });
   });
 
@@ -177,6 +214,25 @@ describe('GaussianInteger', () => {
       const g = new GaussianInteger(1, 1);
       assert.strictEqual(typeof g.isGaussianPrime(), 'boolean');
     });
+
+    it('should classify on-axis Gaussian primes correctly', () => {
+      assert.strictEqual(new GaussianInteger(3, 0).isGaussianPrime(), true);
+      assert.strictEqual(new GaussianInteger(7, 0).isGaussianPrime(), true);
+      assert.strictEqual(new GaussianInteger(-3, 0).isGaussianPrime(), true);
+      assert.strictEqual(new GaussianInteger(0, 7).isGaussianPrime(), true);
+      // 2 = (1+i)(1-i) splits
+      assert.strictEqual(new GaussianInteger(2, 0).isGaussianPrime(), false);
+      assert.strictEqual(new GaussianInteger(0, 2).isGaussianPrime(), false);
+      // 5 = (2+i)(2-i) splits
+      assert.strictEqual(new GaussianInteger(5, 0).isGaussianPrime(), false);
+    });
+
+    it('should classify mixed Gaussian primes correctly', () => {
+      assert.strictEqual(new GaussianInteger(1, 1).isGaussianPrime(), true); // norm 2
+      assert.strictEqual(new GaussianInteger(3, 2).isGaussianPrime(), true); // norm 13
+      assert.strictEqual(new GaussianInteger(2, 1).isGaussianPrime(), true); // norm 5
+      assert.strictEqual(new GaussianInteger(3, 3).isGaussianPrime(), false); // norm 18
+    });
   });
 
   describe('toString', () => {
@@ -237,6 +293,25 @@ describe('EisensteinInteger', () => {
       const e = new EisensteinInteger(2, 0);
       assert.strictEqual(typeof e.isEisensteinPrime(), 'boolean');
     });
+
+    it('should classify on-axis Eisenstein primes correctly', () => {
+      assert.strictEqual(new EisensteinInteger(5, 0).isEisensteinPrime(), true);
+      assert.strictEqual(new EisensteinInteger(2, 0).isEisensteinPrime(), true);
+      assert.strictEqual(new EisensteinInteger(0, 5).isEisensteinPrime(), true);
+      assert.strictEqual(new EisensteinInteger(-2, 0).isEisensteinPrime(), true);
+      // 3 = -(1-ω)² is not prime in Z[ω]
+      assert.strictEqual(new EisensteinInteger(3, 0).isEisensteinPrime(), false);
+      // 7 ≡ 1 (mod 3) splits: 7 = (3+ω)(3+ω̄) is not on-axis prime either
+      assert.strictEqual(new EisensteinInteger(7, 0).isEisensteinPrime(), false);
+    });
+
+    it('should classify mixed Eisenstein primes correctly', () => {
+      assert.strictEqual(new EisensteinInteger(1, -1).isEisensteinPrime(), true); // norm 3, associate of 1-ω
+      assert.strictEqual(new EisensteinInteger(1, 2).isEisensteinPrime(), true); // norm 3
+      assert.strictEqual(new EisensteinInteger(2, 1).isEisensteinPrime(), true); // norm 3
+      assert.strictEqual(new EisensteinInteger(3, 1).isEisensteinPrime(), true); // norm 7
+      assert.strictEqual(new EisensteinInteger(1, 1).isEisensteinPrime(), false); // norm 1 (unit)
+    });
   });
 
   describe('toString', () => {
@@ -283,6 +358,12 @@ describe('Prime conversions', () => {
     it('should handle p = 2', () => {
       const result = sumOfTwoSquares(2);
       assert.deepStrictEqual(result, [1, 1]);
+    });
+
+    it('should throw RangeError for non-prime input', () => {
+      assert.throws(() => sumOfTwoSquares(9), RangeError);
+      assert.throws(() => sumOfTwoSquares(1), RangeError);
+      assert.throws(() => sumOfTwoSquares(4.5), RangeError);
     });
   });
 });

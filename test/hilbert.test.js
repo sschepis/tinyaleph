@@ -21,6 +21,11 @@ import {
   DELTA_S,
   QuaternionPrime
 } from '../core/index.js';
+import {
+  pAdicNorm,
+  pAdicValuation,
+  jacobiSymbol
+} from '../core/hilbert.js';
 
 let passed = 0;
 let failed = 0;
@@ -129,6 +134,35 @@ test('PrimeState measurement', () => {
   assert(result.prime === 7, 'Basis state collapses to its prime');
 });
 
+test('PrimeState measurement sampled probabilities sum to 1', () => {
+  const state = PrimeState.uniform();
+  const n = state.primes.length;
+  const samples = 5000;
+  // Deterministic LCG so the statistical check is reproducible
+  let seed = 42;
+  const origRandom = Math.random;
+  Math.random = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+  try {
+    const counts = new Map();
+    for (let i = 0; i < samples; i++) {
+      const res = state.measure();
+      counts.set(res.prime, (counts.get(res.prime) || 0) + 1);
+    }
+    let total = 0;
+    for (const c of counts.values()) total += c;
+    assert(total === samples, 'Every sample collapsed to a valid prime');
+    for (const p of state.primes) {
+      const freq = (counts.get(p) || 0) / samples;
+      assertApprox(freq, 1 / n, 0.03, `Measured frequency for prime ${p} ≈ 1/${n}`);
+    }
+  } finally {
+    Math.random = origRandom;
+  }
+});
+
 console.log('\n=== Resonance Operators Tests ===\n');
 
 test('Operator P (eigenvalue operator)', () => {
@@ -185,6 +219,26 @@ test('EntropyDrivenEvolution collapse', () => {
   // Should eventually collapse or reach max steps
   assert(result.steps > 0);
   assert(result.finalState !== undefined);
+});
+
+test('EntropyDrivenEvolution rejects non-positive dt', () => {
+  const state = PrimeState.uniform();
+  const zeroDt = new EntropyDrivenEvolution(state);
+  zeroDt.dt = 0;
+  let threwZero = false;
+  try { zeroDt.evolveUntilCollapse(10); } catch (e) { threwZero = e instanceof RangeError; }
+  assert(threwZero, 'dt = 0 should throw RangeError');
+
+  const negDt = new EntropyDrivenEvolution(state, { dt: -0.5 });
+  let threwNeg = false;
+  try { negDt.evolveUntilCollapse(10); } catch (e) { threwNeg = e instanceof RangeError; }
+  assert(threwNeg, 'Negative dt should throw RangeError');
+
+  const nanDt = new EntropyDrivenEvolution(state);
+  nanDt.dt = NaN;
+  let threwNaN = false;
+  try { nanDt.evolveUntilCollapse(10); } catch (e) { threwNaN = e instanceof RangeError; }
+  assert(threwNaN, 'NaN dt should throw RangeError');
 });
 
 console.log('\n=== Memory Encoding Tests ===\n');
@@ -398,6 +452,56 @@ test('PHI golden ratio', () => {
 
 test('DELTA_S irrational', () => {
   assertApprox(DELTA_S, Math.sqrt(2), 0.001);
+});
+
+console.log('\n=== P-Adic Norms and Jacobi Symbol Tests ===\n');
+
+test('pAdicValuation and pAdicNorm basics', () => {
+  assert(pAdicValuation(8, 2) === 3, 'v2(8) = 3');
+  assert(pAdicNorm(8, 2) === 0.125, '|8|_2 = 1/8');
+  assert(pAdicValuation(0, 2) === Infinity, 'v2(0) = Infinity');
+  assert(pAdicNorm(0, 2) === 0, '|0|_2 = 0');
+  assert(pAdicValuation(12, 2) === 2, 'v2(12) = 2');
+  assert(pAdicValuation(12, 3) === 1, 'v3(12) = 1');
+});
+
+test('pAdic functions reject p = 1', () => {
+  let threwNorm = false;
+  try { pAdicNorm(8, 1); } catch (e) { threwNorm = e instanceof RangeError; }
+  assert(threwNorm, 'pAdicNorm with p = 1 should throw RangeError');
+
+  let threwVal = false;
+  try { pAdicValuation(8, 1); } catch (e) { threwVal = e instanceof RangeError; }
+  assert(threwVal, 'pAdicValuation with p = 1 should throw RangeError');
+});
+
+test('pAdic functions reject non-finite and invalid inputs', () => {
+  let threw = false;
+  try { pAdicNorm(Infinity, 2); } catch (e) { threw = e instanceof RangeError; }
+  assert(threw, 'pAdicNorm(Infinity, 2) should throw RangeError');
+
+  threw = false;
+  try { pAdicValuation(NaN, 2); } catch (e) { threw = e instanceof RangeError; }
+  assert(threw, 'pAdicValuation(NaN, 2) should throw RangeError');
+
+  threw = false;
+  try { pAdicNorm(8, 2.5); } catch (e) { threw = e instanceof RangeError; }
+  assert(threw, 'pAdicNorm with non-integer p should throw RangeError');
+});
+
+test('jacobiSymbol with denominator 1 returns 1', () => {
+  assert(jacobiSymbol(0, 1) === 1, '(0/1) = 1');
+  assert(jacobiSymbol(5, 1) === 1, '(5/1) = 1');
+  assert(jacobiSymbol(-7, 1) === 1, '(-7/1) = 1');
+});
+
+test('jacobiSymbol sanity checks', () => {
+  assert(jacobiSymbol(2, 5) === -1, '(2/5) = -1');
+  assert(jacobiSymbol(2, 7) === 1, '(2/7) = 1');
+  assert(jacobiSymbol(2, 3) === -1, '(2/3) = -1');
+  assert(jacobiSymbol(0, 7) === 0, '(0/7) = 0');
+  assert(jacobiSymbol(1, 7) === 1, '(1/7) = 1');
+  assert(jacobiSymbol(15, 7) === 1, '(15/7) = (1/7) = 1');
 });
 
 console.log('\n=== Summary ===\n');

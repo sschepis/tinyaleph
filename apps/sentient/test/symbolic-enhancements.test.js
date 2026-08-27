@@ -7,33 +7,27 @@
  * - SymbolicObserver: Full symbolic observer integration
  */
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
-const assert = require('assert');
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import * as assert from 'assert';
 
 // Import symbolic extensions
-const {
-    SymbolicSMF,
+import { SymbolicSMF,
     SMFSymbolMapper,
     smfMapper,
     AXIS_SYMBOL_MAPPING,
-    TAG_TO_AXIS
-} = require('../lib/symbolic-smf');
+    TAG_TO_AXIS } from '../lib/symbolic-smf.js';
 
-const {
-    SymbolicMoment,
+import { SymbolicMoment,
     SymbolicTemporalLayer,
     SymbolicPatternDetector,
-    HEXAGRAM_ARCHETYPES
-} = require('../lib/symbolic-temporal');
+    HEXAGRAM_ARCHETYPES } from '../lib/symbolic-temporal.js';
 
-const {
-    SymbolicState,
-    SymbolicObserver
-} = require('../lib/symbolic-observer');
+import { SymbolicState,
+    SymbolicObserver } from '../lib/symbolic-observer.js';
 
 // Import core dependencies
-const { symbolDatabase } = require('../../../core/symbols');
-const { createEngine, SemanticBackend } = require('../../../modular');
+import { symbolDatabase } from '../../../core/symbols.js';
+import { createEngine, SemanticBackend } from '../../../index.js';
 
 describe('SymbolicSMF', () => {
     let smf;

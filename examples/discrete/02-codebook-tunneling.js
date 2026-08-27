@@ -5,7 +5,7 @@
  * controlled state transitions via tunneling.
  */
 
-const { SMF_CODEBOOK, nearestCodebookAttractor, codebookTunnel } = require('../../apps/sentient/lib/smf');
+import { SMF_CODEBOOK, nearestCodebookAttractor, codebookTunnel, getTunnelingCandidates } from '../../observer/index.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('  64-Attractor Codebook and Tunneling');
@@ -37,15 +37,15 @@ console.log('   ├─────┼──────────────�
 
 for (const entry of SMF_CODEBOOK.slice(0, 10)) {
     const axes = entry.axes.slice(0, 4).join(', ') + (entry.axes.length > 4 ? '...' : '');
-    const state = entry.state.slice(0, 3).join(', ') + '...';
-    console.log(`   │ ${entry.id.toString().padStart(3)} │ ${entry.type.padEnd(14)} │ ${axes.padEnd(22)} │ ${state.padEnd(13)} │`);
+    const state = Array.from(entry.state.slice(0, 3)).map(v => v.toFixed(1)).join(', ') + '...';
+    console.log(`   │ ${String(entry.id).padStart(3)} │ ${entry.type.padEnd(14)} │ ${axes.padEnd(22)} │ ${state.padEnd(13)} │`);
 }
 console.log('   └─────┴────────────────┴────────────────────────┴───────────────┘');
 
 // Finding nearest attractor
 console.log('\n3. Finding Nearest Attractor\n');
 
-// Create test states
+// Create test states (16-dimensional SMF orientations)
 const testStates = [
     { name: 'Coherent', s: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
     { name: 'Random',   s: Array.from({ length: 16 }, () => Math.random() * 2 - 1) },
@@ -55,9 +55,9 @@ const testStates = [
 console.log('   Finding nearest codebook attractor for test states:\n');
 
 for (const test of testStates) {
-    const nearest = nearestCodebookAttractor(test);
-    if (nearest) {
-        console.log(`   ${test.name} state → Attractor ${nearest.entry.id} (${nearest.entry.type})`);
+    const nearest = nearestCodebookAttractor(test.s);
+    if (nearest && nearest.attractor) {
+        console.log(`   ${test.name} state → Attractor ${nearest.attractor.id} (${nearest.attractor.type})`);
         console.log(`     Distance: ${nearest.distance.toFixed(4)}`);
     } else {
         console.log(`   ${test.name} state → No attractor found`);
@@ -69,50 +69,35 @@ console.log('\n4. Codebook Tunneling\n');
 console.log('   Controlled state transitions via tunneling:\n');
 
 // Create an initial state
-const initialState = { s: [0.8, 0.2, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] };
+const initialState = [0.8, 0.2, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-// Try tunneling with different parameters
-const tunnelingTests = [
-    { rate: 0.1, threshold: 0.3 },
-    { rate: 0.5, threshold: 0.5 },
-    { rate: 0.9, threshold: 0.7 },
-];
-
-for (const params of tunnelingTests) {
-    const result = codebookTunnel(initialState, params.rate, params.threshold);
-    
-    console.log(`   Rate=${params.rate}, Threshold=${params.threshold}:`);
-    if (result.tunneled) {
-        console.log(`     ✓ Tunneled to attractor ${result.targetId} (${result.targetType})`);
-        console.log(`     Blend factor: ${result.blendFactor.toFixed(3)}`);
-    } else {
-        console.log(`     ✗ No tunnel (random check failed or no suitable attractor)`);
-    }
+// Find tunneling candidates near the initial state
+const candidates = getTunnelingCandidates(initialState, 0.9);
+console.log(`   Found ${candidates.length} tunneling candidate(s):\n`);
+for (const cand of candidates.slice(0, 3)) {
+    console.log(`   • Attractor ${cand.attractor.id} (${cand.type}): distance=${cand.distance.toFixed(4)}`);
 }
 
-// Attractor types explained
-console.log('\n5. Attractor Types\n');
+// Tunnel with different mix factors
+const tunnelingTests = [
+    { name: 'Gentle', mixFactor: 0.1 },
+    { name: 'Partial', mixFactor: 0.5 },
+    { name: 'Full', mixFactor: 1.0 },
+];
 
-console.log('   • basis:      Single axis activation (pure modes)');
-console.log('   • dual:       Two-axis correlation states');
-console.log('   • triad:      Three-axis relationships');
-console.log('   • quad:       Four-axis complex patterns');
-console.log('   • harmonic:   Resonant frequency patterns');
-console.log('   • modular:    Modular arithmetic relationships');
+if (candidates.length > 0) {
+    const targetIdx = candidates[0].index;
+    console.log(`\n   Tunneling toward attractor ${candidates[0].attractor.id}:`);
+    for (const test of tunnelingTests) {
+        const result = codebookTunnel(initialState, targetIdx, test.mixFactor);
+        const dot = result.reduce((acc, v, i) => acc + v * SMF_CODEBOOK[targetIdx].state[i], 0);
+        console.log(`   ${test.name} (mix=${test.mixFactor}): cosine similarity to target = ${dot.toFixed(4)}`);
+    }
+} else {
+    console.log('   No candidates found (initial state too far from codebook).');
+}
 
-// Tunneling in practice
-console.log('\n6. Tunneling in Practice\n');
-
-console.log('   Codebook tunneling enables:');
-console.log('   • Controlled phase transitions between stable states');
-console.log('   • Escape from local minima during learning');
-console.log('   • Structured exploration of semantic space');
-console.log('   • Deterministic behavior for distributed consensus');
-
-console.log('\n   Parameters:');
-console.log('   • rate: Probability of attempting a tunnel');
-console.log('   • threshold: Minimum distance to trigger tunneling');
-console.log('   • Higher rate = more frequent transitions');
-console.log('   • Higher threshold = only tunnel from far states');
-
-console.log('\n═══════════════════════════════════════════════════════════════\n');
+console.log('\n═══════════════════════════════════════════════════════════════');
+console.log('  Key takeaway: discrete jumps between semantic states via');
+console.log('  controlled tunneling through the 64-attractor codebook.');
+console.log('═══════════════════════════════════════════════════════════════');

@@ -1,17 +1,21 @@
 /**
- * Complete Alexander Modules for Prime Sets
- * 
- * Implements module-theoretic signature extraction based on:
+ * Alexander-Module-Inspired Signature Layer for Prime Sets
+ *
+ * Approximate heuristic — NOT the standard Alexander invariant.
+ *
+ * This module does NOT implement the actual Alexander module A_ψ of a
+ * link or number field. The Fox derivatives, the Crowell exact-sequence
+ * verification, and the Fitting-ideal minors are placeholders. The
+ * "Alexander polynomial" produced here is a prime-derived heuristic and
+ * is NOT the standard Alexander polynomial Δ(t) of any link or field.
+ * Objects carrying these values are marked `approximate: true` /
+ * `method: 'heuristic'` so consumers can distinguish them from real
+ * arithmetic-topology invariants.
+ *
+ * Implements module-theoretic signature extraction loosely based on:
  * "Complete Alexander Modules for Prime Sets: Crowell Exact Sequences,
  * Iwasawa Modules, and Resonance-Signature Extraction"
- * 
- * Key concepts:
- * - ψ-Differential modules A_ψ: Universal differentials satisfying
- *   d(g₁g₂) = d(g₁) + ψ(g₁)d(g₂)
- * - Crowell exact sequence: 0 → N^ab → A_ψ → I_{Z[H]} → 0
- * - Fitting ideals E_d(A_ψ): Characteristic invariants
- * - Module signature Σ_{k,S,ℓ,ψ}: Stable memory object for prime sets
- * 
+ *
  * @module core/alexander-module
  */
 
@@ -381,6 +385,10 @@ class FittingIdeal {
 
 /**
  * Crowell Exact Sequence Class
+ *
+ * Approximate heuristic — NOT the standard Alexander invariant.
+ * The exactness claims below are asserted, not computed (the Fox
+ * derivative matrix is an all-ones placeholder), see verifyExactness().
  * 
  * Represents the exact sequence of Z[H]-modules:
  * 0 → N^ab → A_ψ → I_{Z[H]} → 0
@@ -461,24 +469,34 @@ class CrowellSequence {
     
     /**
      * Compute A_ψ (Alexander module)
+     *
+     * Approximate heuristic — NOT the standard Alexander invariant.
+     * The Fox derivatives are not implemented; the presentation matrix
+     * is an all-ones placeholder.
      * @private
      */
     _computeApsi() {
         // The Alexander module is computed from the Fox derivatives
-        // of the group presentation
+        // of the group presentation. Here they are placeholders.
         return {
             presentationMatrix: this._computePresentationMatrix(),
-            rank: this.G.relations?.length || 0
+            rank: this.G.relations?.length || 0,
+            approximate: true,
+            method: 'heuristic',
+            note: 'Fox derivatives not implemented; presentation matrix is a placeholder'
         };
     }
     
     /**
      * Compute presentation matrix (Fox derivative matrix)
+     *
+     * PLACEHOLDER: returns an all-ones matrix of Laurent polynomials.
+     * The true Fox derivative matrix ∂r_i/∂x_j is not implemented.
      * @private
      */
     _computePresentationMatrix() {
-        // Fox derivative matrix: ∂r_i/∂x_j for relations r_i, generators x_j
-        // This is a matrix of Laurent polynomials
+        // PLACEHOLDER for the Fox derivative matrix: ∂r_i/∂x_j
+        // for relations r_i and generators x_j.
         const numRelations = this.G.relations?.length || 0;
         const numGenerators = this.G.generators?.length || 0;
         
@@ -497,28 +515,43 @@ class CrowellSequence {
     
     /**
      * Check exactness at each position
+     *
+     * HONEST CONTRACT: exactness is NOT verified — the Fox derivative
+     * matrix required for the check is a placeholder, so this always
+     * reports `exact: false` with an explanatory reason.
      */
     verifyExactness() {
-        // In a proper implementation, this would verify:
+        // A proper implementation would verify:
         // 1. θ₁: N^ab → A_ψ is injective
         // 2. im(θ₁) = ker(θ₂)
         // 3. θ₂: A_ψ → I_{Z[H]} is surjective
+        // None of this can be checked without real Fox derivatives.
         return {
-            injectiveAtNab: true,
-            exactAtApsi: true,
-            surjectiveOntoAugIdeal: true
+            exact: false,
+            reason: 'placeholder — Fox derivatives not implemented',
+            injectiveAtNab: false,
+            exactAtApsi: false,
+            surjectiveOntoAugIdeal: false
         };
     }
     
     /**
      * Get splitting isomorphism (Morishita's result)
      * A_ψ ≅ N^ab ⊕ Λ̂ where Λ̂ = Z_ℓ[[H]]
+     *
+     * HONEST CONTRACT: this structure is asserted, not computed.
+     * Marked approximate; consumers should not treat it as a verified
+     * isomorphism.
      */
     getSplitting() {
         return {
             directSum: true,
             components: ['N^ab', 'Λ̂'],
-            fittingShift: 1 // E_d(N^ab) = E_{d+1}(A_ψ)
+            fittingShift: 1, // E_d(N^ab) = E_{d+1}(A_ψ)
+            approximate: true,
+            method: 'heuristic',
+            computed: false,
+            note: 'Splitting asserted, not computed — no Fox derivatives available'
         };
     }
 }
@@ -529,8 +562,14 @@ class CrowellSequence {
 
 /**
  * Complete Alexander Module
- * 
- * The ψ-differential module A_ψ for a prime set S.
+ *
+ * Approximate heuristic — NOT the standard Alexander invariant.
+ * The ψ-differential module A_ψ is not actually constructed: the group
+ * presentation uses trivial relations, the Fox derivatives are
+ * placeholders, and the "Alexander polynomial" is a prime-derived
+ * heuristic (see alexanderPolynomial / signature, marked
+ * `approximate: true`).
+ *
  * Provides the module-theoretic invariant layer above coupling tensors.
  */
 class AlexanderModule {
@@ -666,9 +705,11 @@ class AlexanderModule {
     
     /**
      * Compute Alexander polynomial
-     * 
-     * For a prime set, this is related to the characteristic polynomial
-     * of the Iwasawa module when interpreted via class field theory.
+     *
+     * Approximate heuristic — NOT the standard Alexander invariant.
+     * The returned polynomial is constructed from prime-derived
+     * coefficients and is NOT the Alexander polynomial Δ(t) of any
+     * link or number field.
      * @private
      */
     _computeAlexanderPolynomial() {
@@ -861,9 +902,16 @@ class AlexanderModule {
     
     /**
      * Get Alexander polynomial Δ₀(A_ψ)
+     *
+     * Approximate heuristic — NOT the standard Alexander invariant.
+     * The returned polynomial carries `approximate: true` and
+     * `method: 'heuristic'` markers.
      */
     get alexanderPolynomial() {
-        return this.computeFittingIdeal(0).characteristicPolynomial;
+        const poly = this.computeFittingIdeal(0).characteristicPolynomial;
+        poly.approximate = true;
+        poly.method = 'heuristic';
+        return poly;
     }
     
     /**
@@ -889,6 +937,10 @@ class AlexanderModule {
     
     /**
      * Compute module signature
+     *
+     * Approximate heuristic — NOT the standard Alexander invariant.
+     * The signature object carries `approximate: true` and
+     * `method: 'heuristic'` markers.
      * @private
      */
     _computeSignature() {
@@ -903,7 +955,9 @@ class AlexanderModule {
             fittingDegrees: {},
             alexanderPolynomial: alexPoly.toString(),
             characteristicValues: [],
-            hash: 0
+            hash: 0,
+            approximate: true,
+            method: 'heuristic'
         };
         
         // Collect Fitting ideal degrees
@@ -984,7 +1038,9 @@ class AlexanderModule {
             field: this.field,
             alexanderPolynomial: this.alexanderPolynomial.toString(),
             signature: this.signature,
-            metadata: this.metadata
+            metadata: this.metadata,
+            approximate: true,
+            method: 'heuristic'
         };
     }
     
@@ -1324,12 +1380,14 @@ class SignatureExtractor {
     /**
      * Extract signature from prime set
      *
+     * Does NOT mutate the caller's primes array.
+     *
      * @param {number[]} primes - Prime set S
      * @param {Object} options - Extraction options
      * @returns {ModuleSignature} The extracted signature
      */
     extract(primes, options = {}) {
-        const key = primes.sort((a, b) => a - b).join(',');
+        const key = [...primes].sort((a, b) => a - b).join(',');
         
         if (this._cache.has(key)) {
             return this._cache.get(key);

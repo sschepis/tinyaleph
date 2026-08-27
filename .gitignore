@@ -29,6 +29,16 @@ Thumbs.db
 secrets/
 .npmrc
 
+# Python virtual environments
+.venv/
+venv/
+
+# Local agent workspaces
+.oboto/
+.snapshots/
+.surfaces/
+.conversations/
+
 # Logs
 logs/
 *.log

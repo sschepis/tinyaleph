@@ -24,6 +24,7 @@
  * The mapping follows the original Dee/Kelley system with prime assignments.
  */
 import { isPrime, nthPrime, firstNPrimes } from './prime.js';
+import { sedenionMultiplyIndex } from './fano.js';
 
 const ENOCHIAN_ALPHABET = [
     { letter: 'A', name: 'Un', prime: 2, meaning: 'Beginning', phonetic: 'ah' },
@@ -696,20 +697,14 @@ class SedenionElement {
 /**
  * Sedenion multiplication table
  * Returns [resultIndex, sign] for e_i * e_j
+ *
+ * Delegates to the Cayley-Dickson table in core/fano.js so this
+ * subsystem and the fano.js tables agree exactly. (Previously this
+ * used an XOR-index heuristic with an ad-hoc sign rule that
+ * contradicted the Cayley-Dickson construction.)
  */
 function sedenionMultTable(i, j) {
-    if (i === 0) return [j, 1];
-    if (j === 0) return [i, 1];
-    if (i === j) return [0, -1]; // e_i^2 = -1 for i > 0
-    
-    // Use XOR for index (captures much of the algebra's structure)
-    const k = i ^ j;
-    
-    // Sign is more complex; simplified here
-    // In full implementation, use proper Cayley-Dickson doubling
-    const sign = ((i & j) !== 0) ? -1 : 1;
-    
-    return [k, sign];
+    return sedenionMultiplyIndex(i, j);
 }
 
 // ============================================================================

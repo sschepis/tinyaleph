@@ -7,15 +7,13 @@
  * 3. Scientific - Quantum simulation
  */
 
-const {
-  createEngine,
+import { createEngine,
   SemanticBackend,
   CryptographicBackend,
   ScientificBackend,
   AlephEngine,
   hash,
-  deriveKey
-} = require('../modular');
+  deriveKey } from '../index.js';
 
 console.log('╔═══════════════════════════════════════════════════════════════╗');
 console.log('║         TinyAleph Modular Architecture Demo                  ║');

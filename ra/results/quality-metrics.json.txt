@@ -1,0 +1,185 @@
+{
+  "timestamp": "2026-01-07T23:15:08.781Z",
+  "benchmark": "quality-metrics",
+  "config": {
+    "numPrimes": 8192
+  },
+  "selfSimilarity": {
+    "mean": 1,
+    "min": 1,
+    "max": 1.0000000000000002,
+    "allPerfect": true
+  },
+  "retrieval": {
+    "meanPrecisionAtK": 0.24000000000000005,
+    "meanRecallAtK": 0.3,
+    "MAP": 0.3779166666666667
+  },
+  "attentionEntropy": [
+    {
+      "n": 10,
+      "meanEntropy": 3.309639483848609,
+      "normalizedEntropy": 0.9963007594722878,
+      "stddev": 0.016331661440190662
+    },
+    {
+      "n": 50,
+      "meanEntropy": 5.63230947519971,
+      "normalizedEntropy": 0.997954109001584,
+      "stddev": 0.006377732449289651
+    },
+    {
+      "n": 100,
+      "meanEntropy": 6.63174916389139,
+      "normalizedEntropy": 0.9981777110254181,
+      "stddev": 0.005634075948273829
+    },
+    {
+      "n": 500,
+      "meanEntropy": 8.953172298047475,
+      "normalizedEntropy": 0.9985933203148566,
+      "stddev": 0.0040160075669755085
+    }
+  ],
+  "analogyCompletion": {
+    "accuracy": 1,
+    "details": [
+      {
+        "analogy": "king:queen::man:?",
+        "expected": "woman",
+        "predicted": "woman",
+        "isCorrect": true,
+        "topCandidates": [
+          {
+            "candidate": "woman",
+            "patternScore": 0,
+            "targetScore": 1,
+            "score": 1
+          },
+          {
+            "candidate": "man",
+            "patternScore": 1,
+            "targetScore": 0,
+            "score": 1
+          },
+          {
+            "candidate": "puppy",
+            "patternScore": 0.5786170559309782,
+            "targetScore": 0,
+            "score": 0.5786170559309782
+          }
+        ]
+      },
+      {
+        "analogy": "Paris:France::Tokyo:?",
+        "expected": "Japan",
+        "predicted": "Japan",
+        "isCorrect": true,
+        "topCandidates": [
+          {
+            "candidate": "Japan",
+            "patternScore": 0,
+            "targetScore": 1,
+            "score": 1
+          },
+          {
+            "candidate": "small",
+            "patternScore": 0,
+            "targetScore": 0.3916366892480994,
+            "score": 0.3916366892480994
+          },
+          {
+            "candidate": "woman",
+            "patternScore": 0,
+            "targetScore": 0.14974076926321062,
+            "score": 0.14974076926321062
+          }
+        ]
+      },
+      {
+        "analogy": "dog:puppy::cat:?",
+        "expected": "kitten",
+        "predicted": "kitten",
+        "isCorrect": true,
+        "topCandidates": [
+          {
+            "candidate": "kitten",
+            "patternScore": 0,
+            "targetScore": 1,
+            "score": 1
+          },
+          {
+            "candidate": "day",
+            "patternScore": 0,
+            "targetScore": 0.309966656984319,
+            "score": 0.309966656984319
+          },
+          {
+            "candidate": "woman",
+            "patternScore": 0.22312773144405038,
+            "targetScore": 0,
+            "score": 0.22312773144405038
+          }
+        ]
+      },
+      {
+        "analogy": "hot:cold::big:?",
+        "expected": "small",
+        "predicted": "small",
+        "isCorrect": true,
+        "topCandidates": [
+          {
+            "candidate": "small",
+            "patternScore": 0,
+            "targetScore": 1,
+            "score": 1
+          },
+          {
+            "candidate": "big",
+            "patternScore": 1,
+            "targetScore": 0,
+            "score": 1
+          },
+          {
+            "candidate": "night",
+            "patternScore": 0.4443092299662114,
+            "targetScore": 0,
+            "score": 0.4443092299662114
+          }
+        ]
+      },
+      {
+        "analogy": "sun:day::moon:?",
+        "expected": "night",
+        "predicted": "night",
+        "isCorrect": true,
+        "topCandidates": [
+          {
+            "candidate": "night",
+            "patternScore": 0,
+            "targetScore": 1,
+            "score": 1
+          },
+          {
+            "candidate": "big",
+            "patternScore": 0,
+            "targetScore": 0.4443092299662114,
+            "score": 0.4443092299662114
+          },
+          {
+            "candidate": "day",
+            "patternScore": 0,
+            "targetScore": 0.3519385946539867,
+            "score": 0.3519385946539867
+          }
+        ]
+      }
+    ]
+  },
+  "componentAnalysis": {
+    "avgJaccard": 0.0035614723786766794,
+    "avgQuaternion": 0.0502121970351041,
+    "avgPhase": 0.06000008488868042
+  },
+  "qualityScore": 0.5515758448663499
+}

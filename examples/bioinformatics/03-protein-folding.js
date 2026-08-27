@@ -10,7 +10,7 @@
  *   - Prime resonance (hypercomplex coupling)
  */
 
-const { BioinformaticsBackend } = require('../../modular');
+import { BioinformaticsBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

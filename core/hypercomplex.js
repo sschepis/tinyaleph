@@ -90,6 +90,15 @@ class Hypercomplex {
   }
   
   inverse() {
+    // Sedenions (dim >= 16) and higher Cayley-Dickson algebras are not
+    // composition algebras: q·q̄ ≠ |q|² in general and zero divisors exist,
+    // so the conjugate/norm formula would return wrong values.
+    if (this.dim >= 16) {
+      throw new Error(
+        `inverse() is not defined for dimension ${this.dim}: ` +
+        'sedenions and higher Cayley-Dickson algebras have zero divisors'
+      );
+    }
     const n2 = this.dot(this);
     if (n2 < 1e-10) return Hypercomplex.zero(this.dim);
     return this.conjugate().scale(1 / n2);
@@ -307,16 +316,18 @@ class Hypercomplex {
       return this.inverse().powInt(-n);
     }
     
-    // Repeated squaring
+    // Repeated squaring. The exponent is converted to BigInt so that large
+    // exponents (>= 2^31) are not corrupted by 32-bit bitwise coercion.
     let result = Hypercomplex.basis(this.dim, 0, 1);
     let base = this.clone();
+    let e = BigInt(n);
     
-    while (n > 0) {
-      if (n & 1) {
+    while (e > 0n) {
+      if (e & 1n) {
         result = result.mul(base);
       }
       base = base.mul(base);
-      n >>= 1;
+      e >>= 1n;
     }
     
     return result;

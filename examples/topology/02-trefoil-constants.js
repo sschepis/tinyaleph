@@ -5,14 +5,12 @@
  * combine with the 108 invariant to derive physical constants.
  */
 
-const {
-    Knot,
+import { Knot,
     TREFOIL,
     FIGURE_EIGHT,
     CINQUEFOIL,
     STANDARD_KNOTS,
-    PhysicalConstants
-} = require('../../core/topology');
+    PhysicalConstants } from '../../core/topology.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('  Trefoil Knot and Physical Constant Derivation');

@@ -9,7 +9,7 @@
  * - Collision-resistant (different inputs = different outputs)
  */
 
-const { CryptographicBackend, hash } = require('../modular');
+import { CryptographicBackend, hash } from '../index.js';
 
 // ===========================================
 // SETUP

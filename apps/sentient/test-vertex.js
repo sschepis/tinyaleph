@@ -3,9 +3,12 @@
  * Test script for Google Vertex AI integration
  */
 
-const { VertexAIClient } = require('./lib/vertex-ai');
-const fs = require('fs');
-const path = require('path');
+import { VertexAIClient } from './lib/vertex-ai.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
     console.log('Testing Google Vertex AI Integration...\n');

@@ -5,6 +5,10 @@
  */
 
 import { colors as c } from './constants.js';
+import { fileURLToPath } from 'node:url';
+import * as path from 'node:path';
+
+const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Parse command line arguments
@@ -42,7 +46,7 @@ function parseArgs() {
         // Server-specific
         port: 3000,
         host: '0.0.0.0',
-        staticPath: './public',
+        staticPath: path.join(appRoot, 'public'),
         cors: true,
         
         // WebRTC options (server mode)
@@ -209,7 +213,7 @@ ${c.bold}Server Options:${c.reset}
   -s, --server          Run as HTTP server instead of CLI
   -p, --port <port>     Server port (default: 3000)
   --host <host>         Server host (default: 0.0.0.0)
-  --static <path>       Static files directory (default: ./public)
+  --static <path>       Static files directory (default: <app>/public)
   --no-cors             Disable CORS headers
 
 ${c.bold}WebRTC Options (Server Mode):${c.reset}

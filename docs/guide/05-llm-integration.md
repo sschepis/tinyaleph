@@ -46,23 +46,15 @@ Aleph provides a **Resonant Field Interface (RFI)** for LLM integration. The key
 ### Creating the Coupled System
 
 ```javascript
-const { createEngine } = require('./modular');
-const { LLMCoupling } = require('./core/llm');
+import { createEngine, LLM } from '@aleph-ai/tinyaleph';
 
 // Create Aleph engine
-const config = require('./data.json');
+const config = { dimension: 16 };
 const engine = createEngine('semantic', config);
 
-// Create coupling layer
-const coupling = new LLMCoupling(engine, {
-  entropyThreshold: 0.3,    // Max allowed entropy
-  coherenceThreshold: 0.7,  // Min required coherence
-  collapseRate: 0.8         // Collapse strength
-});
-
-// Connect to LLM (example with OpenAI-compatible API)
-coupling.connectLLM({
-  endpoint: 'http://localhost:8080/v1/chat/completions',
+// Connect to LLM (OpenAI-compatible API)
+LLM.configure({
+  baseUrl: 'http://localhost:8080/v1/chat/completions',
   model: 'local-model'
 });
 ```
@@ -72,21 +64,17 @@ coupling.connectLLM({
 ```javascript
 // Process a query through the coupled system
 async function processQuery(query) {
-  // 1. Encode query to prime field
-  const queryField = coupling.encodeToField(query);
-  
+  // 1. Encode query into semantic space
+  const state = engine.encode(query);
+
   // 2. Get LLM response
-  const llmResponse = await coupling.queryLLM(query);
-  
-  // 3. Validate response against field
-  const validation = coupling.validateResponse(llmResponse, queryField);
-  
-  if (validation.coherent) {
-    return llmResponse;
-  } else {
-    // Re-query with tighter constraints
-    return coupling.constrainedQuery(query, queryField);
-  }
+  const llmResponse = await LLM.ask(query);
+
+  // 3. Encode the response and check coherence against the query
+  const responseState = engine.encode(llmResponse.content);
+  const coherence = state.coherence(responseState);
+
+  return { response: llmResponse.content, coherence };
 }
 
 const result = await processQuery('What is the relationship between truth and wisdom?');

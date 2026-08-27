@@ -12,16 +12,14 @@
  * Run with: node examples/resonance/04-resoformer-training.js
  */
 
-const tf = require('@tensorflow/tfjs-node');
-const {
-  QuaternionDense,
+import tf from '@tensorflow/tfjs-node';
+import { QuaternionDense,
   SparsePrimeEmbedding,
   ResonantAttention,
   ResoFormerBlock,
   createResoFormerModel,
   createResoFormerClassifier,
-  createResoFormerEmbedder
-} = require('../../core/rformer-tf');
+  createResoFormerEmbedder } from '../../core/rformer-tf.js';
 
 // ============================================================================
 // SYNTHETIC DATA GENERATION

@@ -9,7 +9,7 @@
  * - Produces keys of specified length
  */
 
-const { CryptographicBackend } = require('../../modular');
+import { CryptographicBackend } from '../../index.js';
 
 // ===========================================
 // SETUP

@@ -7,7 +7,7 @@
  * This models consciousness as minimization of epistemic surprise.
  */
 
-const { FreeEnergyDynamics, OBSERVER_HIERARCHY, observerCapacity } = require('../../core/topology');
+import { FreeEnergyDynamics, OBSERVER_HIERARCHY, observerCapacity } from '../../core/topology.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('  Free Energy Dynamics: Cubic FEP Model');

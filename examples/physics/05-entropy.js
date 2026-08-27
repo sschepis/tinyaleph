@@ -8,8 +8,8 @@
  * - Connects to thermodynamics and information theory
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
-const Entropy = require('../../physics/entropy');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
+import * as Entropy from '../../physics/entropy.js';
 
 console.log('TinyAleph Entropy Analysis Example');
 console.log('===================================\n');

@@ -12,7 +12,7 @@
  * the simulateLLM function with actual API calls (OpenAI, Anthropic, etc.)
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

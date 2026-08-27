@@ -9,7 +9,7 @@
  * - Sedenion (16D) integration
  */
 
-const {
+import {
     ENOCHIAN_ALPHABET,
     letterToPrime,
     primeToLetter,
@@ -27,7 +27,7 @@ const {
     THE_NINETEEN_CALLS,
     SedenionElement,
     EnochianEngine
-} = require('../../apps/sentient/lib/enochian-vocabulary');
+} from '../../core/enochian-vocabulary.js';
 
 console.log('=== Enochian Formal Language System ===\n');
 

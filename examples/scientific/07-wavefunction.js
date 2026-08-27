@@ -8,7 +8,7 @@
  * - Probability amplitudes determine measurements
  */
 
-const { ScientificBackend, Hypercomplex } = require('../../modular');
+import { ScientificBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

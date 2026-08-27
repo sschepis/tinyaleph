@@ -51,10 +51,10 @@ class ALKKuramotoModel {
         // Handle oscillator input
         if (oscillators instanceof OscillatorBank) {
             this.bank = oscillators;
-            this.N = oscillators.size;
+            this.N = oscillators.oscillators.length;
             this.omega = new Float64Array(this.N);
             for (let i = 0; i < this.N; i++) {
-                this.omega[i] = oscillators.oscillators[i].frequency;
+                this.omega[i] = oscillators.oscillators[i].freq;
             }
         } else if (Array.isArray(oscillators)) {
             this.omega = Float64Array.from(oscillators);

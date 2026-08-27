@@ -8,7 +8,7 @@
  * - Used in cryptography and simulations
  */
 
-const { ScientificBackend, Hypercomplex } = require('../../modular');
+import { ScientificBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

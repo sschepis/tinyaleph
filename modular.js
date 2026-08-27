@@ -75,7 +75,6 @@ const {
   symbolicCompute,
   // Prime Resonance Network
   PHI,
-  PHI_CONJ,
   DELTA_S,
   QuaternionPrime,
   PrimeResonanceIdentity,
@@ -381,7 +380,6 @@ export default {
   
   // Prime Resonance Network - Non-local symbolic computing
   PHI,
-  PHI_CONJ,
   DELTA_S,
   QuaternionPrime,
   PrimeResonanceIdentity,
@@ -538,9 +536,6 @@ export default {
   enochian,
   enochianVocabulary,
   ENOCHIAN_ALPHABET: enochianVocabulary.ENOCHIAN_ALPHABET,
-  ENOCHIAN_LETTER_PRIMES: enochianVocabulary.ENOCHIAN_LETTER_PRIMES,
-  ENOCHIAN_VOCABULARY: enochianVocabulary.ENOCHIAN_VOCABULARY,
-  ENOCHIAN_CALLS: enochianVocabulary.ENOCHIAN_CALLS,
   SedenionElement: enochianVocabulary.SedenionElement,
   TwistOperator: enochianVocabulary.TwistOperator,
   EnochianWord: enochianVocabulary.EnochianWord,

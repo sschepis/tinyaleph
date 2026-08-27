@@ -12,11 +12,9 @@
  * closure and measurement explicit rather than implicit.
  */
 
-const { 
-  PrimeonZLadderU, 
+import { PrimeonZLadderU, 
   createPrimeonLadder,
-  shannonEntropyNats 
-} = require('../../physics');
+  shannonEntropyNats } from '../../physics/index.js';
 
 // ===========================================
 // SETUP

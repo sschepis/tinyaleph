@@ -13,11 +13,9 @@
 
 'use strict';
 
-const {
-    ResidueEncoder,
+import { ResidueEncoder,
     CRTReconstructor,
-    DEFAULT_PRIMES_SMALL
-} = require('../../core/crt-homology');
+    DEFAULT_PRIMES_SMALL } from '../../core/crt-homology.js';
 
 console.log('=== CRT Residue Encoding Example ===\n');
 

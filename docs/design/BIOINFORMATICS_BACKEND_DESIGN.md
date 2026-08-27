@@ -186,7 +186,7 @@ const BIOINFORMATICS_TRANSFORMS = [
 ### 6.1 Basic Usage
 
 ```javascript
-const { createEngine, BioinformaticsBackend } = require('@aleph-ai/tinyaleph');
+import { createEngine, BioinformaticsBackend } from '@aleph-ai/tinyaleph';
 
 // Create bioinformatics engine
 const config = { dimension: 32 };

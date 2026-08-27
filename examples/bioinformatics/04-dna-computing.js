@@ -11,13 +11,11 @@
  * TinyAleph models these as prime-encoded strand operations.
  */
 
-const { 
-    BioinformaticsBackend, 
+import { BioinformaticsBackend, 
     DNACircuit, 
     ANDGate, 
     ORGate, 
-    NOTGate
-} = require('../../modular');
+    NOTGate } from '../../index.js';
 
 // ===========================================
 // SETUP

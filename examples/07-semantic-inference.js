@@ -6,8 +6,7 @@
  * AND resonance-based disambiguation using ResoFormer attention.
  */
 
-const {
-  SemanticInference,
+import { SemanticInference,
   EntityExtractor,
   semanticInference,
   inferSymbol,
@@ -16,8 +15,7 @@ const {
   symbolDatabase,
   inferWithResonance,
   inferMostResonant,
-  getSymbol
-} = require('../core');
+  getSymbol } from '../core/index.js';
 
 console.log('='.repeat(60));
 console.log('Semantic Inference Engine');
@@ -153,7 +151,7 @@ for (const [method, symbols] of Object.entries(byMethod)) {
 }
 
 // Calculate resonance of the narrative
-const { resonanceSignature } = require('../core');
+import { resonanceSignature } from '../core/index.js';
 const primes = storySymbols.map(s => s.symbol.prime);
 if (primes.length >= 2) {
   const sig = resonanceSignature(primes);

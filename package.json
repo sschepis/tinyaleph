@@ -1,6 +1,6 @@
 {
   "name": "@aleph-ai/tinyaleph",
-  "version": "1.7.3",
+  "version": "1.8.0",
   "description": "Prime-resonant semantic computing framework - hypercomplex algebra, oscillator dynamics, arithmetic topology, and entropy-minimizing reasoning",
   "type": "module",
   "main": "index.js",
@@ -10,43 +10,49 @@
   "sideEffects": false,
   "exports": {
     ".": {
+      "types": "./types/index.d.ts",
       "browser": "./index.js",
       "import": "./index.js",
       "require": "./index.js",
-      "types": "./types/index.d.ts",
       "default": "./index.js"
     },
     "./core": {
+      "types": "./types/core.d.ts",
       "browser": "./core/index.js",
       "import": "./core/index.js",
       "require": "./core/index.js",
       "default": "./core/index.js"
     },
     "./physics": {
+      "types": "./types/physics.d.ts",
       "browser": "./physics/index.js",
       "import": "./physics/index.js",
       "require": "./physics/index.js",
       "default": "./physics/index.js"
     },
     "./backends": {
+      "types": "./types/backends.d.ts",
       "browser": "./backends/index.js",
       "import": "./backends/index.js",
       "require": "./backends/index.js",
       "default": "./backends/index.js"
     },
     "./engine": {
+      "types": "./types/engine.d.ts",
       "browser": "./engine/index.js",
       "import": "./engine/index.js",
       "require": "./engine/index.js",
       "default": "./engine/index.js"
     },
     "./telemetry": {
+      "types": "./types/telemetry.d.ts",
       "browser": "./telemetry/index.js",
       "import": "./telemetry/index.js",
       "require": "./telemetry/index.js",
       "default": "./telemetry/index.js"
     },
     "./observer": {
+      "types": "./types/observer.d.ts",
       "browser": "./observer/index.js",
       "import": "./observer/index.js",
       "require": "./observer/index.js",
@@ -61,13 +67,10 @@
     "test:watch": "node --test --watch test/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage test/*.test.js",
     "demo": "node examples/demo-modular.js",
-    "demo:two-layer": "node examples/demo-two-layer.js",
     "benchmark": "node scripts/benchmark.js",
     "chat": "node examples/chat.js",
     "train": "node scripts/trainer.js",
-    "examples": "node examples/run-examples.js",
-    "aleph-chat": "node apps/aleph-chat/index.js",
-    "ecdsa-learn": "node apps/ecdsa/index.js"
+    "examples": "node examples/run-examples.js"
   },
   "keywords": [
     "semantic-computing",

@@ -536,7 +536,7 @@ Located at [`@sschepis/resolang/assembly/rformer.ts`](../../node_modules/@sschep
 ### A.3 Usage Example
 
 ```javascript
-const { PRGraphMemory, SparsePrimeState } = require('tinyaleph');
+import { PRGraphMemory, SparsePrimeState } from '@aleph-ai/tinyaleph';
 
 const memory = new PRGraphMemory(4096, 0.8);
 

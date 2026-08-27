@@ -47,8 +47,15 @@ class LegendreSymbol {
      * @returns {number} -1, 0, or +1
      */
     static compute(a, p) {
-        if (!isPrime(p) || p === 2) {
-            throw new Error(`LegendreSymbol requires odd prime, got ${p}`);
+        if (!isPrime(p)) {
+            throw new Error(`LegendreSymbol requires prime denominator, got ${p}`);
+        }
+        if (p === 2) {
+            throw new Error(
+                `LegendreSymbol.compute(${a}, 2): the Legendre symbol (a/2) is not defined ` +
+                `(the denominator must be an odd prime). For p = 2 use the Kronecker/quadratic ` +
+                `character (2/p) = (-1)^((p²-1)/8) instead, e.g. via computeCouplingMatrix.`
+            );
         }
         
         a = ((a % p) + p) % p;
@@ -281,13 +288,19 @@ class PowerResidueSymbol {
 
 /**
  * Rédei Symbol Class
- * 
- * The Rédei symbol [p₁, p₂, p₃] ∈ {±1} is the arithmetic analogue
- * of the triple linking number (Milnor's μ(123)).
- * 
- * It detects Borromean-type coherence: three primes that have
- * no pairwise coupling but exhibit irreducible triadic coupling.
- * 
+ *
+ * HONEST CONTRACT: the value computed by `redeiDirectionalSymbol` is NOT
+ * the symmetric Rédei triple symbol [p₁, p₂, p₃] ∈ {±1}. It is a
+ * directional heuristic: choose a with a² ≡ p₁ (mod p₂), then return
+ * the Legendre symbol (a/p₃). The result depends on which prime plays
+ * which role (p₁ as the value whose square root is taken, p₂ as the
+ * modulus of that square root, p₃ as the modulus of the final Legendre
+ * symbol), so it is not symmetric under permutation of the arguments.
+ *
+ * The true Rédei symbol is the arithmetic analogue of the triple
+ * linking number (Milnor's μ(123)) and detects Borromean-type
+ * coherence.
+ *
  * Classical constraints for computability:
  * - p₁, p₂, p₃ are distinct odd primes
  * - (p₁/p₂) = (p₂/p₃) = (p₃/p₁) = 1 (pairwise split)
@@ -341,23 +354,27 @@ class RedeiSymbol {
     }
     
     /**
-     * Compute Rédei symbol [p₁, p₂, p₃]
-     * 
-     * @param {number} p1 - First prime
-     * @param {number} p2 - Second prime
-     * @param {number} p3 - Third prime
-     * @returns {Object} { value: number, computed: boolean, method: string }
+     * Compute directional Rédei heuristic [p₁, p₂, p₃]~ = (a/p₃) where a² ≡ p₁ (mod p₂).
+     *
+     * NOT the symmetric Rédei triple symbol: the value depends on the
+     * order of the arguments (see class docstring). The result carries
+     * `directional: true` and `approximate: true` markers.
+     *
+     * @param {number} p1 - First prime (value whose square root is taken)
+     * @param {number} p2 - Second prime (modulus of the square root)
+     * @param {number} p3 - Third prime (modulus of the Legendre symbol)
+     * @returns {Object} { value: number, computed: boolean, directional: true, approximate: true, method: string }
      */
-    static compute(p1, p2, p3) {
+    static redeiDirectionalSymbol(p1, p2, p3) {
         const check = this.isComputable(p1, p2, p3);
         if (!check.computable) {
-            return { value: 0, computed: false, reason: check.reason };
+            return { value: 0, computed: false, reason: check.reason, directional: true, approximate: true };
         }
         
         // Find a such that a² ≡ p₁ (mod p₂)
         const a = this.sqrtMod(p1, p2);
         if (a === null) {
-            return { value: 0, computed: false, reason: 'sqrt computation failed' };
+            return { value: 0, computed: false, reason: 'sqrt computation failed', directional: true, approximate: true };
         }
         
         // Compute (a/p₃) as approximation to Rédei symbol
@@ -366,9 +383,27 @@ class RedeiSymbol {
         return {
             value: redei,
             computed: true,
-            method: 'genus_theory',
-            sqrt_p1_mod_p2: a
+            method: 'directional_genus_theory',
+            sqrt_p1_mod_p2: a,
+            directional: true,
+            approximate: true,
+            note: 'Directional heuristic: (a/p₃) with a² ≡ p₁ (mod p₂). Not the symmetric Rédei triple symbol.'
         };
+    }
+    
+    /**
+     * Deprecated alias for redeiDirectionalSymbol — kept for
+     * backwards compatibility. Prefer redeiDirectionalSymbol.
+     *
+     * @param {number} p1 - First prime
+     * @param {number} p2 - Second prime
+     * @param {number} p3 - Third prime
+     * @returns {Object} Same shape as redeiDirectionalSymbol, plus `deprecated: true`
+     */
+    static compute(p1, p2, p3) {
+        const result = this.redeiDirectionalSymbol(p1, p2, p3);
+        result.deprecated = true;
+        return result;
     }
     
     /**
@@ -442,7 +477,7 @@ class RedeiSymbol {
         for (let i = 0; i < r; i++) {
             for (let j = i + 1; j < r; j++) {
                 for (let k = j + 1; k < r; k++) {
-                    const result = this.compute(primes[i], primes[j], primes[k]);
+                    const result = this.redeiDirectionalSymbol(primes[i], primes[j], primes[k]);
                     
                     if (result.computed) {
                         const key = `${i},${j},${k}`;
@@ -450,7 +485,9 @@ class RedeiSymbol {
                             indices: [i, j, k],
                             primes: [primes[i], primes[j], primes[k]],
                             value: result.value,
-                            method: result.method
+                            method: result.method,
+                            directional: true,
+                            approximate: true
                         });
                         
                         // Check for Borromean property
@@ -601,14 +638,14 @@ class ArithmeticMilnorInvariant {
         const pk = this.primes[k];
         
         if (this.ell === 2) {
-            const redei = RedeiSymbol.compute(pi, pj, pk);
+            const redei = RedeiSymbol.redeiDirectionalSymbol(pi, pj, pk);
             if (redei.computed) {
                 const value = redei.value === 1 ? 0 : 1;
                 return {
                     value: value % this.m,
                     modulus: this.m,
                     computed: true,
-                    method: 'redei'
+                    method: 'redei_directional'
                 };
             }
         }
@@ -641,6 +678,9 @@ class ArithmeticMilnorInvariant {
     
     /**
      * Approximate Massey triple product
+     *
+     * HONEST CONTRACT: this is NOT a computed Milnor invariant — it is a
+     * hash-based fallback. Marked `computed: false`, `approximate: true`.
      * @private
      */
     _computeMasseyTriple(i, j, k) {
@@ -653,14 +693,19 @@ class ArithmeticMilnorInvariant {
         return {
             value: hash,
             modulus: this.m,
-            computed: true,
+            computed: false,
+            approximate: true,
             method: 'massey_approx',
-            note: 'Simplified computation'
+            note: 'Fallback heuristic — not a computed Massey product'
         };
     }
     
     /**
      * Fox derivative computation for higher-order invariants
+     *
+     * HONEST CONTRACT: this is NOT a computed Milnor invariant — it is a
+     * sign-alternating sum heuristic, not a Fox derivative.
+     * Marked `computed: false`, `approximate: true`.
      * @private
      */
     _computeFoxDerivative(I) {
@@ -677,8 +722,10 @@ class ArithmeticMilnorInvariant {
         return {
             value,
             modulus: this.m,
-            computed: true,
+            computed: false,
+            approximate: true,
             method: 'fox_derivative_approx',
+            note: 'Fallback heuristic — not a Fox derivative',
             order: n
         };
     }
@@ -813,8 +860,8 @@ class ArithmeticLinkKernel {
         
         this.metadata = {
             created: Date.now(),
-            primeProduct: primes.reduce((a, b) => a * b, 1),
-            primeSum: primes.reduce((a, b) => a + b, 0)
+            primeProduct: this.primes.reduce((a, b) => a * b, 1),
+            primeSum: this.primes.reduce((a, b) => a + b, 0)
         };
     }
     
@@ -1224,14 +1271,31 @@ function quickBorromeanCheck(p1, p2, p3) {
         return { possible: true, reason: 'Rédei not computable: ' + check.reason };
     }
     
-    const redei = RedeiSymbol.compute(p1, p2, p3);
+    const redei = RedeiSymbol.redeiDirectionalSymbol(p1, p2, p3);
     
     return {
         possible: redei.computed && redei.value !== 0,
         isBorromean: redei.computed && redei.value === -1,
         redeiSymbol: redei.value,
-        reason: redei.computed ? 'Computed' : redei.reason
+        directional: true,
+        approximate: true,
+        reason: redei.computed ? 'Computed (directional heuristic)' : redei.reason
     };
+}
+
+/**
+ * Compute the directional Rédei heuristic for a prime triple.
+ *
+ * NOT the symmetric Rédei triple symbol — see RedeiSymbol class docstring
+ * for the asymmetry discussion.
+ *
+ * @param {number} p1 - First prime
+ * @param {number} p2 - Second prime
+ * @param {number} p3 - Third prime
+ * @returns {Object} { value, computed, directional: true, approximate: true, ... }
+ */
+function redeiDirectionalSymbol(p1, p2, p3) {
+    return RedeiSymbol.redeiDirectionalSymbol(p1, p2, p3);
 }
 
 // ============================================================================
@@ -1249,6 +1313,7 @@ export {
     
     // Phase 2: Triadic
     RedeiSymbol,
+    redeiDirectionalSymbol,
     
     // Phase 3: Higher-order
     ArithmeticMilnorInvariant,
@@ -1272,6 +1337,7 @@ export default {
     LegendreSymbol,
     PowerResidueSymbol,
     RedeiSymbol,
+    redeiDirectionalSymbol,
     ArithmeticMilnorInvariant,
     MultipleResidueSymbol,
     ArithmeticLinkKernel,

@@ -8,7 +8,7 @@
  * - Measurement with probabilistic collapse
  */
 
-const { ScientificBackend, Hypercomplex } = require('../../modular');
+import { ScientificBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP

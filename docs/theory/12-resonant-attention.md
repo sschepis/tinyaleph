@@ -443,7 +443,7 @@ function resonanceScore(stateI, stateJ, alpha = 0.33, beta = 0.33, gamma = 0.34)
 ### 10.2 Usage Example
 
 ```javascript
-const { SparsePrimeState, resonantAttention } = require('tinyaleph');
+import { SparsePrimeState, resonantAttention } from '@aleph-ai/tinyaleph';
 
 // Create states from text
 const query = SparsePrimeState.fromHash('What is consciousness?');

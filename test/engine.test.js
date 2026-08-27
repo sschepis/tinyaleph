@@ -5,6 +5,7 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { AlephEngine } from '../engine/aleph.js';
+import { createEngine } from '../engine/index.js';
 import { SemanticBackend } from '../backends/semantic/index.js';
 import { CryptographicBackend } from '../backends/cryptographic/index.js';
 import { ScientificBackend } from '../backends/scientific/index.js';
@@ -43,8 +44,11 @@ describe('AlephEngine', () => {
     });
 
     it('should have default options', () => {
-      assert.ok(engine.options.dampingRate >= 0);
       assert.ok(engine.options.baseCoupling > 0);
+      assert.strictEqual(engine.options.maxHistory, 200);
+      // Dead options removed in wave 1B
+      assert.ok(!('dampingRate' in engine.options));
+      assert.ok(!('stableCoherence' in engine.options));
     });
   });
 
@@ -74,7 +78,7 @@ describe('AlephEngine', () => {
 
     it('should provide stability classification', () => {
       const result = engine.run('test');
-      assert.ok(['STABLE', 'MARGINAL', 'CHAOTIC'].includes(result.stability));
+      assert.ok(['stable', 'marginal', 'chaotic'].includes(result.stability));
     });
 
     it('should track evolution steps', () => {
@@ -192,6 +196,34 @@ describe('AlephEngine', () => {
       const history = engine.getHistory(5);
       assert.strictEqual(history.length, 5);
     });
+
+    it('should cap history growth at maxHistory', () => {
+      const cappedEngine = new AlephEngine(backend, {
+        maxEvolutionSteps: 3,
+        maxHistory: 10
+      });
+      
+      for (let i = 0; i < 30; i++) {
+        cappedEngine.run(`input ${i}`);
+      }
+      
+      assert.ok(cappedEngine.history.length <= 10);
+      assert.strictEqual(cappedEngine.history.length, 10);
+    });
+
+    it('should keep the most recent history entries', () => {
+      const cappedEngine = new AlephEngine(backend, {
+        maxEvolutionSteps: 3,
+        maxHistory: 5
+      });
+      
+      for (let i = 0; i < 10; i++) {
+        cappedEngine.run(`input ${i}`);
+      }
+      
+      const last = cappedEngine.history[cappedEngine.history.length - 1];
+      assert.strictEqual(last.input, 'input 9');
+    });
   });
 
   describe('batch processing', () => {
@@ -254,5 +286,27 @@ describe('Engine with different backends', () => {
     const result = engine.run('|0⟩');
     assert.ok(result);
     assert.ok(result.inputPrimes.includes(2));
+  });
+});
+
+describe('createEngine factory (engine/index.js)', () => {
+  it('should construct a semantic engine', () => {
+    const engine = createEngine('semantic', { dimension: 8 });
+    assert.ok(engine instanceof AlephEngine);
+  });
+
+  it('should construct a scientific engine via the science alias', () => {
+    const engine = createEngine('science', { dimension: 8 });
+    assert.ok(engine instanceof AlephEngine);
+  });
+
+  it('should construct a cryptographic engine', () => {
+    const engine = createEngine('crypto', { dimension: 16 });
+    assert.ok(engine instanceof AlephEngine);
+  });
+
+  it('should throw for unknown backend types', () => {
+    assert.throws(() => createEngine('unknown'), /Unknown backend/);
+    assert.throws(() => createEngine('not-a-backend'), /Unknown backend/);
   });
 });

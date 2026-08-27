@@ -10,7 +10,7 @@ This section provides hands-on guidance for using Aleph in your projects. Whethe
 4. [Scientific Computing](./04-scientific.md) - Quantum simulation
 5. [LLM Integration](./05-llm-integration.md) - Coupling with language models
 6. [Symbolic AI & Resonance](./06-symbolic-ai.md) - Symbol inference with attention
-7. [Advanced Techniques](./07-advanced.md) - Power user guide
+7. [Advanced Techniques](./06-advanced.md) - Power user guide
 
 ---
 
@@ -25,7 +25,7 @@ cd tinyaleph
 npm install
 
 # Verify installation
-node -e "require('./modular'); console.log('✓ Aleph loaded')"
+node -e "import('@aleph-ai/tinyaleph').then(() => console.log('✓ Aleph loaded'))"
 ```
 
 ---
@@ -33,10 +33,10 @@ node -e "require('./modular'); console.log('✓ Aleph loaded')"
 ## Quick Example
 
 ```javascript
-const { createEngine } = require('./modular');
+import { createEngine } from '@aleph-ai/tinyaleph';
 
-// Load semantic configuration
-const config = require('./data.json');
+// Optional semantic configuration
+const config = { dimension: 16 };
 
 // Create an engine
 const engine = createEngine('semantic', config);

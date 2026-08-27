@@ -5,6 +5,16 @@
 import { Hypercomplex } from '../core/hypercomplex.js';
 
 /**
+ * Clamp a probability to [0, 1]; non-finite values collapse to 0.
+ * @param {number} p - Raw probability value
+ * @returns {number} Probability in [0, 1]
+ */
+function clampProbability(p) {
+  if (!Number.isFinite(p)) return 0;
+  return Math.min(1, Math.max(0, p));
+}
+
+/**
  * Calculate collapse probability using Born rule approximation
  * @param {Hypercomplex|object} state - HypercomplexState or CollapseState object
  * @param {number} [threshold=0.5] - Collapse threshold
@@ -15,7 +25,7 @@ function collapseProbability(state, threshold = 0.5) {
   if (state && typeof state === 'object' && 'entropy' in state) {
     const { entropy = 0, coherence = 0.5, lyapunov = 0 } = state;
     const factor = lyapunov < 0 ? 1.5 : 0.5;
-    return (1 - Math.exp(-entropy * coherence)) * factor;
+    return clampProbability((1 - Math.exp(-entropy * coherence)) * factor);
   }
   
   // Handle Hypercomplex state
@@ -26,7 +36,7 @@ function collapseProbability(state, threshold = 0.5) {
     // Compute Born-rule probability based on dominant component
     const probs = state.c.map(v => (v / n) ** 2);
     const maxProb = Math.max(...probs);
-    return maxProb > threshold ? maxProb : 0;
+    return clampProbability(maxProb > threshold ? maxProb : 0);
   }
   
   // Legacy signature: collapseProbability(entropyIntegral, lyapunovFactor)
@@ -34,7 +44,7 @@ function collapseProbability(state, threshold = 0.5) {
     const entropyIntegral = state;
     const lyapunovFactor = threshold;
     const factor = lyapunovFactor < 0 ? 1.5 : 0.5;
-    return (1 - Math.exp(-entropyIntegral)) * factor;
+    return clampProbability((1 - Math.exp(-entropyIntegral)) * factor);
   }
   
   return 0;
@@ -122,32 +132,51 @@ function collapseToIndex(hypercomplex, index) {
  * @returns {{ index: number, probability: number }} Measurement result
  */
 function bornMeasurement(hypercomplexOrAmplitudes) {
-  let probabilities;
+  let amplitudes;
   
   // Handle plain number array (amplitudes)
   if (Array.isArray(hypercomplexOrAmplitudes)) {
-    const amplitudes = hypercomplexOrAmplitudes;
-    const sumSq = amplitudes.reduce((s, v) => s + v * v, 0);
-    if (sumSq < 1e-10) return { index: 0, probability: 1 };
-    probabilities = amplitudes.map(v => (v * v) / sumSq);
+    amplitudes = hypercomplexOrAmplitudes;
   } else {
     // Handle Hypercomplex object
     const hypercomplex = hypercomplexOrAmplitudes;
-    const n = hypercomplex.norm ? hypercomplex.norm() : Math.sqrt(hypercomplex.c.reduce((s, v) => s + v * v, 0));
-    if (n < 1e-10) return { index: 0, probability: 1 };
-    probabilities = hypercomplex.c.map(v => (v / n) ** 2);
+    amplitudes = hypercomplex ? hypercomplex.c : null;
+  }
+  
+  // Reject non-finite amplitudes (NaN/Infinity) so the result is always a
+  // finite, valid index and probability.
+  const finite = [];
+  let sumSq = 0;
+  if (amplitudes) {
+    for (let i = 0; i < amplitudes.length; i++) {
+      const v = amplitudes[i];
+      if (Number.isFinite(v)) {
+        finite.push({ index: i, value: v });
+        sumSq += v * v;
+      }
+    }
+  }
+  
+  if (finite.length === 0) {
+    return { index: 0, probability: 0 };
+  }
+  if (sumSq < 1e-10) {
+    return { index: 0, probability: 1 };
   }
   
   const r = Math.random();
   let cumulative = 0;
   
-  for (let i = 0; i < probabilities.length; i++) {
-    cumulative += probabilities[i];
+  for (const entry of finite) {
+    const probability = entry.value * entry.value / sumSq;
+    cumulative += probability;
     if (r < cumulative) {
-      return { index: i, probability: probabilities[i] };
+      return { index: entry.index, probability };
     }
   }
-  return { index: probabilities.length - 1, probability: probabilities[probabilities.length - 1] };
+  
+  const last = finite[finite.length - 1];
+  return { index: last.index, probability: last.value * last.value / sumSq };
 }
 
 /**

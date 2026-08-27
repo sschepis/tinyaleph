@@ -843,50 +843,32 @@ backend.process(input)
 
 ---
 
-## Backend Registration
+## Backend Extension
 
-### registerBackend(name, BackendClass)
+The backends module exports the built-in backends and the `Backend` base
+class. There is no runtime backend registry: custom backends are defined by
+extending `Backend` (or `SemanticBackend`) and instantiated directly.
 
-Register a custom backend.
-
-```javascript
-const { registerBackend } = require('./modular');
-
-registerBackend('custom', CustomBackend);
-```
-
-**Parameters:**
-- `name` (string): Backend identifier
-- `BackendClass` (class): Backend constructor
-
----
-
-### getBackend(name)
-
-Get registered backend class.
+### Extending the Backend Base Class
 
 ```javascript
-const { getBackend } = require('./modular');
+import { Backend, SemanticBackend } from '@aleph-ai/tinyaleph/backends';
 
-const SemanticBackend = getBackend('semantic');
+class CustomBackend extends Backend {
+    // implement the Backend interface methods
+}
 ```
 
-**Parameters:**
-- `name` (string): Backend identifier
-
-**Returns:** class | null
-
----
-
-### listBackends()
-
-List all registered backends.
+### Available Backend Classes
 
 ```javascript
-const { listBackends } = require('./modular');
+import { SemanticBackend, ScientificBackend, CryptographicBackend, bioinformatics } from '@aleph-ai/tinyaleph/backends';
 
-console.log(listBackends());
-// ['semantic', 'cryptographic', 'scientific']
+// Backend classes are used directly - no registry lookup required
+const backend = new SemanticBackend({ dimension: 16 });
+const bioBackend = new bioinformatics.BioinformaticsBackend();
 ```
 
-**Returns:** Array<string>
+**Returns:** Backend instances are used directly; `createEngine` maps backend
+type strings (`'semantic'`, `'scientific'`, `'cryptographic'`,
+`'bioinformatics'`) to these classes.

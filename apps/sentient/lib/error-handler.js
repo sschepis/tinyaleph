@@ -447,7 +447,7 @@ class ErrorHandler extends EventEmitter {
         // Try recovery if retryable
         if (sentientError.retryable && context.canRetry !== false) {
             const recovery = await this.attemptRecovery(sentientError, context);
-            if (recovery.retry) {
+            if (recovery.retry || !this.recoveryHandlers.has(sentientError.category)) {
                 return { handled: true, retry: true, error: sentientError };
             }
         }

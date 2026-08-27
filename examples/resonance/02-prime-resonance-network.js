@@ -9,16 +9,15 @@
  * - Resonant Fragments
  */
 
-const {
-  PrimeResonanceIdentity,
+import { PrimeResonanceIdentity,
   PhaseLockedRing,
   HolographicField,
   EntangledNode,
   ResonantFragment,
   PrimeState,
+  Complex,
   PHI,
-  DELTA_S
-} = require('../../modular');
+  DELTA_S } from '../../index.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('         PRIME RESONANCE NETWORK DEMONSTRATION');
@@ -33,13 +32,12 @@ const priAlpha = PrimeResonanceIdentity.fromSeed(42);
 const priBeta = PrimeResonanceIdentity.random();
 
 console.log('\nNode Alpha PRI:');
-console.log('  Gaussian:', priAlpha.gaussian.toString());
-console.log('  Eisenstein:', priAlpha.eisenstein.toString());
-console.log('  Quaternion:', priAlpha.quaternion.toString());
-console.log('  Signature:', priAlpha.signature);
+console.log('  Signature:', priAlpha.signature.join(', '));
+console.log('  Hash:', priAlpha.hash);
 
 console.log('\nNode Beta PRI:');
-console.log('  Signature:', priBeta.signature);
+console.log('  Signature:', priBeta.signature.join(', '));
+console.log('  Hash:', priBeta.hash);
 
 const strength = priAlpha.entanglementStrength(priBeta);
 console.log('\nEntanglement strength α↔β:', strength.toFixed(4));
@@ -52,7 +50,7 @@ console.log('φ (golden ratio):', PHI.toFixed(6));
 console.log('δS (√2):', DELTA_S.toFixed(6));
 
 const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
-const ring = new PhaseLockedRing(primes, 'phi');
+const ring = new PhaseLockedRing(primes);
 
 console.log('\nInitial phases (scaled by 1/π):');
 for (let i = 0; i < 5; i++) {
@@ -69,7 +67,10 @@ for (let i = 0; i < 200; i++) {
 console.log('After 200 ticks:');
 console.log('  Order parameter:', ring.orderParameter().toFixed(4));
 console.log('  Mean phase:', (ring.meanPhase() / Math.PI).toFixed(4) + 'π');
-console.log('  Synchronization:', ring.synchronization().toFixed(4));
+const ringPhases = Array.from(ring.phases);
+const meanCos = ringPhases.reduce((acc, p) => acc + Math.cos(p), 0) / ringPhases.length;
+const meanSin = ringPhases.reduce((acc, p) => acc + Math.sin(p), 0) / ringPhases.length;
+console.log('  Synchronization:', Math.sqrt(meanCos ** 2 + meanSin ** 2).toFixed(4));
 
 // 3. Holographic Memory Field
 console.log('\n3. HOLOGRAPHIC MEMORY FIELD');
@@ -132,7 +133,7 @@ console.log('  observer-2 ↔ observer-3:', strengthBC.toFixed(4));
 console.log('  observer-1 ↔ observer-3:', strengthAC.toFixed(4));
 
 // Store memory in node A
-const thoughtState = PrimeState.uniform().scale({ re: 0.5, im: 0.5 });
+const thoughtState = PrimeState.uniform().scale(new Complex(0.5, 0.5));
 nodeA.storeMemory(thoughtState, 16, 16);
 
 console.log('\nStored memory in observer-1');
@@ -151,8 +152,8 @@ console.log('  observer-2 coherence:', nodeB.coherence.toFixed(4));
 console.log('  observer-3 coherence:', nodeC.coherence.toFixed(4));
 
 console.log('\nNode stability:');
-console.log('  observer-1 stable:', nodeA.isStable() ? 'YES' : 'NO');
-console.log('  observer-2 stable:', nodeB.isStable() ? 'YES' : 'NO');
+console.log('  observer-1 stable:', nodeA.coherence > 0.5 ? 'YES' : 'NO');
+console.log('  observer-2 stable:', nodeB.coherence > 0.5 ? 'YES' : 'NO');
 
 // 5. Resonant Fragments
 console.log('\n5. RESONANT FRAGMENTS');

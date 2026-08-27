@@ -6,8 +6,9 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 import { SemanticBackend } from '../backends/semantic/index.js';
-import { CryptographicBackend } from '../backends/cryptographic/index.js';
+import { CryptographicBackend, EntropySensitiveEncryptor, HolographicKeyDistributor } from '../backends/cryptographic/index.js';
 import { ScientificBackend } from '../backends/scientific/index.js';
+import { TwoLayerEngine } from '../backends/semantic/two-layer.js';
 
 describe('SemanticBackend', () => {
   let backend;
@@ -135,6 +136,52 @@ describe('SemanticBackend', () => {
       backend.learn('newword', [31, 37]);
       assert.strictEqual(backend.hasWord('newword'), true);
       assert.deepStrictEqual(backend.getWordPrimes('newword'), [31, 37]);
+    });
+  });
+
+  describe('transforms', () => {
+    it('should expose configured transforms via getTransforms', () => {
+      const b = new SemanticBackend({
+        dimension: 8,
+        transforms: [{ q: [2], r: [5], name: 'test-transform' }]
+      });
+      const transforms = b.getTransforms();
+      assert.strictEqual(transforms.length, 1);
+      assert.strictEqual(transforms[0].name, 'test-transform');
+    });
+
+    it('should apply a transform whose query primes are core primes', () => {
+      // q:[2,3] are both in the default corePrimes set; the transform must fire
+      const transformed = backend.applyTransform([2, 3], { q: [2, 3], r: [5] });
+      assert.ok(transformed.includes(5), 'transform result prime should be added');
+      assert.notDeepStrictEqual(transformed, [2, 3]);
+    });
+
+    it('should change the state when a core-prime transform applies', () => {
+      const transformed = backend.applyTransform([2, 3], { q: [2, 3], r: [5] });
+      const before = backend.primesToState([2, 3]);
+      const after = backend.primesToState(transformed);
+      let diff = 0;
+      for (let i = 0; i < before.dim; i++) {
+        diff += Math.abs(before.c[i] - after.c[i]);
+      }
+      assert.ok(diff > 0.001, 'state should change after transform');
+    });
+
+    it('should return input unchanged when query primes are absent', () => {
+      const result = backend.applyTransform([11, 13], { q: [2], r: [5] });
+      assert.deepStrictEqual(result, [11, 13]);
+    });
+  });
+
+  describe('unknown word hashing', () => {
+    it('should map distinct characters to distinct primes', () => {
+      const primes = backend.wordToPrimes('abc');
+      assert.strictEqual(new Set(primes).size, 3);
+    });
+
+    it('should be order-sensitive', () => {
+      assert.notDeepStrictEqual(backend.wordToPrimes('ab'), backend.wordToPrimes('ba'));
     });
   });
 
@@ -430,6 +477,105 @@ describe('CryptographicBackend', () => {
       assert.strictEqual(mixed.length, 4);
     });
   });
+
+  describe('transforms', () => {
+    it('should expose 16 mixing transforms via getTransforms', () => {
+      const transforms = backend.getTransforms();
+      assert.strictEqual(transforms.length, 16);
+      for (const t of transforms) {
+        assert.ok(typeof t.n === 'string');
+        assert.ok(Array.isArray(t.key) && t.key.length === 4);
+      }
+    });
+  });
+
+  describe('decode validation', () => {
+    it('should throw for unknown primes instead of silently corrupting', () => {
+      const known = backend.encode('test');
+      assert.throws(() => backend.decode([...known, 999999937]), /unknown prime/i);
+    });
+
+    it('should decode known primes back to bytes', () => {
+      const primes = backend.encode('test');
+      const decoded = backend.decode(primes);
+      assert.ok(decoded.equals(Buffer.from('test')));
+    });
+  });
+});
+
+describe('EntropySensitiveEncryptor', () => {
+  it('decrypt inverts encrypt for buffer keys', () => {
+    const encryptor = new EntropySensitiveEncryptor();
+    const key = Buffer.from('secret-key');
+    const inputs = [
+      'hello world',
+      'prime resonance framework',
+      Buffer.from([0, 1, 2, 127, 128, 255]),
+      'x'
+    ];
+    for (const input of inputs) {
+      const buf = Buffer.isBuffer(input) ? input : Buffer.from(input);
+      const roundTrip = encryptor.decrypt(encryptor.encrypt(buf, key), key);
+      assert.ok(roundTrip.equals(buf), `round-trip failed for ${JSON.stringify(input)}`);
+    }
+  });
+
+  it('decrypt inverts encrypt for numeric keys', () => {
+    const encryptor = new EntropySensitiveEncryptor();
+    const data = Buffer.from('numeric-key message');
+    assert.ok(encryptor.decrypt(encryptor.encrypt(data, 42), 42).equals(data));
+  });
+
+  it('produces different ciphertext for different buffer keys', () => {
+    const encryptor = new EntropySensitiveEncryptor();
+    const data = Buffer.from('some data to encrypt');
+    const c1 = encryptor.encrypt(data, Buffer.from('key1'));
+    const c2 = encryptor.encrypt(data, Buffer.from('key2'));
+    assert.notDeepStrictEqual(c1, c2);
+  });
+});
+
+describe('HolographicKeyDistributor', () => {
+  it('decodeKey recovers the key encoded by encodeKey', () => {
+    const kd = new HolographicKeyDistributor();
+    const original = kd.keyGen.generateKey(54321).keyBuffer;
+    const recovered = kd.decodeKey(kd.encodeKey(54321));
+    assert.ok(Buffer.isBuffer(recovered));
+    assert.ok(recovered.equals(original));
+  });
+
+  it('combineShares recovers the original key from all shares', () => {
+    const kd = new HolographicKeyDistributor();
+    const original = kd.keyGen.generateKey(12345).keyBuffer;
+    const { shares } = kd.createShares(12345, 3, 2);
+    const recovered = kd.combineShares(shares);
+    assert.ok(Buffer.isBuffer(recovered));
+    assert.ok(recovered.equals(original), 'combined shares should round-trip to the original key');
+  });
+
+  it('round-trips for several key values', () => {
+    const kd = new HolographicKeyDistributor();
+    for (const keyValue of [2, 17, 100, 12345, 999983]) {
+      const original = kd.keyGen.generateKey(keyValue).keyBuffer;
+      const { shares } = kd.createShares(keyValue, 4, 2);
+      const recovered = kd.combineShares(shares);
+      assert.ok(recovered.equals(original), `round-trip failed for key ${keyValue}`);
+    }
+  });
+
+  it('combining a subset of shares still returns a key buffer', () => {
+    const kd = new HolographicKeyDistributor();
+    const { shares } = kd.createShares(999, 4, 2);
+    const recovered = kd.combineShares(shares.slice(0, 2));
+    assert.ok(Buffer.isBuffer(recovered));
+    assert.strictEqual(recovered.length, kd.keyGen.keyLength);
+  });
+
+  it('rejects fewer than two shares', () => {
+    const kd = new HolographicKeyDistributor();
+    const { shares } = kd.createShares(5, 3, 2);
+    assert.throws(() => kd.combineShares(shares.slice(0, 1)), /at least 2/i);
+  });
 });
 
 describe('ScientificBackend', () => {
@@ -498,6 +644,39 @@ describe('ScientificBackend', () => {
       const state = backend.decode([2, 3]);
       assert.strictEqual(state, '|+⟩');
     });
+
+    it('should decode multi-qubit states distinctly', () => {
+      assert.strictEqual(backend.decode([2, 2]), '|00⟩');
+      assert.strictEqual(backend.decode([3, 3]), '|11⟩');
+      assert.strictEqual(backend.decode([3, 2]), '|10⟩');
+      assert.strictEqual(backend.decode([2, 7]), '|01⟩');
+    });
+  });
+
+  describe('encode/decode round-trip', () => {
+    const states = [
+      '|0⟩', '|1⟩', '|+⟩', '|-⟩', '|i⟩', '|-i⟩',
+      '|00⟩', '|01⟩', '|10⟩', '|11⟩',
+      '|Φ+⟩', '|Φ-⟩', '|Ψ+⟩', '|Ψ-⟩'
+    ];
+
+    for (const state of states) {
+      it(`should round-trip ${state}`, () => {
+        const encoded = backend.encode(state);
+        assert.strictEqual(backend.decode(encoded), state);
+      });
+    }
+  });
+
+  describe('transforms', () => {
+    it('should expose the 8 quantum gates via getTransforms', () => {
+      const transforms = backend.getTransforms();
+      assert.strictEqual(transforms.length, 8);
+      const names = transforms.map(t => t.name);
+      for (const gate of ['Pauli-X', 'Pauli-Y', 'Pauli-Z', 'Hadamard', 'CNOT', 'T-gate', 'S-gate', 'SWAP']) {
+        assert.ok(names.includes(gate), `missing gate ${gate}`);
+      }
+    });
   });
 
   describe('quantum gates', () => {
@@ -561,5 +740,101 @@ describe('ScientificBackend', () => {
       const result = backend.rotate([2], 'x', Math.PI / 2);
       assert.strictEqual(result.dim, 16);
     });
+
+    it('x rotation at π/2 stays normalized', () => {
+      const state = backend.primesToState([2]);
+      const rotated = backend.rotateState(state, 'x', Math.PI / 2);
+      assert.ok(Math.abs(rotated.norm() - 1) < 1e-9);
+    });
+
+    it('x rotation at π/2 is invertible (rotating back recovers the original)', () => {
+      const state = backend.primesToState([2]);
+      const rotated = backend.rotateState(state, 'x', Math.PI / 2);
+      const restored = backend.rotateState(rotated, 'x', -Math.PI / 2);
+      for (let i = 0; i < state.dim; i++) {
+        assert.ok(
+          Math.abs(restored.c[i] - state.c[i]) < 1e-9,
+          `component ${i} diverged: ${restored.c[i]} vs ${state.c[i]}`
+        );
+      }
+    });
+
+    it('y rotation at π/2 is invertible', () => {
+      const state = backend.primesToState([2]);
+      const rotated = backend.rotateState(state, 'y', Math.PI / 2);
+      const restored = backend.rotateState(rotated, 'y', -Math.PI / 2);
+      for (let i = 0; i < state.dim; i++) {
+        assert.ok(Math.abs(restored.c[i] - state.c[i]) < 1e-9);
+      }
+    });
+
+    it('z rotation preserves the |0⟩ component', () => {
+      const state = backend.primesToState([2]);
+      const rotated = backend.rotateState(state, 'z', Math.PI / 2);
+      assert.ok(Math.abs(rotated.c[0] - state.c[0]) < 1e-9);
+    });
+  });
+});
+describe('Backend base class interface', () => {
+  it('should expose getDimension on all backends', () => {
+    assert.strictEqual(new SemanticBackend({ dimension: 8 }).getDimension(), 8);
+    assert.strictEqual(new ScientificBackend({ dimension: 16 }).getDimension(), 16);
+    assert.strictEqual(new CryptographicBackend({ dimension: 32 }).getDimension(), 32);
+  });
+
+  it('should support additive configure() merging', () => {
+    const backend = new SemanticBackend({ dimension: 8 });
+    const returned = backend.configure({ dimension: 10, customFlag: true });
+    assert.strictEqual(returned, backend);
+    assert.strictEqual(backend.getDimension(), 10);
+    assert.strictEqual(backend.config.customFlag, true);
+    assert.strictEqual(backend.config.primes.length > 0, true);
+  });
+
+  it('should expose the full base method surface on each backend type', () => {
+    const backends = [
+      new SemanticBackend({ dimension: 8 }),
+      new ScientificBackend({ dimension: 16 }),
+      new CryptographicBackend({ dimension: 32 })
+    ];
+    for (const b of backends) {
+      for (const method of ['getName', 'getAxes', 'getPrimes', 'getDimension', 'getTransforms', 'applyTransform', 'encode', 'decode']) {
+        assert.strictEqual(typeof b[method], 'function', `${b.getName()} missing ${method}`);
+      }
+      assert.strictEqual(typeof b.getName(), 'string');
+      assert.ok(Array.isArray(b.getPrimes()));
+      assert.ok(Array.isArray(b.getTransforms()));
+      assert.strictEqual(b.getDimension(), b.dimension);
+    }
+  });
+});
+
+describe('TwoLayerEngine', () => {
+  function makeEngine() {
+    return new TwoLayerEngine({
+      core: { dimension: 16, vocabulary: { wisdom: [2, 7, 11] } }
+    });
+  }
+
+  it('applyConversationalBias boosts words related to recent conversation', () => {
+    const engine = makeEngine();
+    engine.process('wisdom');
+    const boosted = engine.applyConversationalBias();
+    assert.ok(boosted > 0, 'should boost at least one word');
+    assert.ok(engine.biasEngine.getBias('wisdom', []) > 1.0);
+  });
+
+  it('applyConversationalBias changes word selection output', () => {
+    const engine = makeEngine();
+    engine.process('wisdom');
+    const before = engine.selectWords([[7, 11]], { deterministic: true })[0];
+    engine.applyConversationalBias();
+    const after = engine.selectWords([[7, 11]], { deterministic: true })[0];
+    assert.notStrictEqual(before, after);
+  });
+
+  it('applyConversationalBias is a no-op with empty history', () => {
+    const engine = makeEngine();
+    assert.strictEqual(engine.applyConversationalBias(), 0);
   });
 });

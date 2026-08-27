@@ -52,7 +52,8 @@ class StochasticKuramoto extends KuramotoModel {
     this.temperature = options.temperature ?? 1.0;
     this.useTemperatureCoupling = options.temperatureCoupling ?? false;
     
-    // For colored noise (Ornstein-Uhlenbeck): dη = -η/τ dt + σ/√τ dW
+    // For colored noise (Ornstein-Uhlenbeck): dη = -η/τ dt + σ dW
+    // (stationary variance σ²τ/2, see getStationaryVariance)
     // Each oscillator has its own OU process
     this.coloredNoiseState = new Float64Array(frequencies.length);
     
@@ -106,7 +107,7 @@ class StochasticKuramoto extends KuramotoModel {
   
   /**
    * Update Ornstein-Uhlenbeck process for colored noise
-   * dη = -η/τ dt + (σ/√τ)·dW
+   * dη = -η/τ dt + σ dW
    * 
    * @param {number} idx - Oscillator index
    * @param {number} dt - Time step
@@ -115,7 +116,10 @@ class StochasticKuramoto extends KuramotoModel {
   updateColoredNoise(idx, dt) {
     const eta = this.coloredNoiseState[idx];
     const decay = Math.exp(-dt / this.tau);
-    const diffusion = this.sigma * Math.sqrt((1 - decay * decay) / 2);
+    // Exact OU discretization: stationary variance σ²τ/2, matching
+    // getStationaryVariance(). The √τ factor is required for the discrete
+    // process to converge to the documented stationary variance.
+    const diffusion = this.sigma * Math.sqrt(this.tau * (1 - decay * decay) / 2);
     
     // Exact update for OU process
     this.coloredNoiseState[idx] = eta * decay + diffusion * gaussianRandom();
@@ -192,7 +196,7 @@ class StochasticKuramoto extends KuramotoModel {
       stepNoise.push(phaseIncrement);
       
       // Update phase
-      osc.phase += osc.frequency * dt + phaseIncrement;
+      osc.phase += osc.freq * dt + phaseIncrement;
       osc.phase = ((osc.phase % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
       
       // Amplitude decay
@@ -500,7 +504,7 @@ class ThermalKuramoto extends StochasticKuramoto {
    */
   estimateCriticalTemperature() {
     // Approximate T_c = K * (frequency spread factor)
-    const freqs = this.oscillators.map(o => o.frequency);
+    const freqs = this.oscillators.map(o => o.freq);
     const meanFreq = freqs.reduce((a, b) => a + b, 0) / freqs.length;
     const freqSpread = Math.sqrt(
       freqs.reduce((sum, f) => sum + (f - meanFreq) ** 2, 0) / freqs.length

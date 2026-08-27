@@ -25,6 +25,19 @@ import {  Quaternion,
   computeCoherence  } from './rformer.js';
 
 /**
+ * Memoized prime-list access: the prime sieve for a given size is
+ * computed once per process and shared by all SparsePrimeState-like
+ * constructions in this module.
+ */
+const _primeTableCache = new Map();
+function _cachedPrimes(n) {
+    if (!_primeTableCache.has(n)) {
+        _primeTableCache.set(n, firstNPrimes(n));
+    }
+    return _primeTableCache.get(n);
+}
+
+/**
  * ResonantMultiHeadAttention
  * 
  * Multiple attention heads with different resonance weight configurations.
@@ -242,6 +255,9 @@ class PrimeFFN {
     this.activation = config.activation || 'relu';
     this.dropout = config.dropout || 0.0;
     
+    // Dropout is applied in training mode only; eval mode is deterministic
+    this.training = false;
+    
     // Initialize weights (simplified: diagonal + bias)
     // In full implementation, these would be learned
     this.w1Scale = config.w1Scale || 2.0;
@@ -266,8 +282,8 @@ class PrimeFFN {
       // Activation
       hidden = this._activate(hidden);
       
-      // Dropout (training only)
-      if (this.dropout > 0 && Math.random() < this.dropout) {
+      // Dropout (training mode only)
+      if (this.training && this.dropout > 0 && Math.random() < this.dropout) {
         continue;
       }
       
@@ -442,14 +458,31 @@ class PositionalPrimeEncoding {
   
   /**
    * Precompute position encodings
+   *
+   * The full prime table (this.numPrimes primes) is computed once and
+   * shared across all positions — each position reuses the same
+   * `allPrimes` array instead of re-running the prime sieve inside
+   * every SparsePrimeState construction.
    * @private
    */
   _precompute() {
     const encodings = [];
-    const primes = firstNPrimes(this.activeK);
+    const primes = _cachedPrimes(this.activeK);
+    const allPrimes = _cachedPrimes(this.numPrimes);
+    
+    // Precompute per-index constants (pure functions of i)
+    const sinusoidalFreqs = primes.map((_, i) => 1 / Math.pow(10000, i / primes.length));
+    const primePhases = primes.map((_, i) => 2 * Math.PI / nthPrime(i + 1));
+    const goldenBase = (1 + Math.sqrt(5)) / 2;
+    const goldenPowers = primes.map((_, i) => Math.pow(goldenBase, -i));
     
     for (let pos = 0; pos < this.maxLength; pos++) {
-      const state = new SparsePrimeState(this.numPrimes, this.activeK);
+      // Reuse the shared prime table: replicate the SparsePrimeState
+      // constructor fields without re-sieving this.numPrimes primes.
+      const state = Object.create(SparsePrimeState.prototype);
+      state.allPrimes = allPrimes;
+      state.k = this.activeK;
+      state.activations = new Map();
       
       for (let i = 0; i < primes.length; i++) {
         const p = primes[i];
@@ -458,19 +491,17 @@ class PositionalPrimeEncoding {
         switch (this.type) {
           case 'sinusoidal':
             // Classic transformer-style
-            const freq = 1 / Math.pow(10000, i / primes.length);
-            phase = pos * freq;
+            phase = pos * sinusoidalFreqs[i];
             break;
           
           case 'prime':
             // Prime-based: use p-th prime for position
-            phase = 2 * Math.PI * pos / nthPrime(i + 1);
+            phase = pos * primePhases[i];
             break;
           
           case 'golden':
             // Golden ratio based
-            const phi = (1 + Math.sqrt(5)) / 2;
-            phase = 2 * Math.PI * pos * Math.pow(phi, -i);
+            phase = 2 * Math.PI * pos * goldenPowers[i];
             break;
           
           default:

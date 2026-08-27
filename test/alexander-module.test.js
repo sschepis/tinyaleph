@@ -303,7 +303,7 @@ describe('CrowellSequence', () => {
   });
 
   describe('exactness', () => {
-    it('should verify exactness', () => {
+    it('should report exactness honestly (placeholder Fox derivatives)', () => {
       const groupData = {
         G: { generators: [], relations: [] },
         H: { rank: 1 },
@@ -312,9 +312,12 @@ describe('CrowellSequence', () => {
       
       const seq = new CrowellSequence(groupData);
       const check = seq.verifyExactness();
-      assert.ok(check.injectiveAtNab);
-      assert.ok(check.exactAtApsi);
-      assert.ok(check.surjectiveOntoAugIdeal);
+      assert.strictEqual(check.exact, false);
+      assert.strictEqual(check.reason, 'placeholder — Fox derivatives not implemented');
+      // Legacy shape fields are retained, honestly false
+      assert.strictEqual(check.injectiveAtNab, false);
+      assert.strictEqual(check.exactAtApsi, false);
+      assert.strictEqual(check.surjectiveOntoAugIdeal, false);
     });
   });
 

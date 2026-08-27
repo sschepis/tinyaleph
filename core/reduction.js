@@ -261,7 +261,9 @@ function isReducible(term) {
  * Definition 3 from ncpsc.pdf:
  * - |N(p)| = 1
  * - |A(p)| = 1
- * - |FUSE(p,q,r)| = 1
+ * - |FUSE(p,q,r)| = 4  (= 3 operand primes + 1 fused-result position;
+ *   the paper's |FUSE(p,q,r)| = 1 makes the FUSE step size-neutral and
+ *   would break Lemma 1's strict decrease, so we count the operands)
  * - |A(p₁)...A(pₖ)N(q)| = k + 1
  * - |S₁ ∘ S₂| = |S₁| + |S₂|
  * - |S₁ ⇒ S₂| = |S₁| + |S₂|
@@ -269,7 +271,7 @@ function isReducible(term) {
 function termSize(term) {
     if (term instanceof NounTerm) return 1;
     if (term instanceof AdjTerm) return 1;
-    if (term instanceof FusionTerm) return 1;
+    if (term instanceof FusionTerm) return 4;
     if (term instanceof ChainTerm) return term.operators.length + 1;
     if (term instanceof NounSentence) return termSize(term.expr);
     if (term instanceof SeqSentence) return termSize(term.left) + termSize(term.right);
@@ -1037,51 +1039,103 @@ class RouteStatistics {
 // ============================================================================
 
 /**
+ * Collect the distinct one-step reducts of a term.
+ * The reduction relation is deterministic (leftmost-outermost), but
+ * sentence constructors allow both components to be reduced first, so
+ * both orderings are collected when they exist.
+ */
+function collectOneStepReducts(reducer, term) {
+    const steps = [];
+    
+    const primary = reducer.step(term);
+    if (primary) {
+        steps.push(primary.after);
+    }
+    
+    // Alternative first step: reduce the other sentence component first
+    if (term instanceof SeqSentence) {
+        const rightStep = reducer.step(term.right);
+        if (rightStep) {
+            steps.push(new SeqSentence(term.left, rightStep.after));
+        }
+    }
+    if (term instanceof ImplSentence) {
+        const consStep = reducer.step(term.consequent);
+        if (consStep) {
+            steps.push(new ImplSentence(term.antecedent, consStep.after));
+        }
+    }
+    
+    return steps;
+}
+
+/**
  * Test local confluence for overlapping redexes
  * By Newman's Lemma: SN + local confluence → confluence
+ *
+ * The verdict is COMPUTED, not hardcoded: every one-step reduct of each
+ * test term must normalize to the same normal form as the term itself.
  */
 function testLocalConfluence(reducer = null) {
     reducer = reducer || new ReductionSystem();
     
     const testCases = [];
+    const normalFormSignature = (t) =>
+        t instanceof NounTerm ? `N(${t.prime})` : (t.signature ? t.signature() : String(t));
     
-    // Test case 1: Chain with fusion subterm
-    // A(p)...A(pₖ)FUSE(a,b,c) - two possible first reductions
+    const checkCase = (term, description) => {
+        const nf = reducer.evaluate(term);
+        const nfSig = normalFormSignature(nf);
+        const reducts = collectOneStepReducts(reducer, term);
+        
+        // Local confluence: all one-step reducts must join at the same normal form
+        const joinedSigs = new Set();
+        for (const r of reducts) {
+            joinedSigs.add(normalFormSignature(reducer.evaluate(r)));
+        }
+        
+        // Vacuously confluent when there are no one-step reducts,
+        // otherwise the reducts must all join at the direct normal form.
+        const confluent = reducts.length === 0 ||
+            (joinedSigs.size === 1 && joinedSigs.has(nfSig));
+        
+        testCases.push({
+            term: term.signature ? term.signature() : String(term),
+            description,
+            normalForm: nfSig,
+            oneStepReducts: reducts.map(r => r.signature ? r.signature() : String(r)),
+            joinedNormalForms: [...joinedSigs],
+            confluent
+        });
+    };
+    
+    // Test case 1: Chain application (single redex)
+    checkCase(CHAIN([2, 3], N(7)), 'chain application');
+    
+    // Test case 2: Pure fusion (single redex)
     const fusion = FUSE(3, 5, 11); // 3+5+11 = 19, which is prime
     if (fusion.isWellFormed()) {
-        const chain = CHAIN([2], fusion.toNounTerm());
-        
-        // Both reduction paths should lead to same normal form
-        const nf = reducer.evaluate(chain);
-        testCases.push({
-            term: chain.signature(),
-            normalForm: nf.signature(),
-            confluent: true
-        });
+        checkCase(fusion, 'fusion elimination');
     }
     
-    // Test case 2: Nested chains
-    const chain2 = CHAIN([2, 3], N(7));
-    const nf2 = reducer.evaluate(chain2);
-    testCases.push({
-        term: chain2.signature(),
-        normalForm: nf2.signature(),
-        confluent: true
-    });
+    // Test case 3: Sentence with reducible parts on both sides
+    // (overlapping/alternative first steps)
+    const fusionL = FUSE(3, 5, 11);      // → N(19)
+    const chainR = CHAIN([2], N(7));     // → N(next prime ≥ 9)
+    if (fusionL.isWellFormed()) {
+        checkCase(new SeqSentence(new NounSentence(fusionL), new NounSentence(chainR)), 'sequence with two redexes');
+    }
     
-    // Test case 3: Multiple fusions
-    const fusion2 = FUSE(5, 7, 11); // 5+7+11 = 23
-    if (fusion2.isWellFormed()) {
-        const nf3 = reducer.evaluate(fusion2);
-        testCases.push({
-            term: fusion2.signature(),
-            normalForm: nf3.signature(),
-            confluent: true
-        });
+    // Test case 4: Implication with reducible antecedent and consequent
+    const fusionA = FUSE(5, 7, 11);      // → N(23)
+    if (fusionA.isWellFormed()) {
+        checkCase(new ImplSentence(new NounSentence(fusionA), new NounSentence(CHAIN([3], N(7)))), 'implication with two redexes');
     }
     
     return {
         allConfluent: testCases.every(tc => tc.confluent),
+        checked: true,
+        method: 'joinability_of_one_step_reducts',
         testCases
     };
 }

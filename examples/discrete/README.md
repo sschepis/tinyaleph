@@ -30,17 +30,16 @@ node examples/discrete/01-integer-sine-table.js
 node examples/discrete/02-codebook-tunneling.js
 ```
 
-### [03-canonical-fusion.js](./03-canonical-fusion.js)
+### Canonical Fusion (FUSE)
 
-Deterministic FUSE(p,q,r) selection:
+*Removed.* Deterministic FUSE(p,q,r) canonical-triad selection is now
+demonstrated directly via the `FUSE` function from `@aleph-ai/tinyaleph/core`:
 
-- Canonical triad ordering
-- Finding triads for target primes
-- Uniqueness guarantee
-- Verification utilities
+```javascript
+import { FUSE } from '@aleph-ai/tinyaleph/core';
 
-```bash
-node examples/discrete/03-canonical-fusion.js
+const fused = FUSE(3, 5, 11);  // Canonical triad summing to 19
+console.log(fused.p, fused.q, fused.r);  // 3 5 11
 ```
 
 ### [04-tick-gate.js](./04-tick-gate.js)

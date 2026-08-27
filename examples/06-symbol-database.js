@@ -5,13 +5,11 @@
  * their prime assignments, and cultural tagging.
  */
 
-const {
-  SymbolDatabase,
+import { SymbolDatabase,
   SymbolCategory,
   symbolDatabase,
   getSymbol,
-  getSymbolByPrime
-} = require('../core');
+  getSymbolByPrime } from '../core/index.js';
 
 console.log('='.repeat(60));
 console.log('Symbolic AI Database');

@@ -5,7 +5,7 @@
  * integer sine tables for deterministic phase computation.
  */
 
-const { INT_SINE_TABLE, computeHistogramCoherence } = require('../../apps/sentient/lib/prsc');
+import { INT_SINE_TABLE, computeHistogramCoherence } from '../../observer/index.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('  Integer Sine Tables for Discrete Phase Dynamics');

@@ -5,8 +5,8 @@
  * gauge group SU(3) × SU(2) × U(1).
  */
 
-const { GaugeSymmetry } = require('../../core/topology');
-const { TWIST_108, factorize } = require('../../core/prime');
+import { GaugeSymmetry } from '../../core/topology.js';
+import { TWIST_108, factorize } from '../../core/prime.js';
 
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('  Gauge Symmetry from the 108 Invariant');

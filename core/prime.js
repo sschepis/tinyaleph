@@ -13,6 +13,9 @@ function* primeGenerator(start = 2) {
 }
 
 function nthPrime(n) {
+  if (!Number.isInteger(n) || n < 1) {
+    throw new RangeError('nthPrime requires an integer n >= 1');
+  }
   let count = 0, candidate = 2;
   while (count < n) {
     if (isPrime(candidate)) count++;
@@ -22,6 +25,10 @@ function nthPrime(n) {
 }
 
 function primesUpTo(max) {
+  if (!Number.isInteger(max)) {
+    throw new RangeError('primesUpTo requires an integer max');
+  }
+  if (max < 2) return [];
   const sieve = new Array(max + 1).fill(true);
   sieve[0] = sieve[1] = false;
   for (let i = 2; i * i <= max; i++) {
@@ -33,7 +40,7 @@ function primesUpTo(max) {
 }
 
 function isPrime(n) {
-  if (n < 2) return false;
+  if (!Number.isInteger(n) || n < 2) return false;
   if (n === 2) return true;
   if (n % 2 === 0) return false;
   for (let i = 3, s = Math.sqrt(n); i <= s; i += 2) {
@@ -44,6 +51,9 @@ function isPrime(n) {
 
 // Factorization
 function factorize(n) {
+  if (!Number.isInteger(n) || n < 2) {
+    throw new RangeError('factorize requires an integer n >= 2');
+  }
   const factors = {};
   let d = 2;
   while (n > 1) {
@@ -89,10 +99,18 @@ class GaussianInteger {
   }
   
   isGaussianPrime() {
-    const n = this.norm();
-    if (!isPrime(n)) return false;
-    // Prime if norm is prime and not split
-    return n % 4 === 3 || (this.real !== 0 && this.imag !== 0);
+    if (this.real === 0 && this.imag === 0) return false;
+    // On-axis: a+0i or 0+bi is prime iff |a| (resp |b|) is prime and ≡ 3 (mod 4)
+    if (this.imag === 0) {
+      const a = Math.abs(this.real);
+      return isPrime(a) && a % 4 === 3;
+    }
+    if (this.real === 0) {
+      const b = Math.abs(this.imag);
+      return isPrime(b) && b % 4 === 3;
+    }
+    // Both nonzero: prime iff norm is a rational prime
+    return isPrime(this.norm());
   }
   
   toString() {
@@ -128,8 +146,20 @@ class EisensteinInteger {
   }
   
   isEisensteinPrime() {
+    if (this.a === 0 && this.b === 0) return false;
+    // On-axis: a+0ω or 0+bω is prime iff |a| (resp |b|) is prime and ≡ 2 (mod 3)
+    if (this.b === 0) {
+      const a = Math.abs(this.a);
+      return isPrime(a) && a % 3 === 2;
+    }
+    if (this.a === 0) {
+      const b = Math.abs(this.b);
+      return isPrime(b) && b % 3 === 2;
+    }
+    // Both nonzero: prime iff norm is a rational prime ≡ 1 (mod 3),
+    // or norm 3 (associates of 1-ω)
     const n = this.norm();
-    return isPrime(n) && n % 3 === 2;
+    return isPrime(n) && (n % 3 === 1 || n === 3);
   }
   
   toString() {
@@ -151,6 +181,9 @@ function primeToAngle(p) {
 
 // Sum of two squares representation (for p ≡ 1 mod 4)
 function sumOfTwoSquares(p) {
+  if (!isPrime(p)) {
+    throw new RangeError('sumOfTwoSquares requires a prime input');
+  }
   if (p === 2) return [1, 1];
   if (p % 4 !== 1) return null;
   

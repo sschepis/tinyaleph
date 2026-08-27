@@ -9,10 +9,8 @@
  * Run with: node examples/resonance/05-language-model.js
  */
 
-const tf = require('@tensorflow/tfjs-node');
-const {
-  ResoFormerBlock
-} = require('../../core/rformer-tf');
+import tf from '@tensorflow/tfjs-node';
+import { ResoFormerBlock } from '../../core/rformer-tf.js';
 
 // ============================================================================
 // SAMPLE TEXT CORPUS - More text for better training

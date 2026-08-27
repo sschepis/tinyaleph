@@ -482,6 +482,15 @@ class GaugeSymmetry {
     
     /**
      * Verify that a number exhibits the gauge structure
+     *
+     * NOTE ON CONVENTIONS: `u1Strength` uses a multiplicative convention
+     * (product of the powers of all primes other than 2 and 3), while
+     * `TWIST_108.gaugeDecomposition(n).u1Contribution` (core/prime.js)
+     * uses an additive convention (sum of the exponents of those same
+     * primes). The two values therefore disagree for numbers with
+     * several non-2/3 prime factors; this discrepancy is documented,
+     * not resolved, to avoid changing asserted values.
+     *
      * @param {number} n - Number to check
      * @returns {Object} Gauge decomposition
      */
@@ -605,10 +614,14 @@ class FreeEnergyDynamics {
      * Simulate trajectory from initial condition
      * @param {number} psi0 - Initial state
      * @param {number} duration - Simulation duration
-     * @param {number} dt - Time step
+     * @param {number} dt - Time step (must be > 0)
      * @returns {Array<Object>} Trajectory points
      */
     simulate(psi0, duration = 10, dt = 0.01) {
+        if (!(dt > 0)) {
+            throw new Error(`FreeEnergyDynamics.simulate requires dt > 0, got ${dt}`);
+        }
+        
         const trajectory = [];
         let psi = psi0;
         let t = 0;

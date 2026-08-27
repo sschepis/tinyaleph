@@ -61,7 +61,7 @@ f(cycle) = Σ_{r ∈ cycle} σ(ε(r) - τ) · |cycle|^α · β^γ
 Encodes hidden vectors into residue distributions over coprime moduli.
 
 ```javascript
-const { ResidueEncoder } = require('tinyaleph/core');
+import { ResidueEncoder } from '@aleph-ai/tinyaleph/core';
 
 const primes = [2, 3, 5, 7];  // Coprime moduli
 const hiddenDim = 32;
@@ -82,7 +82,7 @@ console.log('Expected residues:', expected);
 Reconstructs values from residues using Chinese Remainder Theorem.
 
 ```javascript
-const { CRTReconstructor } = require('tinyaleph/core');
+import { CRTReconstructor } from '@aleph-ai/tinyaleph/core';
 
 const primes = [2, 3, 5, 7];
 const crt = new CRTReconstructor(primes);
@@ -106,7 +106,7 @@ console.log('Valid:', result.valid, 'Error:', result.error);
 Projects matrices onto the Birkhoff polytope using Sinkhorn-Knopp.
 
 ```javascript
-const { BirkhoffProjector } = require('tinyaleph/core');
+import { BirkhoffProjector } from '@aleph-ai/tinyaleph/core';
 
 const projector = new BirkhoffProjector(10);  // 10 iterations
 
@@ -134,7 +134,7 @@ const output = projector.attention(Q, K, V);
 Computes loss terms for obstruction cycles.
 
 ```javascript
-const { HomologyLoss, CRTReconstructor } = require('tinyaleph/core');
+import { HomologyLoss, CRTReconstructor } from '@aleph-ai/tinyaleph/core';
 
 const crt = new CRTReconstructor([2, 3, 5, 7]);
 const homology = new HomologyLoss({
@@ -167,7 +167,7 @@ console.log('β₁ (holes):', betti.beta1);
 Integrated layer combining encoding, reconstruction, and attention.
 
 ```javascript
-const { createCRTLayer } = require('tinyaleph/core');
+import { createCRTLayer } from '@aleph-ai/tinyaleph/core';
 
 const layer = createCRTLayer([2, 3, 5, 7], 32);
 
@@ -194,7 +194,7 @@ console.log('Betti numbers:', batchResult.bettiNumbers);
 Multi-head attention with per-modulus Birkhoff projection.
 
 ```javascript
-const { CRTResonantAttention } = require('tinyaleph/core');
+import { CRTResonantAttention } from '@aleph-ai/tinyaleph/core';
 
 const attention = new CRTResonantAttention({
   numHeads: 4,
@@ -219,7 +219,7 @@ console.log('Has holes:', result.homologyInfo.hasHoles);
 Complete CRT-enhanced ResoFormer model.
 
 ```javascript
-const { createCRTResoFormer, SparsePrimeState } = require('tinyaleph/core');
+import { createCRTResoFormer, SparsePrimeState } from '@aleph-ai/tinyaleph/core';
 
 const model = createCRTResoFormer({
   numLayers: 6,
@@ -251,10 +251,11 @@ console.log('Sequence output length:', seqOutput.output.length);
 
 ### Homology-Aware Stabilization
 
-The `StabilizationController` in `observer/hqe.js` now includes homology detection:
+The `StabilizationController` exported from `@aleph-ai/tinyaleph/observer`
+includes homology detection:
 
 ```javascript
-const { StabilizationController } = require('tinyaleph/observer/hqe');
+import { StabilizationController } from '@aleph-ai/tinyaleph/observer';
 
 const controller = new StabilizationController({
   lambda0: 0.1,
@@ -290,27 +291,30 @@ The CRT kernel detection correlates with Lyapunov instability:
 - **λ < 0** (stable): Low error, consistent reconstruction
 
 ```javascript
-const { lyapunovExponent } = require('tinyaleph/physics');
-const { CRTReconstructor } = require('tinyaleph/core');
+import { localLyapunov, classifyStability, Oscillator } from '@aleph-ai/tinyaleph/physics';
+import { CRTReconstructor } from '@aleph-ai/tinyaleph/core';
 
 const crt = new CRTReconstructor([2, 3, 5, 7]);
 
-// Track correlation between Lyapunov and CRT error
-function correlateStability(trajectory) {
+// Track correlation between Lyapunov stability and CRT kernel membership
+function correlateStability(oscillators) {
   const correlations = [];
-  
-  for (const state of trajectory) {
-    const lambda = lyapunovExponent(state);
-    const residues = extractResidues(state);
+
+  for (const osc of oscillators) {
+    const lambda = localLyapunov(osc);
+    // Residue distribution derived from the oscillator state
+    const value = Math.round(Math.abs(Math.sin(osc.phase)) * 1000);
+    const residues = [value % 2, value % 3, value % 5, value % 7];
     const crtError = crt.reconstructionError(residues);
-    
+
     correlations.push({
       lambda,
+      classification: classifyStability(lambda),
       crtError,
-      inKernel: crtError > 0.1
+      inKernel: crt.detectKernel(residues)
     });
   }
-  
+
   return correlations;
 }
 ```

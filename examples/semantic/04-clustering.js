@@ -8,7 +8,7 @@
  * - Cluster centroids represent topic summaries
  */
 
-const { SemanticBackend, Hypercomplex } = require('../../modular');
+import { SemanticBackend, Hypercomplex } from '../../index.js';
 
 // ===========================================
 // SETUP
